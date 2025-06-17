@@ -47,6 +47,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     // TODO: Implement login functionality with API
     print('Login with: $email, $password, Remember: $_rememberMe');
+
+    // Navigate to home screen on successful login
+    Get.offAllNamed(AppRoutes.homeScreen);
   }
 
   @override
