@@ -87,6 +87,33 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       WelcomeTitleWidget(
                           userName: 'Light User', onLogWeightTap: () {}),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        height: 80,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: 10,
+                          itemBuilder: (context, index) {
+                            return Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              child: DataSummaryWidget(
+                                title: 'Plan transformation',
+                                startValue: '100kg',
+                                endValue: '96Kg',
+                                onClick: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          'Plan transformation details clicked'),
+                                      backgroundColor: Color(0xFFE57373),
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                       Container(
                         margin: const EdgeInsets.symmetric(vertical: 10),
                         child: WeightProgressChart(
@@ -106,48 +133,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           maxWeight: 100.0, // Weight scale 96.0-100.0 kg
                         ),
                       ),
-                      DataSummaryWidget(
-                        title: 'Plan transformation',
-                        startValue: '100kg',
-                        endValue: '96Kg',
-                        onClick: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content:
-                                  Text('Plan transformation details clicked'),
-                              backgroundColor: Color(0xFFE57373),
-                            ),
-                          );
-                        },
-                      ),
                       const SizedBox(height: 24),
-                      // SizedBox(
-                      //   height: 250,
-                      //   child: ListView.builder(
-                      //     scrollDirection: Axis.horizontal,
-                      //     itemCount: 10,
-                      //     itemBuilder: (context, index) {
-                      //       return DataSummaryWidget(
-                      //         title: 'Plan transformation',
-                      //         startValue: '100kg',
-                      //         endValue: '96Kg',
-                      //         onClick: () {
-                      //           ScaffoldMessenger.of(context).showSnackBar(
-                      //             const SnackBar(
-                      //               content: Text(
-                      //                   'Plan transformation details clicked'),
-                      //               backgroundColor: Color(0xFFE57373),
-                      //             ),
-                      //           );
-                      //         },
-                      //       );
-                      //     },
-                      //   ),
-                      // ),
-                      // Using the redesigned DataSummaryWidget to match the image
-
-                      const SizedBox(height: 16),
-                      // You can add more instances of DataSummaryWidget here
+                      // Using the redesigned DataSummaryWidget to match the imag
 
                       // Additional content can be added here
                     ],

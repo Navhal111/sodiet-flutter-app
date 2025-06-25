@@ -29,7 +29,7 @@ class DataSummaryWidget extends StatelessWidget {
     return GestureDetector(
       onTap: onClick,
       child: Container(
-        width: MediaQuery.of(context).size.width - 80,
+        width: MediaQuery.of(context).size.width - 120,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
           color: backgroundColor,
@@ -73,7 +73,7 @@ class DataSummaryWidget extends StatelessWidget {
                 children: [
                   RegularText(
                     title,
-                    fontSize: 14,
+                    fontSize: 12,
                     textColor: Colors.grey[600],
                   ),
                   const SizedBox(height: 4),
@@ -81,7 +81,7 @@ class DataSummaryWidget extends StatelessWidget {
                     children: [
                       SemiBoldText(
                         startValue,
-                        fontSize: 24,
+                        fontSize: 18,
                         textColor: textColor,
                       ),
                       const SizedBox(width: 8),
@@ -94,7 +94,7 @@ class DataSummaryWidget extends StatelessWidget {
                             const SizedBox(width: 8),
                             SemiBoldText(
                               endValue,
-                              fontSize: 24,
+                              fontSize: 18,
                               textColor: textColor,
                             ),
                           ],
