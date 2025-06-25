@@ -60,6 +60,14 @@ class _HomeScreenState extends State<HomeScreen> {
     ));
   }
 
+  void _handleLogWeightTap() {
+    // TODO: Implement log weight functionality
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Log weight feature will be implemented soon'),
+      backgroundColor: Theme.of(context).primaryColor,
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,37 +87,47 @@ class _HomeScreenState extends State<HomeScreen> {
             // Home content
             Expanded(
               child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      WelcomeTitleWidget(
-                          userName: 'Light User', onLogWeightTap: () {}),
-                      Container(
-                        margin: const EdgeInsets.symmetric(vertical: 10),
-                        child: WeightProgressChart(
-                          weightDataList: sampleWeightData,
-                          title: 'Plan Progress',
-                          titleColor: const Color(
-                              0xFF091242), // Dark blue from the design
-                          titleFontSize: 22,
-                          loggedWeightColor: const Color.fromRGBO(
-                              48, 0, 129, 1), // Deep purple
-                          plannedWeightColor:
-                              const Color.fromRGBO(255, 99, 132, 1), // Pink
-                          showRightAxisLabels: true,
-                          minKcal: 0.0,
-                          maxKcal: 1.0, // KCal scale 0.0-1.0
-                          minWeight: 96.0,
-                          maxWeight: 100.0, // Weight scale 96.0-100.0 kg
-                        ),
-                      ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Welcome Title Widget at full width
+                    WelcomeTitleWidget(
+                      userName: "Mikel James",
+                      onLogWeightTap: _handleLogWeightTap,
+                    ),
 
-                      const SizedBox(height: 24),
-                      // Additional content can be added here
-                    ],
-                  ),
+                    // Content below welcome title
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Weight Progress Chart
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            child: WeightProgressChart(
+                              weightDataList: sampleWeightData,
+                              title: 'Plan Progress',
+                              titleColor: const Color(
+                                  0xFF091242), // Dark blue from the design
+                              titleFontSize: 22,
+                              loggedWeightColor: const Color.fromRGBO(
+                                  48, 0, 129, 1), // Deep purple
+                              plannedWeightColor:
+                                  const Color.fromRGBO(255, 99, 132, 1), // Pink
+                              showRightAxisLabels: true,
+                              minKcal: 0.0,
+                              maxKcal: 1.0, // KCal scale 0.0-1.0
+                              minWeight: 96.0,
+                              maxWeight: 100.0, // Weight scale 96.0-100.0 kg
+                            ),
+                          ),
+
+                          // Additional content can be added here
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -143,12 +161,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 10),
                 SemiBoldText(
-                  'User Name',
+                  'Mikel James',
                   textColor: Colors.white,
                   fontSize: 18,
                 ),
                 RegularText(
-                  'user@example.com',
+                  'mikel.james@example.com',
                   textColor: Colors.white.withOpacity(0.8),
                   fontSize: 14,
                 ),
