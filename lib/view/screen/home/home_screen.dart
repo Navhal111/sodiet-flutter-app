@@ -5,6 +5,7 @@ import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/chart/weight_progress_chart.dart';
 import 'package:sodiet/view/widgets/header/app_header.dart';
 import 'package:sodiet/view/widgets/home/welcome_title_widget.dart';
+import 'package:sodiet/view/widgets/home/data_summary_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -105,8 +106,49 @@ class _HomeScreenState extends State<HomeScreen> {
                           maxWeight: 100.0, // Weight scale 96.0-100.0 kg
                         ),
                       ),
-
+                      DataSummaryWidget(
+                        title: 'Plan transformation',
+                        startValue: '100kg',
+                        endValue: '96Kg',
+                        onClick: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content:
+                                  Text('Plan transformation details clicked'),
+                              backgroundColor: Color(0xFFE57373),
+                            ),
+                          );
+                        },
+                      ),
                       const SizedBox(height: 24),
+                      // SizedBox(
+                      //   height: 250,
+                      //   child: ListView.builder(
+                      //     scrollDirection: Axis.horizontal,
+                      //     itemCount: 10,
+                      //     itemBuilder: (context, index) {
+                      //       return DataSummaryWidget(
+                      //         title: 'Plan transformation',
+                      //         startValue: '100kg',
+                      //         endValue: '96Kg',
+                      //         onClick: () {
+                      //           ScaffoldMessenger.of(context).showSnackBar(
+                      //             const SnackBar(
+                      //               content: Text(
+                      //                   'Plan transformation details clicked'),
+                      //               backgroundColor: Color(0xFFE57373),
+                      //             ),
+                      //           );
+                      //         },
+                      //       );
+                      //     },
+                      //   ),
+                      // ),
+                      // Using the redesigned DataSummaryWidget to match the image
+
+                      const SizedBox(height: 16),
+                      // You can add more instances of DataSummaryWidget here
+
                       // Additional content can be added here
                     ],
                   ),

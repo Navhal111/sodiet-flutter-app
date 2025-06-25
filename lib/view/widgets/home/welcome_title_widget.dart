@@ -40,15 +40,26 @@ class WelcomeTitleWidget extends StatelessWidget {
             ),
 
             // Log weight button
-            Container(
+            SizedBox(
               height: 45,
-              child: ElevatedButton.icon(
+              child: ElevatedButton(
                 onPressed: onLogWeightTap,
-                icon: const Icon(Icons.grade, color: Colors.white),
-                label: MediumText(
-                  'Log weight',
-                  fontSize: 12,
-                  textColor: Colors.white,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/images/pulse.png',
+                      width: 12,
+                      height: 12,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 6),
+                    MediumText(
+                      'Log weight',
+                      fontSize: 12,
+                      textColor: Colors.white,
+                    ),
+                  ],
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFFA500), // Orange color
@@ -56,7 +67,7 @@ class WelcomeTitleWidget extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
               ),
             ),
