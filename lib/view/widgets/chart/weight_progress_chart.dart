@@ -24,8 +24,9 @@ class WeightProgressChart extends StatelessWidget {
     this.title = 'Plan Progress',
     this.titleColor = Colors.black87,
     this.titleFontSize = 20,
-    this.loggedWeightColor = const Color.fromRGBO(48, 0, 129, 1), // Deep purple
-    this.plannedWeightColor = const Color.fromRGBO(255, 99, 132, 1), // Pink
+    this.loggedWeightColor = const Color.fromRGBO(51, 0, 153, 1), // Deep purple
+    this.plannedWeightColor =
+        const Color.fromRGBO(255, 102, 153, 1), // Pink rgba(255, 102, 153, 1)
     this.showRightAxisLabels = true,
     this.minKcal = 0.0,
     this.maxKcal = 1.0,
@@ -73,7 +74,7 @@ class WeightProgressChart extends StatelessWidget {
                 'Logged KCal',
                 loggedWeightColor,
               ),
-              const SizedBox(width: 32),
+              const SizedBox(width: 10),
               _buildLegendItem(
                 context,
                 'Planned weight',
@@ -87,22 +88,35 @@ class WeightProgressChart extends StatelessWidget {
   }
 
   Widget _buildLegendItem(BuildContext context, String label, Color color) {
-    return Row(
-      children: [
-        Container(
-          width: 16,
-          height: 16,
-          decoration: BoxDecoration(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
             color: color,
-            shape: BoxShape.circle,
+            width: 2,
+          )),
+      child: Row(
+        children: [
+          Container(
+            width: 16,
+            height: 16,
+            decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Theme.of(context).canvasColor,
+                  width: 2,
+                )),
           ),
-        ),
-        const SizedBox(width: 8),
-        RegularText(
-          label,
-          fontSize: 14,
-        ),
-      ],
+          const SizedBox(width: 8),
+          MediumText(
+            label,
+            fontSize: 12,
+            textColor: color,
+          ),
+        ],
+      ),
     );
   }
 

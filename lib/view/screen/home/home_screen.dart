@@ -83,20 +83,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SemiBoldText(
-                        'Welcome to SoDiet',
-                        fontSize: 24,
-                        textColor: Theme.of(context).primaryColor,
-                      ),
-                      const SizedBox(height: 8),
-                      RegularText(
-                        'Your health journey starts here',
-                        fontSize: 16,
-                        textColor: Colors.black54,
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Weight Progress Chart
                       Container(
                         margin: const EdgeInsets.symmetric(vertical: 10),
                         child: WeightProgressChart(
@@ -118,7 +104,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
 
                       const SizedBox(height: 24),
-
                       // Additional content can be added here
                     ],
                   ),

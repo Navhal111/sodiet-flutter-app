@@ -27,7 +27,6 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     // TODO: implement initState
     initializeDefaultFromAndroidResource();
-
     super.initState();
   }
 
