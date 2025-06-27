@@ -44,6 +44,7 @@ class _MyAppState extends State<MyApp> {
       SystemUiMode.manual,
       overlays: [SystemUiOverlay.top],
     );
+
     return GetBuilder<ThemeController>(builder: (themeController) {
       return GetMaterialApp(
         title: AppConstants.APP_NAME,

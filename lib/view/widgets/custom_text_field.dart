@@ -44,9 +44,9 @@ class CustomTextField extends StatelessWidget {
       padding: padding ?? const EdgeInsets.symmetric(vertical: 4),
       child: TextFormField(
         controller: controller,
-        focusNode: focusNode,
+        // focusNode: focusNode,
         maxLines: maxLines,
-        enabled: isEnabled,
+        enabled: true,
         obscureText: isPassword,
         validator: validator,
         style: TextStyle(
@@ -82,7 +82,7 @@ class CustomTextField extends StatelessWidget {
               fillColor: Theme.of(context)
                   .cardColor
                   .withOpacity(0.8), // Use light gray from theme
-              prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+              // prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
               suffixIcon: suffixIcon,
               enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: Color(0xFFD9D9D9), width: 1),

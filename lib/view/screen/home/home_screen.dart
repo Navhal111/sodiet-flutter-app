@@ -4,6 +4,7 @@ import 'package:sodiet/model/weight_data.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/chart/weight_progress_chart.dart';
 import 'package:sodiet/view/widgets/header/app_header.dart';
+import 'package:sodiet/view/widgets/home/nutrient_progress_widget.dart';
 import 'package:sodiet/view/widgets/home/welcome_title_widget.dart';
 import 'package:sodiet/view/widgets/home/data_summary_widget.dart';
 
@@ -16,6 +17,40 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  // Sample data for the weight progress chart - matching the design screenshot
+  List<Map<String, dynamic>> poritinelist = [
+    {
+      "title": "Protein",
+      "value": 75.0,
+      "requiredValue": 100.0,
+      "color": const Color(0xFF8BC34A)
+    },
+    {
+      "title": "Zinc (mg)",
+      "value": 50.09,
+      "requiredValue": 100.0,
+      "color": const Color(0xFFC82333)
+    },
+    {
+      "title": "Folate (µg)",
+      "value": 50.0,
+      "requiredValue": 100.0,
+      "color": const Color(0xFFC82333)
+    },
+    {
+      "title": "Vitamin B3 (mg)",
+      "value": 108.4,
+      "requiredValue": 100.0,
+      "color": const Color(0xFF8BC34A)
+    },
+    {
+      "title": "Iron (mg)",
+      "value": 82.3,
+      "requiredValue": 100.0,
+      "color": const Color(0xFFFFA500)
+    },
+  ];
 
   // Sample data for the weight progress chart - matching the design screenshot
   List<WeightData> sampleWeightData = [
@@ -134,6 +169,39 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
+                      // ...existing code...
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              spreadRadius: 1,
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            ...List.generate(poritinelist.length, (index) {
+                              // Your dynamic count here
+                              return NutrientProgressWidget(
+                                nutrientName: poritinelist[index]['title'],
+                                percentage: poritinelist[index]['value'],
+                                inputValue: poritinelist[index]['value'],
+                                requiredValue: poritinelist[index]
+                                    ['requiredValue'],
+                                progressColor: poritinelist[index]
+                                    ['color'], // Green
+                                onTap: () {},
+                              );
+                            }),
+                          ],
+                        ),
+                      ),
                       // Using the redesigned DataSummaryWidget to match the imag
 
                       // Additional content can be added here

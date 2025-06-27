@@ -23,12 +23,13 @@ class NutrientProgressWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(19),
       child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
+          color: Color(0xFFF2F2F2),
+          borderRadius: BorderRadius.circular(19),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,16 +39,16 @@ class NutrientProgressWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Nutrient name
-                SemiBoldText(
+                MediumText(
                   nutrientName,
-                  fontSize: 18,
+                  fontSize: 14,
                   textColor: Colors.black87,
                 ),
 
                 // Percentage
                 SemiBoldText(
                   '${percentage.toStringAsFixed(1)}%',
-                  fontSize: 18,
+                  fontSize: 14,
                   textColor: progressColor,
                 ),
               ],
@@ -57,12 +58,12 @@ class NutrientProgressWidget extends StatelessWidget {
 
             // Progress bar
             ClipRRect(
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(11),
               child: LinearProgressIndicator(
                 value: percentage / 100 > 1 ? 1 : percentage / 100,
                 backgroundColor: Colors.grey.shade300,
                 color: progressColor,
-                minHeight: 8,
+                minHeight: 6,
               ),
             ),
 
@@ -73,17 +74,17 @@ class NutrientProgressWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Input value
-                RegularText(
+                MediumText(
                   'IN:${inputValue.toStringAsFixed(1)}',
-                  fontSize: 16,
-                  textColor: Colors.grey.shade500,
+                  fontSize: 14,
+                  textColor: Color(0xFF4C4C80).withOpacity(0.5),
                 ),
 
                 // Required value
-                RegularText(
+                MediumText(
                   'REQ: ${requiredValue.toStringAsFixed(1)}',
                   fontSize: 16,
-                  textColor: Colors.grey.shade500,
+                  textColor: Color(0xFF4C4C80).withOpacity(0.5),
                 ),
               ],
             ),

@@ -13,7 +13,7 @@ ThemeData light = ThemeData(
   unselectedWidgetColor: const Color(0xff87888E),
 
   dividerColor: const Color(0xff222322),
-  cardColor: const Color(0xFFFF1F1F1),
+  cardColor: const Color(0xFFFF8F9FA),
   canvasColor: Color.fromARGB(255, 255, 255, 255),
 
   textButtonTheme: TextButtonThemeData(
