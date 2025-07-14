@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:sodiet/utils/recipe_constants.dart';
-import 'package:sodiet/view/widgets/recipes/recipe_category_filter_widget.dart';
 import 'package:sodiet/view/widgets/recipes/recipe_card_widget.dart';
-import 'package:sodiet/view/widgets/recipes/dishes_section_widget.dart';
+import 'package:sodiet/route/app_routes.dart';
 
 class RecipeListingWidget extends StatefulWidget {
   const RecipeListingWidget({Key? key}) : super(key: key);
@@ -13,7 +13,6 @@ class RecipeListingWidget extends StatefulWidget {
 
 class _RecipeListingWidgetState extends State<RecipeListingWidget> {
   String _selectedCategory = 'Custom';
-  String _sortBy = 'Time';
   List<Map<String, dynamic>> _filteredRecipes = [];
 
   @override
@@ -36,17 +35,8 @@ class _RecipeListingWidgetState extends State<RecipeListingWidget> {
     _updateFilteredRecipes();
   }
 
-  void _onSortTap() {
-    // TODO: Show sort options (you can move this from recipes_screen if needed)
-  }
-
   void _onRecipeTap(Map<String, dynamic> recipe) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${recipe['name']} selected'),
-        backgroundColor: Theme.of(context).primaryColor,
-      ),
-    );
+    Get.toNamed(AppRoutes.recipeDetailScreen, arguments: recipe);
   }
 
   @override

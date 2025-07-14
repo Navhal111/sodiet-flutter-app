@@ -5,4 +5,5 @@ class AppRoutes {
   static const String homeScreen = '/home_screen';
   static const String planScreen = '/plan_screen';
   static const String recipesScreen = '/recipes_screen';
+  static const String recipeDetailScreen = '/recipe_detail_screen';
 }

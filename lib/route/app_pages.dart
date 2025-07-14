@@ -4,6 +4,7 @@ import 'package:sodiet/view/screen/auth/login_screen.dart';
 import 'package:sodiet/view/screen/home/home_screen.dart';
 import 'package:sodiet/view/screen/plan/plan_screen.dart';
 import 'package:sodiet/view/screen/recipes/recipes_screen.dart';
+import 'package:sodiet/view/screen/recipes/recipe_detail_screen.dart';
 import 'package:sodiet/view/screen/splash/index.dart';
 import 'app_routes.dart';
 
@@ -32,6 +33,12 @@ class AppPages {
     GetPage(
       name: AppRoutes.recipesScreen,
       page: () => const RecipesScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.recipeDetailScreen,
+      page: () => RecipeDetailScreen(
+        recipe: Get.arguments as Map<String, dynamic>,
+      ),
     ),
   ];
 }
