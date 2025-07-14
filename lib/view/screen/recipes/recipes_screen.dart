@@ -4,7 +4,8 @@ import 'package:sodiet/view/widgets/header/app_header.dart';
 import 'package:sodiet/view/widgets/home/home_drawer.dart';
 import 'package:sodiet/view/widgets/recipes/recipes_header_widget.dart';
 import 'package:sodiet/view/widgets/recipes/recipes_search_widget.dart';
-import 'package:sodiet/view/widgets/recipes/dishes_section_widget.dart';
+import 'package:sodiet/view/widgets/recipes/recipe_header_section_widget.dart';
+import 'package:sodiet/view/widgets/recipes/recipe_listing_widget.dart';
 
 class RecipesScreen extends StatefulWidget {
   const RecipesScreen({Key? key}) : super(key: key);
@@ -16,7 +17,6 @@ class RecipesScreen extends StatefulWidget {
 class _RecipesScreenState extends State<RecipesScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _searchController = TextEditingController();
-  String _sortBy = 'Time';
 
   void _openDrawer() {
     _scaffoldKey.currentState?.openDrawer();
@@ -57,48 +57,6 @@ class _RecipesScreenState extends State<RecipesScreen> {
     ));
   }
 
-  void _handleSort() {
-    // TODO: Show sort options
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SemiBoldText(
-              'Sort by',
-              fontSize: 16,
-              textColor: const Color(0xFF091242),
-            ),
-            const SizedBox(height: 20),
-            ListTile(
-              title: RegularText('Time', fontSize: 14),
-              onTap: () {
-                setState(() => _sortBy = 'Time');
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: RegularText('Name', fontSize: 14),
-              onTap: () {
-                setState(() => _sortBy = 'Name');
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: RegularText('Category', fontSize: 14),
-              onTap: () {
-                setState(() => _sortBy = 'Category');
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,22 +87,20 @@ class _RecipesScreenState extends State<RecipesScreen> {
                       ),
 
                       const SizedBox(height: 4),
-
                       // Search Widget
                       RecipesSearchWidget(
                         controller: _searchController,
                         onChanged: _handleSearch,
                         onFilterTap: _handleFilter,
                       ),
-
                       const SizedBox(height: 4),
-                      // Recipes List (Empty state for now)
+                      // Categories and Dishes Section in white container
                       Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 16),
+                        margin: EdgeInsets.zero,
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.grey.withOpacity(0.1),
@@ -154,14 +110,14 @@ class _RecipesScreenState extends State<RecipesScreen> {
                             ),
                           ],
                         ),
-                        child: Column(
-                          children: [
-                            DishesSectionWidget(
-                              sortBy: _sortBy,
-                              onSortTap: _handleSort,
-                            )
-                          ],
-                        ),
+                        child: const RecipeHeaderSectionWidget(),
+                      ),
+
+                      const SizedBox(height: 8),
+                      // Recipe Grid (transparent background)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: const RecipeListingWidget(),
                       ),
                     ],
                   ),
