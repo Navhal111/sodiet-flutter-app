@@ -5,7 +5,6 @@ import 'package:sodiet/view/widgets/header/app_header.dart';
 import 'package:sodiet/view/widgets/common/title_section_widget.dart';
 import 'package:sodiet/view/widgets/preference/meal_type_tabs_widget.dart';
 import 'package:sodiet/view/widgets/preference/combination_form_widget.dart';
-import 'package:sodiet/view/widgets/preference/combinations_list_widget.dart';
 
 class PreferenceOnboardingScreen extends StatefulWidget {
   const PreferenceOnboardingScreen({Key? key}) : super(key: key);
@@ -55,7 +54,19 @@ class _PreferenceOnboardingScreenState
 
   void _onDeleteCombination(int index) {
     setState(() {
-      combinations.removeAt(index);
+      // Find the actual index in the main combinations list
+      final filteredCombinations = _filteredCombinations;
+      final combinationToRemove = filteredCombinations[index];
+
+      // Find and remove from the main list
+      final actualIndex = combinations.indexWhere((combination) =>
+          combination['mealType'] == combinationToRemove['mealType'] &&
+          combination['food'] == combinationToRemove['food'] &&
+          combination['quantity'] == combinationToRemove['quantity']);
+
+      if (actualIndex != -1) {
+        combinations.removeAt(actualIndex);
+      }
     });
   }
 
@@ -79,6 +90,7 @@ class _PreferenceOnboardingScreenState
             ),
             Expanded(
               child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -88,13 +100,13 @@ class _PreferenceOnboardingScreenState
                       description:
                           'Add your preferred food combinations for different meals of the day',
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 16),
                     // Meal Type Tabs
                     MealTypeTabsWidget(
                       selectedMealType: selectedMealType,
                       onMealTypeSelected: _onMealTypeChanged,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
                     // Food Combination Form
                     CombinationFormWidget(
                       selectedFood: selectedFood,
@@ -102,14 +114,9 @@ class _PreferenceOnboardingScreenState
                       onFoodChanged: _onFoodChanged,
                       onQuantityChanged: _onQuantityChanged,
                       onAddCombination: _onAddCombination,
-                    ),
-
-                    // Combinations List
-                    CombinationsListWidget(
                       combinations: _filteredCombinations,
                       onDeleteCombination: _onDeleteCombination,
                     ),
-                    const SizedBox(height: 16),
                   ],
                 ),
               ),

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 
-class CombinationFormWidget extends StatelessWidget {
+class CombinationFormWidget extends StatefulWidget {
   final String selectedFood;
   final String quantity;
   final ValueChanged<String?> onFoodChanged;
   final ValueChanged<String> onQuantityChanged;
   final VoidCallback onAddCombination;
+  final List<Map<String, String>> combinations;
+  final ValueChanged<int> onDeleteCombination;
 
   static const List<String> foodOptions = [
     'Masala Karela with vegetable filling recipe',
@@ -16,58 +18,85 @@ class CombinationFormWidget extends StatelessWidget {
     'Bele bhat powder'
   ];
 
-  CombinationFormWidget({
+  const CombinationFormWidget({
     Key? key,
     required this.selectedFood,
     required this.quantity,
     required this.onFoodChanged,
     required this.onQuantityChanged,
     required this.onAddCombination,
+    required this.combinations,
+    required this.onDeleteCombination,
   }) : super(key: key);
+
+  @override
+  State<CombinationFormWidget> createState() => _CombinationFormWidgetState();
+}
+
+class _CombinationFormWidgetState extends State<CombinationFormWidget> {
+  late TextEditingController _quantityController;
+
+  @override
+  void initState() {
+    super.initState();
+    _quantityController = TextEditingController(text: widget.quantity);
+  }
+
+  @override
+  void didUpdateWidget(CombinationFormWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.quantity != widget.quantity) {
+      _quantityController.text = widget.quantity;
+    }
+  }
+
+  @override
+  void dispose() {
+    _quantityController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      color: Colors.white,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Title
           SemiBoldText(
             'Combination 1',
             fontSize: 18,
             textColor: const Color(0xFF091242),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // Food name dropdown
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
               border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              borderRadius: BorderRadius.circular(8),
             ),
             child: DropdownButtonFormField<String>(
-              value: foodOptions.contains(selectedFood) ? selectedFood : null,
+              value: CombinationFormWidget.foodOptions
+                      .contains(widget.selectedFood)
+                  ? widget.selectedFood
+                  : null,
               decoration: const InputDecoration(
-                hintText: 'Select food item',
+                hintText: 'Food name',
                 border: InputBorder.none,
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 hintStyle: TextStyle(
                   color: Colors.grey,
                   fontSize: 14,
                 ),
               ),
-              items: foodOptions.map((String food) {
+              items: CombinationFormWidget.foodOptions.map((String food) {
                 return DropdownMenuItem<String>(
                   value: food,
                   child: Text(
@@ -77,35 +106,29 @@ class CombinationFormWidget extends StatelessWidget {
                   ),
                 );
               }).toList(),
-              onChanged: onFoodChanged,
+              onChanged: widget.onFoodChanged,
               icon:
                   Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade600),
+              dropdownColor: Colors.white,
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // Quantity field
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
               border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              borderRadius: BorderRadius.circular(8),
             ),
             child: TextField(
-              onChanged: onQuantityChanged,
+              controller: _quantityController,
+              onChanged: widget.onQuantityChanged,
               decoration: const InputDecoration(
-                hintText: 'Enter quantity (e.g., 1 cup, 200g)',
+                hintText: 'Quantity',
                 border: InputBorder.none,
                 contentPadding:
-                    EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 hintStyle: TextStyle(
                   color: Colors.grey,
                   fontSize: 14,
@@ -114,57 +137,120 @@ class CombinationFormWidget extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // Add combination button
-          Container(
+          SizedBox(
             width: double.infinity,
-            height: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFF9800), Color(0xFFFF6F00)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFFF9800).withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
             child: ElevatedButton(
-              onPressed: onAddCombination,
+              onPressed: widget.onAddCombination,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
+                backgroundColor: const Color(0xFFFF9800),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.add_circle_outline,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  SemiBoldText(
-                    'Add Combination',
-                    fontSize: 16,
-                    textColor: Colors.white,
-                  ),
-                ],
+              child: SemiBoldText(
+                'Add combination',
+                fontSize: 16,
+                textColor: Colors.white,
               ),
             ),
           ),
+
+          // Combinations List
+          if (widget.combinations.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            SemiBoldText(
+              'Combinations',
+              fontSize: 18,
+              textColor: const Color(0xFF091242),
+            ),
+            const SizedBox(height: 8),
+            ...widget.combinations.asMap().entries.map((entry) {
+              final index = entry.key;
+              final combination = entry.value;
+              return _buildCombinationItem(index, combination);
+            }).toList(),
+          ],
         ],
       ),
+    );
+  }
+
+  Widget _buildCombinationItem(int index, Map<String, String> combination) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+          child: Row(
+            children: [
+              // Index number
+              SemiBoldText(
+                '${index + 1}',
+                fontSize: 16,
+                textColor: const Color(0xFF091242),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '-',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Food and quantity
+              Expanded(
+                child: RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '${combination['food']}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF091242),
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                      if (combination['quantity']?.isNotEmpty == true)
+                        TextSpan(
+                          text: ' (${combination['quantity']})',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              // Delete button
+              GestureDetector(
+                onTap: () => widget.onDeleteCombination(index),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  child: Icon(
+                    Icons.delete_outline,
+                    color: Colors.red.shade400,
+                    size: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Separator line (except for last item)
+        if (index < widget.combinations.length - 1)
+          Container(
+            height: 1,
+            color: Colors.grey.shade200,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+          ),
+      ],
     );
   }
 }
