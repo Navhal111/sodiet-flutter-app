@@ -16,7 +16,7 @@ class PlanStatusWidget extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(0),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),

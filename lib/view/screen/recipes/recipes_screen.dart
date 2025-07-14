@@ -119,7 +119,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -128,7 +128,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                         onAddRecipeTap: _handleAddRecipe,
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 4),
 
                       // Search Widget
                       RecipesSearchWidget(
@@ -137,23 +137,14 @@ class _RecipesScreenState extends State<RecipesScreen> {
                         onFilterTap: _handleFilter,
                       ),
 
-                      const SizedBox(height: 20),
-
-                      // Dishes Section
-                      DishesSectionWidget(
-                        sortBy: _sortBy,
-                        onSortTap: _handleSort,
-                      ),
-
-                      const SizedBox(height: 20),
-
+                      const SizedBox(height: 4),
                       // Recipes List (Empty state for now)
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(40),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 16),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.grey.withOpacity(0.1),
@@ -165,23 +156,10 @@ class _RecipesScreenState extends State<RecipesScreen> {
                         ),
                         child: Column(
                           children: [
-                            Icon(
-                              Icons.restaurant_menu_outlined,
-                              size: 60,
-                              color: Colors.grey.shade400,
-                            ),
-                            const SizedBox(height: 16),
-                            SemiBoldText(
-                              'No recipes yet',
-                              fontSize: 16,
-                              textColor: Colors.grey.shade600,
-                            ),
-                            const SizedBox(height: 8),
-                            RegularText(
-                              'Add your first recipe to get started',
-                              fontSize: 14,
-                              textColor: Colors.grey.shade500,
-                            ),
+                            DishesSectionWidget(
+                              sortBy: _sortBy,
+                              onSortTap: _handleSort,
+                            )
                           ],
                         ),
                       ),

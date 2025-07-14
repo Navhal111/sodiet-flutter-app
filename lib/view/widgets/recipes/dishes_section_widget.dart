@@ -24,9 +24,8 @@ class DishesSectionWidget extends StatelessWidget {
         GestureDetector(
           onTap: onSortTap,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
               borderRadius: BorderRadius.circular(15),
               border: Border.all(
                 color: Colors.grey.shade300,
@@ -38,12 +37,12 @@ class DishesSectionWidget extends StatelessWidget {
               children: [
                 RegularText(
                   'Sort by: ',
-                  fontSize: 12,
+                  fontSize: 14,
                   textColor: Colors.grey.shade600,
                 ),
                 SemiBoldText(
                   sortBy,
-                  fontSize: 12,
+                  fontSize: 14,
                   textColor: Colors.black87,
                 ),
                 const SizedBox(width: 4),
