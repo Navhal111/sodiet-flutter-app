@@ -81,7 +81,9 @@ class HomeDrawer extends StatelessWidget {
                 _buildDrawerItem(
                     context, Icons.calendar_today_outlined, 'Calendar'),
                 _buildDrawerItem(
-                    context, Icons.settings_outlined, 'Preferences'),
+                    context, Icons.settings_outlined, 'Preferences', onTap: () {
+                  Get.toNamed(AppRoutes.preferenceOnboardingScreen);
+                }),
                 _buildDrawerItem(
                     context, Icons.extension_outlined, 'Integrations'),
                 _buildDrawerItem(context, Icons.help_outline, 'Help Desk'),
