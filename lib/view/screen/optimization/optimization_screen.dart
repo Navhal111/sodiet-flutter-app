@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/header/app_header.dart';
 import 'package:sodiet/view/widgets/common/title_section_widget.dart';
+import 'package:sodiet/route/app_routes.dart';
 
 class OptimizationScreen extends StatefulWidget {
   const OptimizationScreen({Key? key}) : super(key: key);
@@ -81,7 +83,8 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
                             width: 100,
                             child: ElevatedButton(
                               onPressed: () {
-                                // Handle run all action
+                                // Navigate to meal plan screen
+                                Get.toNamed(AppRoutes.mealPlanScreen);
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF2AB989),

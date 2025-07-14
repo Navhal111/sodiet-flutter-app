@@ -6,6 +6,7 @@ import 'package:sodiet/view/screen/plan/plan_screen.dart';
 import 'package:sodiet/view/screen/recipes/recipes_screen.dart';
 import 'package:sodiet/view/screen/recipes/recipe_detail_screen.dart';
 import 'package:sodiet/view/screen/optimization/optimization_screen.dart';
+import 'package:sodiet/view/screen/meal_plan/meal_plan_screen.dart';
 import 'package:sodiet/view/screen/splash/index.dart';
 import 'app_routes.dart';
 
@@ -44,6 +45,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.optimizationScreen,
       page: () => const OptimizationScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.mealPlanScreen,
+      page: () => const MealPlanScreen(),
     ),
   ];
 }
