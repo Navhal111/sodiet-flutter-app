@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/header/app_header.dart';
+import 'package:sodiet/view/widgets/common/title_section_widget.dart';
 
 class OptimizationScreen extends StatefulWidget {
   const OptimizationScreen({Key? key}) : super(key: key);
@@ -35,42 +36,11 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Title Section
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      color: Colors.white,
-                      child: Row(
-                        children: [
-                          Container(
-                            child: Image.asset(
-                              'assets/images/plan.png',
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SemiBoldText(
-                                  'Optimization Status',
-                                  fontSize: 20,
-                                  textColor: const Color(0xFF091242),
-                                ),
-                                const SizedBox(height: 4),
-                                RegularText(
-                                  'View and manage your weekly optimization plans to track your progress and stay on top of your diet and fitness goals.',
-                                  fontSize: 14,
-                                  textColor: Colors.grey.shade600,
-                                  maxLines: 3,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                    TitleSectionWidget(
+                      imagePath: 'assets/images/plan.png',
+                      title: 'Optimization Status',
+                      description:
+                          'View and manage your weekly optimization plans to track your progress and stay on top of your diet and fitness goals.',
                     ),
                     Container(
                       color: Colors.white,
