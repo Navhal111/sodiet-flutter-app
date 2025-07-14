@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:sodiet/model/weight_data.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/chart/weight_progress_chart.dart';
@@ -8,6 +7,7 @@ import 'package:sodiet/view/widgets/header/app_header.dart';
 import 'package:sodiet/view/widgets/home/nutrient_progress_widget.dart';
 import 'package:sodiet/view/widgets/home/welcome_title_widget.dart';
 import 'package:sodiet/view/widgets/home/data_summary_widget.dart';
+import 'package:sodiet/view/widgets/home/home_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -134,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Theme.of(context).cardColor,
-      drawer: _buildDrawer(),
+      drawer: const HomeDrawer(),
       body: SafeArea(
         child: Column(
           children: [
@@ -223,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             SemiBoldText(
                               'Nutrient Analysis',
-                              fontSize: 24,
+                              fontSize: 16,
                               textColor: const Color(0xFF091242), // Dark blue
                             ),
                             const SizedBox(height: 10),
@@ -261,78 +261,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildDrawer() {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.white,
-                  child: Icon(
-                    Icons.person,
-                    color: Theme.of(context).primaryColor,
-                    size: 40,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SemiBoldText(
-                  'User Name',
-                  textColor: Colors.white,
-                  fontSize: 18,
-                ),
-                RegularText(
-                  'user@example.com',
-                  textColor: Colors.white.withOpacity(0.8),
-                  fontSize: 14,
-                ),
-              ],
-            ),
-          ),
-          _buildDrawerItem(Icons.home, 'Home'),
-          _buildDrawerItem(Icons.person, 'Profile'),
-          _buildDrawerItem(Icons.settings, 'Settings'),
-          _buildDrawerItem(Icons.info_outline, 'About'),
-          const Divider(),
-          _buildDrawerItem(Icons.logout, 'Logout', onTap: () {
-            Get.back();
-            // TODO: Implement logout functionality
-            Get.offAllNamed('/login_screen');
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDrawerItem(IconData icon, String title, {Function? onTap}) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: Theme.of(context).primaryColor,
-      ),
-      title: RegularText(
-        title,
-        fontSize: 16,
-      ),
-      onTap: () {
-        // Close drawer first
-        Get.back();
-        // Then perform action if provided
-        if (onTap != null) {
-          onTap();
-        }
-      },
     );
   }
 }
