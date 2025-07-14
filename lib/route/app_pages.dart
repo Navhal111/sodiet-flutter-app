@@ -5,6 +5,7 @@ import 'package:sodiet/view/screen/home/home_screen.dart';
 import 'package:sodiet/view/screen/plan/plan_screen.dart';
 import 'package:sodiet/view/screen/recipes/recipes_screen.dart';
 import 'package:sodiet/view/screen/recipes/recipe_detail_screen.dart';
+import 'package:sodiet/view/screen/optimization/optimization_screen.dart';
 import 'package:sodiet/view/screen/splash/index.dart';
 import 'app_routes.dart';
 
@@ -39,6 +40,10 @@ class AppPages {
       page: () => RecipeDetailScreen(
         recipe: Get.arguments as Map<String, dynamic>,
       ),
+    ),
+    GetPage(
+      name: AppRoutes.optimizationScreen,
+      page: () => const OptimizationScreen(),
     ),
   ];
 }

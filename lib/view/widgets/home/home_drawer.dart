@@ -61,7 +61,10 @@ class HomeDrawer extends StatelessWidget {
                   Get.toNamed(AppRoutes.recipesScreen);
                 }),
                 _buildDrawerItem(
-                    context, Icons.tune_outlined, 'Diet Optimization'),
+                    context, Icons.tune_outlined, 'Diet Optimization',
+                    onTap: () {
+                  Get.toNamed(AppRoutes.optimizationScreen);
+                }),
                 _buildDrawerItem(
                     context, Icons.history_outlined, 'Diet Recall'),
                 _buildDrawerItem(

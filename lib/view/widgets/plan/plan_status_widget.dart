@@ -30,18 +30,11 @@ class PlanStatusWidget extends StatelessWidget {
         children: [
           // Icon/Illustration
           Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Image.asset(
-                MyImages.plan,
-                fit: BoxFit.contain,
-              ),
+            width: 100,
+            height: 100,
+            child: Image.asset(
+              MyImages.plan,
+              fit: BoxFit.contain,
             ),
           ),
 

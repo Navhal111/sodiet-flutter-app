@@ -29,16 +29,11 @@ class RecipesHeaderWidget extends StatelessWidget {
         children: [
           // Menu Icon/Illustration
           Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              Icons.menu_book_outlined,
-              size: 30,
-              color: Theme.of(context).primaryColor,
+            child: Image.asset(
+              'assets/images/plan.png',
+              width: 100,
+              height: 100,
+              fit: BoxFit.contain,
             ),
           ),
 
