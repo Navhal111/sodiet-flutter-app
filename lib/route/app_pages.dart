@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:sodiet/view/screen/auth/forgot_password/forgot_password_screen.dart';
 import 'package:sodiet/view/screen/auth/login_screen.dart';
+import 'package:sodiet/view/screen/course_correction/course_correction_screen.dart';
 import 'package:sodiet/view/screen/home/home_screen.dart';
 import 'package:sodiet/view/screen/plan/plan_screen.dart';
 import 'package:sodiet/view/screen/recipes/recipes_screen.dart';
@@ -49,6 +50,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.mealPlanScreen,
       page: () => const MealPlanScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.courseCorrectionScreen,
+      page: () => const CourseCorrectionScreen(),
     ),
   ];
 }

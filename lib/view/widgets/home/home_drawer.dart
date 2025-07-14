@@ -74,7 +74,10 @@ class HomeDrawer extends StatelessWidget {
                 _buildDrawerItem(context, Icons.event_note_outlined,
                     'Physical Activity Planner'),
                 _buildDrawerItem(
-                    context, Icons.auto_fix_high_outlined, 'Course Correction'),
+                    context, Icons.auto_fix_high_outlined, 'Course Correction',
+                    onTap: () {
+                  Get.toNamed(AppRoutes.courseCorrectionScreen);
+                }),
                 _buildDrawerItem(
                     context, Icons.calendar_today_outlined, 'Calendar'),
                 _buildDrawerItem(

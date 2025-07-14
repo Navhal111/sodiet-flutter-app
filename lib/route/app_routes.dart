@@ -8,4 +8,5 @@ class AppRoutes {
   static const String recipeDetailScreen = '/recipe_detail_screen';
   static const String optimizationScreen = '/optimization_screen';
   static const String mealPlanScreen = '/meal_plan_screen';
+  static const String courseCorrectionScreen = '/course_correction_screen';
 }
