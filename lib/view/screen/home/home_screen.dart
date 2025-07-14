@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:sodiet/model/weight_data.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/chart/weight_progress_chart.dart';
+import 'package:sodiet/view/widgets/chart/intake_overview_chart.dart';
 import 'package:sodiet/view/widgets/header/app_header.dart';
 import 'package:sodiet/view/widgets/home/nutrient_progress_widget.dart';
 import 'package:sodiet/view/widgets/home/welcome_title_widget.dart';
@@ -74,6 +75,38 @@ class _HomeScreenState extends State<HomeScreen> {
     WeightData(day: 26, loggedWeight: -1, plannedWeight: 96.3),
     WeightData(day: 28, loggedWeight: -1, plannedWeight: 96.1),
     WeightData(day: 30, loggedWeight: -1, plannedWeight: 96.0),
+  ];
+
+  // Sample data for the intake overview chart - matching the design screenshot
+  List<IntakeData> sampleIntakeData = [
+    IntakeData(
+      date: DateTime(2025, 1, 28),
+      breakfast: 200,
+      lunch: 0,
+      dinner: 0,
+      snacks: 150,
+    ),
+    IntakeData(
+      date: DateTime(2025, 1, 29),
+      breakfast: 850,
+      lunch: 200,
+      dinner: 350,
+      snacks: 100,
+    ),
+    IntakeData(
+      date: DateTime(2025, 1, 30),
+      breakfast: 500,
+      lunch: 0,
+      dinner: 0,
+      snacks: 0,
+    ),
+    IntakeData(
+      date: DateTime(2025, 2, 6),
+      breakfast: 0,
+      lunch: 0,
+      dinner: 0,
+      snacks: 0,
+    ),
   ];
 
   void _openDrawer() {
@@ -168,7 +201,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           maxWeight: 100.0, // Weight scale 96.0-100.0 kg
                         ),
                       ),
-                      const SizedBox(height: 24),
+
+                      const SizedBox(height: 10),
                       // ...existing code...
                       Container(
                         padding: const EdgeInsets.all(16),
@@ -185,7 +219,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            SemiBoldText(
+                              'Nutrient Analysis',
+                              fontSize: 24,
+                              textColor: const Color(0xFF091242), // Dark blue
+                            ),
+                            const SizedBox(height: 10),
                             ...List.generate(poritinelist.length, (index) {
                               // Your dynamic count here
                               return NutrientProgressWidget(
@@ -203,7 +244,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       // Using the redesigned DataSummaryWidget to match the imag
-
+                      const SizedBox(height: 10),
+                      // Intake Overview Chart
+                      IntakeOverviewChart(
+                        intakeDataList: sampleIntakeData,
+                        title: 'Intake Overview',
+                        titleColor: const Color(0xFF091242),
+                        titleFontSize: 22,
+                      ),
                       // Additional content can be added here
                     ],
                   ),
