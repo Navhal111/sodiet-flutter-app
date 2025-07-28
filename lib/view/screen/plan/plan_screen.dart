@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
-import 'package:sodiet/view/widgets/header/app_header.dart';
 import 'package:sodiet/view/widgets/home/data_summary_widget.dart';
-import 'package:sodiet/view/widgets/home/home_drawer.dart';
+import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 import 'package:sodiet/view/widgets/plan/plan_status_widget.dart';
 import 'package:sodiet/view/widgets/plan/plan_table_widget.dart';
 
@@ -14,8 +14,6 @@ class PlanScreen extends StatefulWidget {
 }
 
 class _PlanScreenState extends State<PlanScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
   // Sample plan data for the table
   List<PlanData> samplePlanData = [
     PlanData(
@@ -62,107 +60,68 @@ class _PlanScreenState extends State<PlanScreen> {
     ),
   ];
 
-  void _openDrawer() {
-    _scaffoldKey.currentState?.openDrawer();
-  }
-
-  void _handleNotificationTap() {
-    // TODO: Implement notification screen navigation
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: RegularText('Notifications feature will be implemented soon'),
-      backgroundColor: Theme.of(context).primaryColor,
-    ));
-  }
-
-  void _handleProfileTap() {
-    // TODO: Implement profile screen navigation
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: RegularText('Profile feature will be implemented soon'),
-      backgroundColor: Theme.of(context).primaryColor,
-    ));
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: Theme.of(context).cardColor,
-      drawer: const HomeDrawer(),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // App Header
-            AppHeader(
-              onMenuTap: _openDrawer,
-              onNotificationTap: _handleNotificationTap,
-              onProfileTap: _handleProfileTap,
-            ),
-
-            // Plan content
-            Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(0.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 14),
-                      Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 0, vertical: 4),
-                          child: PlanStatusWidget(
-                            onResetTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: RegularText(
-                                      'Reset plan functionality will be implemented soon'),
-                                  backgroundColor:
-                                      Theme.of(context).primaryColor,
-                                ),
-                              );
-                            },
-                          )),
-                      const SizedBox(height: 14),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: SizedBox(
-                          height: 80,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: 10,
-                            itemBuilder: (context, index) {
-                              return Container(
-                                margin: const EdgeInsets.only(right: 8),
-                                child: DataSummaryWidget(
-                                  title: 'Plan transformation',
-                                  startValue: '100kg',
-                                  endValue: '96Kg',
-                                  onClick: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                            'Plan transformation details clicked'),
-                                        backgroundColor: Color(0xFFE57373),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                          ),
+    return BaseScreenLayout(
+      currentRoute: AppRoutes.planScreen,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(0.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 14),
+              Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+                  child: PlanStatusWidget(
+                    onResetTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: RegularText(
+                              'Reset plan functionality will be implemented soon'),
+                          backgroundColor: Theme.of(context).primaryColor,
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      // Plan Table Widget
-                      PlanTableWidget(
-                        planDataList: samplePlanData,
-                      ),
-                    ],
+                      );
+                    },
+                  )),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: SizedBox(
+                  height: 80,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 10,
+                    itemBuilder: (context, index) {
+                      return Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        child: DataSummaryWidget(
+                          title: 'Plan transformation',
+                          startValue: '100kg',
+                          endValue: '96Kg',
+                          onClick: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content:
+                                    Text('Plan transformation details clicked'),
+                                backgroundColor: Color(0xFFE57373),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 10),
+              // Plan Table Widget
+              PlanTableWidget(
+                planDataList: samplePlanData,
+              ),
+            ],
+          ),
         ),
       ),
     );

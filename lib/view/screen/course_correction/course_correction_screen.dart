@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
-import 'package:sodiet/view/widgets/header/app_header.dart';
+import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 import 'package:sodiet/view/widgets/common/title_section_widget.dart';
 
 class CourseCorrectionScreen extends StatefulWidget {
@@ -17,125 +17,101 @@ class _CourseCorrectionScreenState extends State<CourseCorrectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).cardColor,
-      body: SafeArea(
+    return BaseScreenLayout(
+      currentRoute: AppRoutes.courseCorrectionScreen,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            AppHeader(
-              showBackButton: true,
+            // Title Section
+            TitleSectionWidget(
+              imagePath: 'assets/images/correntions.png',
               title: 'Course Correction',
-              onBackTap: () => Get.back(),
-              onNotificationTap: () {},
-              onProfileTap: () {},
+              description: 'Select Date and Do the Course Correction Here',
             ),
+            const SizedBox(height: 4),
 
-            // Content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title Section
-                    TitleSectionWidget(
-                      imagePath: 'assets/images/correntions.png',
-                      title: 'Course Correction',
-                      description:
-                          'Select Date and Do the Course Correction Here',
+            Container(
+              padding: const EdgeInsets.all(8),
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              color: Colors.white,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Select date section
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    child: SemiBoldText(
+                      'Select date for course correction',
+                      fontSize: 18,
+                      textColor: const Color(0xFF091242),
                     ),
-                    const SizedBox(height: 4),
+                  ),
 
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      margin: const EdgeInsets.symmetric(horizontal: 8),
-                      color: Colors.white,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Select date section
-                          Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 16),
-                            child: SemiBoldText(
-                              'Select date for course correction',
-                              fontSize: 18,
+                  const SizedBox(height: 8),
+
+                  // Date Cards
+                  ...List.generate(3, (index) => _buildDateCard(index)),
+
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    height: 100,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            SemiBoldText(
+                              'Total Delta:',
+                              fontSize: 16,
                               textColor: const Color(0xFF091242),
                             ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          // Date Cards
-                          ...List.generate(3, (index) => _buildDateCard(index)),
-
-                          const SizedBox(height: 24),
-                          SizedBox(
-                            height: 100,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    SemiBoldText(
-                                      'Total Delta:',
-                                      fontSize: 16,
-                                      textColor: const Color(0xFF091242),
-                                    ),
-                                    SemiBoldText(
-                                      '$totalDelta Kcal',
-                                      fontSize: 16,
-                                      textColor: const Color(0xFF091242),
-                                    ),
-                                  ],
-                                ),
-                                Container(
-                                  margin: const EdgeInsets.symmetric(
-                                      horizontal: 16),
-                                  width: 120,
-                                  height: 56,
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      // Handle submit
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: RegularText(
-                                              'Course correction submitted successfully'),
-                                          backgroundColor:
-                                              const Color(0xFF2AB989),
-                                        ),
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFFF9800),
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 16),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    child: SemiBoldText(
-                                      'Submit',
-                                      fontSize: 16,
-                                      textColor: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            SemiBoldText(
+                              '$totalDelta Kcal',
+                              fontSize: 16,
+                              textColor: const Color(0xFF091242),
                             ),
-                          )
-                        ],
-                      ),
+                          ],
+                        ),
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          width: 120,
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // Handle submit
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: RegularText(
+                                      'Course correction submitted successfully'),
+                                  backgroundColor: const Color(0xFF2AB989),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFF9800),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: SemiBoldText(
+                              'Submit',
+                              fontSize: 16,
+                              textColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                  )
+                ],
               ),
             ),
+
+            const SizedBox(height: 24),
           ],
         ),
       ),

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:sodiet/model/weight_data.dart';
+import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/chart/weight_progress_chart.dart';
 import 'package:sodiet/view/widgets/chart/intake_overview_chart.dart';
-import 'package:sodiet/view/widgets/header/app_header.dart';
 import 'package:sodiet/view/widgets/home/nutrient_progress_widget.dart';
 import 'package:sodiet/view/widgets/home/welcome_title_widget.dart';
 import 'package:sodiet/view/widgets/home/data_summary_widget.dart';
-import 'package:sodiet/view/widgets/home/home_drawer.dart';
+import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -17,9 +17,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
-  // Sample data for the weight progress chart - matching the design screenshot
+  // Sample data for nutrient progress
   List<Map<String, dynamic>> poritinelist = [
     {
       "title": "Protein",
@@ -109,156 +107,104 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   ];
 
-  void _openDrawer() {
-    _scaffoldKey.currentState?.openDrawer();
-  }
-
-  void _handleNotificationTap() {
-    // TODO: Implement notification screen navigation
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Notifications feature will be implemented soon'),
-      backgroundColor: Theme.of(context).primaryColor,
-    ));
-  }
-
-  void _handleProfileTap() {
-    // TODO: Implement profile screen navigation
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Profile feature will be implemented soon'),
-      backgroundColor: Theme.of(context).primaryColor,
-    ));
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: Theme.of(context).cardColor,
-      drawer: const HomeDrawer(),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // App Header
-            AppHeader(
-              onMenuTap: _openDrawer,
-              onNotificationTap: _handleNotificationTap,
-              onProfileTap: _handleProfileTap,
-            ),
-
-            // Home content
-            Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      WelcomeTitleWidget(
-                          userName: 'Light User', onLogWeightTap: () {}),
-                      const SizedBox(height: 14),
-                      SizedBox(
-                        height: 80,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: 10,
-                          itemBuilder: (context, index) {
-                            return Container(
-                              margin: const EdgeInsets.only(right: 8),
-                              child: DataSummaryWidget(
-                                title: 'Plan transformation',
-                                startValue: '100kg',
-                                endValue: '96Kg',
-                                onClick: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'Plan transformation details clicked'),
-                                      backgroundColor: Color(0xFFE57373),
-                                    ),
-                                  );
-                                },
-                              ),
-                            );
-                          },
-                        ),
+    return BaseScreenLayout(
+      currentRoute: AppRoutes.homeScreen,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              WelcomeTitleWidget(userName: 'Light User', onLogWeightTap: () {}),
+              const SizedBox(height: 14),
+              SizedBox(
+                height: 80,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: 10,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      child: DataSummaryWidget(
+                        title: 'Plan transformation',
+                        startValue: '100kg',
+                        endValue: '96Kg',
+                        onClick: () {},
                       ),
-                      Container(
-                        margin: const EdgeInsets.symmetric(vertical: 10),
-                        child: WeightProgressChart(
-                          weightDataList: sampleWeightData,
-                          title: 'Plan Progress',
-                          titleColor: const Color(
-                              0xFF091242), // Dark blue from the design
-                          titleFontSize: 22,
-                          loggedWeightColor: const Color.fromRGBO(
-                              48, 0, 129, 1), // Deep purple
-                          plannedWeightColor:
-                              const Color.fromRGBO(255, 99, 132, 1), // Pink
-                          showRightAxisLabels: true,
-                          minKcal: 0.0,
-                          maxKcal: 1.0, // KCal scale 0.0-1.0
-                          minWeight: 96.0,
-                          maxWeight: 100.0, // Weight scale 96.0-100.0 kg
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-                      // ...existing code...
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
-                              spreadRadius: 1,
-                              blurRadius: 5,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SemiBoldText(
-                              'Nutrient Analysis',
-                              fontSize: 16,
-                              textColor: const Color(0xFF091242), // Dark blue
-                            ),
-                            const SizedBox(height: 10),
-                            ...List.generate(poritinelist.length, (index) {
-                              // Your dynamic count here
-                              return NutrientProgressWidget(
-                                nutrientName: poritinelist[index]['title'],
-                                percentage: poritinelist[index]['value'],
-                                inputValue: poritinelist[index]['value'],
-                                requiredValue: poritinelist[index]
-                                    ['requiredValue'],
-                                progressColor: poritinelist[index]
-                                    ['color'], // Green
-                                onTap: () {},
-                              );
-                            }),
-                          ],
-                        ),
-                      ),
-                      // Using the redesigned DataSummaryWidget to match the imag
-                      const SizedBox(height: 10),
-                      // Intake Overview Chart
-                      IntakeOverviewChart(
-                        intakeDataList: sampleIntakeData,
-                        title: 'Intake Overview',
-                        titleColor: const Color(0xFF091242),
-                        titleFontSize: 22,
-                      ),
-                      // Additional content can be added here
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
-            ),
-          ],
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 10),
+                child: WeightProgressChart(
+                  weightDataList: sampleWeightData,
+                  title: 'Plan Progress',
+                  titleColor:
+                      const Color(0xFF091242), // Dark blue from the design
+                  titleFontSize: 22,
+                  loggedWeightColor:
+                      const Color.fromRGBO(48, 0, 129, 1), // Deep purple
+                  plannedWeightColor:
+                      const Color.fromRGBO(255, 99, 132, 1), // Pink
+                  showRightAxisLabels: true,
+                  minKcal: 0.0,
+                  maxKcal: 1.0, // KCal scale 0.0-1.0
+                  minWeight: 96.0,
+                  maxWeight: 100.0, // Weight scale 96.0-100.0 kg
+                ),
+              ),
+
+              const SizedBox(height: 10),
+              // Nutrient Analysis Section
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      spreadRadius: 1,
+                      blurRadius: 5,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SemiBoldText(
+                      'Nutrient Analysis',
+                      fontSize: 16,
+                      textColor: const Color(0xFF091242), // Dark blue
+                    ),
+                    const SizedBox(height: 10),
+                    ...List.generate(poritinelist.length, (index) {
+                      return NutrientProgressWidget(
+                        nutrientName: poritinelist[index]['title'],
+                        percentage: poritinelist[index]['value'],
+                        inputValue: poritinelist[index]['value'],
+                        requiredValue: poritinelist[index]['requiredValue'],
+                        progressColor: poritinelist[index]['color'],
+                        onTap: () {},
+                      );
+                    }),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Intake Overview Chart
+              IntakeOverviewChart(
+                intakeDataList: sampleIntakeData,
+                title: 'Intake Overview',
+                titleColor: const Color(0xFF091242),
+                titleFontSize: 22,
+              ),
+            ],
+          ),
         ),
       ),
     );

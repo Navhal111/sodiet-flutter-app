@@ -32,7 +32,7 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
               description:
                   'View and manage your weekly optimization plans to track your progress and stay on top of your diet and fitness goals.',
             ),
-            
+
             Container(
               color: Colors.white,
               padding: const EdgeInsets.all(16),
@@ -138,7 +138,7 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
             ),
 
             const SizedBox(height: 4),
-            
+
             _buildOptimizationCard(
               'Week 3',
               'Mar3 - Mar10',

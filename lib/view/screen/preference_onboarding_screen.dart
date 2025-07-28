@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sodiet/view/widgets/app_text.dart';
-import 'package:sodiet/view/widgets/header/app_header.dart';
+import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 import 'package:sodiet/view/widgets/common/title_section_widget.dart';
 import 'package:sodiet/view/widgets/preference/meal_type_tabs_widget.dart';
 import 'package:sodiet/view/widgets/preference/combination_form_widget.dart';
+import 'package:sodiet/route/app_routes.dart';
 
 class PreferenceOnboardingScreen extends StatefulWidget {
   const PreferenceOnboardingScreen({Key? key}) : super(key: key);
@@ -78,49 +78,44 @@ class _PreferenceOnboardingScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).cardColor,
-      body: SafeArea(
+    return BaseScreenLayout(
+      currentRoute: AppRoutes.preferenceOnboardingScreen,
+      title: 'Preferences',
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AppHeader(
-              title: 'Preferences',
-              showBackButton: true,
-              onBackTap: () => Get.back(),
+            TitleSectionWidget(
+              imagePath: 'assets/images/plan.png',
+              title: 'Preference Onboarding',
+              description:
+                  'Add your preferred food combinations for different meals of the day',
             ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TitleSectionWidget(
-                      imagePath: 'assets/images/plan.png',
-                      title: 'Preference Onboarding',
-                      description:
-                          'Add your preferred food combinations for different meals of the day',
-                    ),
-                    const SizedBox(height: 16),
-                    // Meal Type Tabs
-                    MealTypeTabsWidget(
-                      selectedMealType: selectedMealType,
-                      onMealTypeSelected: _onMealTypeChanged,
-                    ),
-                    const SizedBox(height: 16),
-                    // Food Combination Form
-                    CombinationFormWidget(
-                      selectedFood: selectedFood,
-                      quantity: quantity,
-                      onFoodChanged: _onFoodChanged,
-                      onQuantityChanged: _onQuantityChanged,
-                      onAddCombination: _onAddCombination,
-                      combinations: _filteredCombinations,
-                      onDeleteCombination: _onDeleteCombination,
-                    ),
-                  ],
-                ),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  const SizedBox(height: 16),
+                  // Meal Type Tabs
+                  MealTypeTabsWidget(
+                    selectedMealType: selectedMealType,
+                    onMealTypeSelected: _onMealTypeChanged,
+                  ),
+                  const SizedBox(height: 16),
+                  // Food Combination Form
+                  CombinationFormWidget(
+                    selectedFood: selectedFood,
+                    quantity: quantity,
+                    onFoodChanged: _onFoodChanged,
+                    onQuantityChanged: _onQuantityChanged,
+                    onAddCombination: _onAddCombination,
+                    combinations: _filteredCombinations,
+                    onDeleteCombination: _onDeleteCombination,
+                  ),
+                ],
               ),
-            ),
+            )
           ],
         ),
       ),

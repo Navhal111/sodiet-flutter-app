@@ -9,6 +9,10 @@ import 'package:sodiet/view/screen/recipes/recipe_detail_screen.dart';
 import 'package:sodiet/view/screen/optimization/optimization_screen.dart';
 import 'package:sodiet/view/screen/meal_plan/meal_plan_screen.dart';
 import 'package:sodiet/view/screen/preference_onboarding_screen.dart';
+import 'package:sodiet/view/screen/weight_log/weight_log_manager_screen.dart';
+import 'package:sodiet/view/screen/physical_activity/physical_activity_screen.dart';
+import 'package:sodiet/view/screen/physical_activity/physical_activity_planner_screen.dart';
+import 'package:sodiet/view/screen/integrations/integrations_screen.dart';
 import 'package:sodiet/view/screen/splash/index.dart';
 import 'app_routes.dart';
 
@@ -59,6 +63,22 @@ class AppPages {
     GetPage(
       name: AppRoutes.preferenceOnboardingScreen,
       page: () => const PreferenceOnboardingScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.weightLogManagerScreen,
+      page: () => const WeightLogManagerScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.physicalActivityScreen,
+      page: () => const PhysicalActivityScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.physicalActivityPlannerScreen,
+      page: () => const PhysicalActivityPlannerScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.integrationsScreen,
+      page: () => const IntegrationsScreen(),
     ),
   ];
 }
