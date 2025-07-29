@@ -16,4 +16,5 @@ class AppRoutes {
   static const String physicalActivityPlannerScreen =
       '/physical_activity_planner_screen';
   static const String integrationsScreen = '/integrations_screen';
+  static const String dietRecallScreen = '/diet_recall_screen';
 }

@@ -89,7 +89,11 @@ class HomeDrawer extends StatelessWidget {
                           navigationController.navigateToOptimization(),
                     ),
                     _buildDrawerItem(
-                        context, Icons.history_outlined, 'Diet Recall'),
+                        context, Icons.history_outlined, 'Diet Recall',
+                        isSelected: navigationController
+                            .isRouteActive(AppRoutes.dietRecallScreen),
+                        onTap: () =>
+                            navigationController.navigateToDietRecall()),
                     _buildDrawerItem(context, Icons.trending_up_outlined,
                         'Weight Log Manager',
                         isSelected: navigationController

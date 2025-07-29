@@ -108,6 +108,14 @@ class NavigationController extends GetxController {
     }
   }
 
+  void navigateToDietRecall() {
+    if (_currentRoute.value != AppRoutes.dietRecallScreen) {
+      Get.offNamed(AppRoutes.dietRecallScreen);
+      _currentRoute.value = AppRoutes.dietRecallScreen;
+      update();
+    }
+  }
+
   // Helper method to get display name for route
   String getRouteDisplayName(String route) {
     switch (route) {
@@ -133,6 +141,8 @@ class NavigationController extends GetxController {
         return 'Physical Activity Planner';
       case AppRoutes.integrationsScreen:
         return 'Integrations';
+      case AppRoutes.dietRecallScreen:
+        return 'Diet Recall';
       default:
         return 'Unknown';
     }

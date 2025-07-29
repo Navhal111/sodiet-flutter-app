@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/utils/images.dart';
+
+import '../../../controller/auth/authController.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -11,13 +12,15 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  var authController = Get.find<AuthController>();
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     Future.delayed(Duration(seconds: 3)).then(
       (value) {
-        Get.offAllNamed(AppRoutes.loginScreen);
+        authController.loginCheckScreen();
       },
     );
   }

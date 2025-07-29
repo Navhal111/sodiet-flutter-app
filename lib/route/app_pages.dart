@@ -13,6 +13,7 @@ import 'package:sodiet/view/screen/weight_log/weight_log_manager_screen.dart';
 import 'package:sodiet/view/screen/physical_activity/physical_activity_screen.dart';
 import 'package:sodiet/view/screen/physical_activity/physical_activity_planner_screen.dart';
 import 'package:sodiet/view/screen/integrations/integrations_screen.dart';
+import 'package:sodiet/view/screen/diet_recall/diet_recall_screen.dart';
 import 'package:sodiet/view/screen/splash/index.dart';
 import 'app_routes.dart';
 
@@ -79,6 +80,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.integrationsScreen,
       page: () => const IntegrationsScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.dietRecallScreen,
+      page: () => const DietRecallScreen(),
     ),
   ];
 }

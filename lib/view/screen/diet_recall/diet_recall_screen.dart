@@ -1,0 +1,380 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:sodiet/view/widgets/common/title_section_widget.dart';
+import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
+import 'package:sodiet/view/widgets/app_text.dart';
+import 'package:sodiet/view/widgets/custom_text_field.dart';
+import 'package:sodiet/route/app_routes.dart';
+
+class DietRecallScreen extends StatefulWidget {
+  const DietRecallScreen({Key? key}) : super(key: key);
+
+  @override
+  State<DietRecallScreen> createState() => _DietRecallScreenState();
+}
+
+class _DietRecallScreenState extends State<DietRecallScreen> {
+  final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _recipeController = TextEditingController();
+  final TextEditingController _quantityController = TextEditingController();
+
+  String selectedTiming = 'Breakfast';
+  String selectedUnit = 'Cup';
+
+  final List<Map<String, dynamic>> timingOptions = [
+    {'label': 'Breakfast', 'icon': 'assets/icons/breakfast.png'},
+    {'label': 'Lunch', 'icon': 'assets/icons/lunch.png'},
+    {'label': 'Dinner', 'icon': 'assets/icons/dinner.png'},
+    {'label': 'Snacks', 'icon': 'assets/icons/snaks.png'},
+  ];
+  final List<Map<String, dynamic>> unitOptions = [
+    {'label': 'Cup', 'icon': 'assets/units/cup.png'},
+    {'label': 'Bowl', 'icon': 'assets/units/bowl.png'},
+    {'label': 'Tsp', 'icon': 'assets/units/Moon.png'}, // Using Moon.png for Tsp
+    {'label': 'Tbsp', 'icon': 'assets/units/tbsp.png'},
+    {'label': 'Glass', 'icon': 'assets/units/glass.png'},
+    {'label': 'Pieces', 'icon': 'assets/units/piece.png'},
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Set today's date by default
+    _dateController.text = DateTime.now().toString().split(' ')[0];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BaseScreenLayout(
+      currentRoute: AppRoutes.dietRecallScreen,
+      title: 'Diet Recall',
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TitleSectionWidget(
+              imagePath:
+                  'assets/images/combinations.png', // Using combinations icon as shown in image
+              title: 'Diet Recall',
+              description:
+                  'Recall your daily diet and track your food intake to maintain a healthy and balanced diet.',
+              imageWidth: 60,
+              imageHeight: 60,
+            ),
+
+            const SizedBox(height: 16),
+
+            // Main Form Card
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SemiBoldText(
+                    'Add New Entry',
+                    fontSize: 18,
+                    textColor: Colors.black87,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Date Field
+                  GestureDetector(
+                    onTap: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) {
+                        _dateController.text = picked.toString().split(' ')[0];
+                      }
+                    },
+                    child: AbsorbPointer(
+                      child: CustomTextField(
+                        controller: _dateController,
+                        labelText: 'Date',
+                        hintText: 'Select date',
+                        suffixIcon: const Icon(Icons.calendar_today),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Timing Section
+                  SemiBoldText(
+                    'Timing',
+                    fontSize: 16,
+                    textColor: Colors.black87,
+                  ),
+                  const SizedBox(height: 12),
+
+                  Row(
+                    children: timingOptions.map((timing) {
+                      final isSelected = selectedTiming == timing['label'];
+                      return Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedTiming = timing['label'];
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 8),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? const Color(0xFF4CAF50)
+                                  : Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Icon
+                                Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? Colors.white.withOpacity(0.2)
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  padding: const EdgeInsets.all(2),
+                                  child: Image.asset(
+                                    timing['icon'],
+                                    width: 20,
+                                    height: 20,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : const Color(0xFF4CAF50),
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Icon(
+                                        Icons.restaurant,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : const Color(0xFF4CAF50),
+                                        size: 20,
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                // Text
+                                RegularText(
+                                  timing['label'],
+                                  fontSize: 11,
+                                  textColor: isSelected
+                                      ? Colors.white
+                                      : Colors.black87,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Recipe Field
+                  SemiBoldText(
+                    'Recipe',
+                    fontSize: 16,
+                    textColor: Colors.black87,
+                  ),
+                  const SizedBox(height: 8),
+                  CustomTextField(
+                    controller: _recipeController,
+                    labelText: '',
+                    hintText: 'Food Name',
+                    suffixIcon: const Icon(Icons.keyboard_arrow_down),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Quantity Field
+                  SemiBoldText(
+                    'Quantity',
+                    fontSize: 16,
+                    textColor: Colors.black87,
+                  ),
+                  const SizedBox(height: 8),
+                  CustomTextField(
+                    controller: _quantityController,
+                    labelText: '',
+                    hintText: 'Quantity',
+                    textInputType: TextInputType.number,
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Units Section
+                  SemiBoldText(
+                    'Units',
+                    fontSize: 16,
+                    textColor: Colors.black87,
+                  ),
+                  const SizedBox(height: 12),
+
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      childAspectRatio: 2.2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                    ),
+                    itemCount: unitOptions.length,
+                    itemBuilder: (context, index) {
+                      final unit = unitOptions[index];
+                      final isSelected = selectedUnit == unit['label'];
+
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedUnit = unit['label'];
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? const Color(0xFF4CAF50).withOpacity(0.1)
+                                : Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                            border: isSelected
+                                ? Border.all(
+                                    color: const Color(0xFF4CAF50), width: 2)
+                                : null,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // Unit Icon
+                              Container(
+                                width: 20,
+                                height: 20,
+                                child: Image.asset(
+                                  unit['icon'],
+                                  width: 20,
+                                  height: 20,
+                                  color: isSelected
+                                      ? const Color(0xFF4CAF50)
+                                      : const Color(0xFF4CAF50),
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Icon(
+                                      Icons.dining,
+                                      color: isSelected
+                                          ? const Color(0xFF4CAF50)
+                                          : Colors.grey.shade600,
+                                      size: 20,
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // Unit Label
+                              Expanded(
+                                child: RegularText(
+                                  unit['label'],
+                                  fontSize: 12,
+                                  textColor: isSelected
+                                      ? const Color(0xFF4CAF50)
+                                      : Colors.grey.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Add Button
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              width: double.infinity,
+              height: 40,
+              child: ElevatedButton(
+                onPressed: () {
+                  if (_dateController.text.isNotEmpty &&
+                      _recipeController.text.isNotEmpty &&
+                      _quantityController.text.isNotEmpty) {
+                    // Handle add entry
+                    Get.snackbar(
+                      'Entry Added',
+                      'Diet recall entry has been added successfully',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: const Color(0xFF4CAF50),
+                      colorText: Colors.white,
+                      margin: const EdgeInsets.all(16),
+                      borderRadius: 8,
+                    );
+
+                    // Clear form
+                    _recipeController.clear();
+                    _quantityController.clear();
+                  } else {
+                    Get.snackbar(
+                      'Error',
+                      'Please fill all required fields',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: const Color(0xFFF44336),
+                      colorText: Colors.white,
+                      margin: const EdgeInsets.all(16),
+                      borderRadius: 8,
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF9800),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Add',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}

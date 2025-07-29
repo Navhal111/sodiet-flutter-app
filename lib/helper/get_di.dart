@@ -1,15 +1,38 @@
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sodiet/controller/theme/themeController.dart';
 import 'package:sodiet/controller/navigation/navigation_controller.dart';
+import 'package:sodiet/controller/physicalActivity/physicalController.dart';
+import 'package:sodiet/controller/theme/themeController.dart';
+
+import '../api/api_client.dart';
+import '../constant/appConstant.dart';
+import '../controller/auth/authController.dart';
+import '../controller/diet/dietController.dart';
+import '../repo/authRepo.dart';
 
 init() async {
   // Core
   final sharedPreferences = await SharedPreferences.getInstance();
   Get.lazyPut(() => sharedPreferences);
+
+  Get.lazyPut(
+      () => ApiClient(
+          appBaseUrl: AppConstants.BASE_URL, sharedPreferences: Get.find()),
+      fenix: true);
+
+// Data controllers
   Get.lazyPut(() => ThemeController(sharedPreferences: Get.find()),
+      fenix: true);
+  Get.lazyPut(() => AuthController(authRepo: Get.find()), fenix: true);
+  Get.lazyPut(() => DietController(authRepo: Get.find()), fenix: true);
+  Get.lazyPut(() => PhysicalActivityController(authRepo: Get.find()),
       fenix: true);
 
   // Navigation
   Get.lazyPut(() => NavigationController(), fenix: true);
+
+  // Repositories
+  Get.lazyPut(
+      () => AuthRepo(sharedPreferences: Get.find(), apiClient: Get.find()),
+      fenix: true);
 }

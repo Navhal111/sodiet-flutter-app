@@ -1,5 +1,26 @@
+// ignore_for_file: constant_identifier_names
+
 class AppConstants {
   static const String APP_NAME = 'SoDiet App';
-  static const String THEME = 'theme';
   static const String somethingWentWrong = 'something Went Wrong';
+
+  // API DOMAIN LINK
+  static const String DOMAIN = 'https://datatools.sjri.res.in';
+  static const String BASE_URL = '${DOMAIN}VD/';
+  static const String GET_DIET_RECALES = '${BASE_URL}v1/api/recalls';
+
+  // Contant Save data keys
+  static const String INTRO = 'intro';
+  static const String TOKEN = 'token';
+  static const String THEME = 'theme';
+  static const String LANGUAGE_CODE = 'in';
+
+  // Version names for the app
+  static const String ANDROID_VERSION = "1.0.0";
+  static const String IOS_VERSION = "1.0.0";
+  static const String VERSION = "1.0.0";
+
+// Share Prefernce API data
+  static const String userData = 'userData';
+  static const String SaveAccessKey = 'access_key';
 }
