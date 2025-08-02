@@ -44,7 +44,7 @@ class CustomTextField extends StatelessWidget {
       padding: padding ?? const EdgeInsets.symmetric(vertical: 4),
       child: TextFormField(
         controller: controller,
-        // focusNode: focusNode,
+        focusNode: focusNode, // Uncommented to enable focus management
         maxLines: maxLines,
         enabled: true,
         obscureText: isPassword,

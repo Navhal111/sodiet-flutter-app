@@ -122,8 +122,10 @@ class ApiClient extends GetxService {
         body: jsonEncode(body),
         headers: headers ?? _mainHeaders,
       ).timeout(Duration(seconds: timeoutInSeconds));
+      debugPrint('====> API _response: $_response');
       return handleResponse(_response, uri);
     } catch (e) {
+      debugPrint('====> API Error: $e');
       return Response(statusCode: 1, statusText: noInternetMessage);
     }
   }

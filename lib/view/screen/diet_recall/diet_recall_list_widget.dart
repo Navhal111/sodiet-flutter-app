@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../widgets/app_text.dart';
 
 class DietRecallListWidget extends StatelessWidget {

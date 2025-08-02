@@ -48,4 +48,17 @@ class StaticData {
     "A000063": "Iranian Baida Curry Recipe",
     "A000070": "Dubuk Vade Recipe - Khandeshi Gram Flour Dumpling Curry"
   };
+
+  /// Get recipe name by key
+  /// Returns null if key is not found
+  static String? getRecipeByKey(String key) {
+    return RECIPES[key];
+  }
+
+  /// Get recipe name by key with fallback
+  /// Returns fallback string if key is not found
+  static String getRecipeByKeyOrDefault(String key,
+      [String fallback = 'Unknown Recipe']) {
+    return RECIPES[key] ?? fallback;
+  }
 }

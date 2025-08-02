@@ -37,8 +37,7 @@ class DietController extends GetxController implements GetxService {
       sendData: dietData,
       apiName: AppConstants.GET_DIET_RECALES,
     );
-    Map<String, dynamic> responcejson = response.body;
-    print("==========${responcejson}");
+    print("==========${response.body}");
     if (response.statusCode == 200) {
       // getDietRecallList();
       // Handle success

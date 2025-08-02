@@ -18,17 +18,32 @@ class DietRecallScreen extends StatefulWidget {
   State<DietRecallScreen> createState() => _DietRecallScreenState();
 }
 
-class _DietRecallScreenState extends State<DietRecallScreen> {
+class _DietRecallScreenState extends State<DietRecallScreen>
+    with AutomaticKeepAliveClientMixin {
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _quantityFocusNode =
+      FocusNode(); // Add focus node for quantity field
 
   var dietController = Get.find<DietController>();
 
-  String selectedTiming = 'Breakfast';
-  String selectedUnit = 'Cup';
-  String? selectedRecipeKey;
-  String? selectedRecipeValue;
+  // Use ValueNotifiers to prevent full rebuilds
+  final ValueNotifier<String> selectedTimingNotifier =
+      ValueNotifier('Breakfast');
+  final ValueNotifier<String> selectedUnitNotifier = ValueNotifier('Cup');
+  final ValueNotifier<String?> selectedRecipeKeyNotifier = ValueNotifier(null);
+  final ValueNotifier<String?> selectedRecipeValueNotifier =
+      ValueNotifier(null);
+
+  // Getters for backward compatibility
+  String get selectedTiming => selectedTimingNotifier.value;
+  String get selectedUnit => selectedUnitNotifier.value;
+  String? get selectedRecipeKey => selectedRecipeKeyNotifier.value;
+  String? get selectedRecipeValue => selectedRecipeValueNotifier.value;
+
+  @override
+  bool get wantKeepAlive => true;
 
   final List<Map<String, dynamic>> timingOptions = [
     {'label': 'Breakfast', 'icon': 'assets/icons/breakfast.png'},
@@ -58,46 +73,70 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
     _scrollController.dispose();
     _dateController.dispose();
     _quantityController.dispose();
+    _quantityFocusNode.dispose(); // Dispose focus node
+    selectedTimingNotifier.dispose();
+    selectedUnitNotifier.dispose();
+    selectedRecipeKeyNotifier.dispose();
+    selectedRecipeValueNotifier.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return BaseScreenLayout(
       currentRoute: AppRoutes.dietRecallScreen,
       title: 'Diet Recall',
       child: Column(
         children: [
-          // Fixed Header
-          TitleSectionWidget(
-            imagePath: 'assets/images/combinations.png',
-            title: 'Diet Recall',
-            description:
-                'Recall your daily diet and track your food intake to maintain a healthy and balanced diet.',
-            imageWidth: 60,
-            imageHeight: 60,
+          // Fixed Header - Non-scrollable
+          Container(
+            color: Theme.of(context).cardColor,
+            child: TitleSectionWidget(
+              imagePath: 'assets/images/combinations.png',
+              title: 'Diet Recall',
+              description:
+                  'Recall your daily diet and track your food intake to maintain a healthy and balanced diet.',
+              imageWidth: 60,
+              imageHeight: 60,
+            ),
           ),
 
           const SizedBox(height: 16),
-          // Scrollable Content
+
+          // Scrollable Content with stable structure
           Expanded(
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.all(0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Main Form Card
-                  _buildFormSection(),
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (scrollNotification) {
+                // Prevent auto-scroll on setState
+                return false;
+              },
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                physics: const ClampingScrollPhysics(),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.manual,
+                child: Column(
+                  key: const ValueKey('main_content'), // Stable key
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Form Section with stable structure
+                    Container(
+                      key: const ValueKey('form_section'), // Stable key
+                      child: _buildFormSection(),
+                    ),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  // Diet Entries List (Reactive)
-                  _buildDietEntriesList(),
+                    // List Section - completely separate
+                    Container(
+                      key: const ValueKey('list_section'), // Stable key
+                      child: _buildDietEntriesList(),
+                    ),
 
-                  const SizedBox(height: 20),
-                ],
+                    const SizedBox(height: 100), // Extra padding for keyboard
+                  ],
+                ),
               ),
             ),
           ),
@@ -177,7 +216,6 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
           _buildRecipeDropdown(),
 
           const SizedBox(height: 8),
-
           // Quantity Field
           SemiBoldText(
             'Quantity',
@@ -185,11 +223,17 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
             textColor: Colors.black87,
           ),
           const SizedBox(height: 8),
-          CustomTextField(
-            controller: _quantityController,
-            labelText: '',
-            hintText: 'Quantity',
-            textInputType: TextInputType.number,
+          Container(
+            key: const ValueKey(
+                'quantity_field'), // Stable key to prevent rebuilds
+            child: CustomTextField(
+              controller: _quantityController,
+              labelText: '',
+              hintText: 'Quantity',
+              textInputType: TextInputType.number,
+              focusNode:
+                  _quantityFocusNode, // Add focus node to maintain keyboard focus
+            ),
           ),
 
           const SizedBox(height: 8),
@@ -213,196 +257,201 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
   }
 
   Widget _buildTimingSelection() {
-    return Row(
-      children: timingOptions.map((timing) {
-        final isSelected = selectedTiming == timing['label'];
-        return Expanded(
-          child: GestureDetector(
-            onTap: () {
-              if (mounted) {
-                setState(() {
-                  selectedTiming = timing['label'];
-                });
-              }
-            },
-            child: Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? Theme.of(context).primaryColorDark
-                    : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Icon
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? Colors.white.withOpacity(0.2)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    padding: const EdgeInsets.all(2),
-                    child: Image.asset(
-                      timing['icon'],
-                      width: 20,
-                      height: 20,
-                      color: isSelected
-                          ? Colors.white
-                          : Theme.of(context).primaryColorDark,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Icon(
-                          Icons.restaurant,
+    return ValueListenableBuilder<String>(
+      valueListenable: selectedTimingNotifier,
+      builder: (context, selectedTiming, child) {
+        return Row(
+          children: timingOptions.map((timing) {
+            final isSelected = selectedTiming == timing['label'];
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  selectedTimingNotifier.value = timing['label'];
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? Theme.of(context).primaryColorDark
+                        : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Icon
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Colors.white.withOpacity(0.2)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        padding: const EdgeInsets.all(2),
+                        child: Image.asset(
+                          timing['icon'],
+                          width: 20,
+                          height: 20,
                           color: isSelected
                               ? Colors.white
                               : Theme.of(context).primaryColorDark,
-                          size: 20,
-                        );
-                      },
-                    ),
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(
+                              Icons.restaurant,
+                              color: isSelected
+                                  ? Colors.white
+                                  : Theme.of(context).primaryColorDark,
+                              size: 20,
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      // Text
+                      RegularText(
+                        timing['label'],
+                        fontSize: 11,
+                        textColor: isSelected ? Colors.white : Colors.black87,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 6),
-                  // Text
-                  RegularText(
-                    timing['label'],
-                    fontSize: 11,
-                    textColor: isSelected ? Colors.white : Colors.black87,
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          }).toList(),
         );
-      }).toList(),
+      },
     );
   }
 
   Widget _buildRecipeDropdown() {
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor.withOpacity(0.8),
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: DropdownButtonFormField<String>(
-        value: selectedRecipeKey,
-        decoration: const InputDecoration(
-          hintStyle: TextStyle(
-            color: Colors.grey,
-            fontSize: 14,
-            fontWeight: FontWeight.normal,
+    return ValueListenableBuilder<String?>(
+      valueListenable: selectedRecipeKeyNotifier,
+      builder: (context, selectedRecipeKey, child) {
+        return Container(
+          height: 50,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor.withOpacity(0.8),
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(12),
           ),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-        ),
-        items: StaticData.RECIPES.entries.map((entry) {
-          return DropdownMenuItem<String>(
-            value: entry.key,
-            child: RegularText(
-              entry.value,
-              fontSize: 14,
-              textColor: Colors.black87,
+          child: DropdownButtonFormField<String>(
+            value: selectedRecipeKey,
+            decoration: const InputDecoration(
+              hintStyle: TextStyle(
+                color: Colors.grey,
+                fontSize: 14,
+                fontWeight: FontWeight.normal,
+              ),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
             ),
-          );
-        }).toList(),
-        onChanged: (String? newValue) {
-          if (mounted) {
-            setState(() {
-              selectedRecipeKey = newValue;
-              selectedRecipeValue =
+            items: StaticData.RECIPES.entries.map((entry) {
+              return DropdownMenuItem<String>(
+                value: entry.key,
+                child: RegularText(
+                  entry.value,
+                  fontSize: 14,
+                  textColor: Colors.black87,
+                ),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              selectedRecipeKeyNotifier.value = newValue;
+              selectedRecipeValueNotifier.value =
                   newValue != null ? StaticData.RECIPES[newValue] : null;
-            });
-          }
-        },
-        isExpanded: true,
-        icon: Icon(
-          Icons.keyboard_arrow_down,
-          color: Colors.grey.shade600,
-          size: 20,
-        ),
-        dropdownColor: Colors.white,
-        style: const TextStyle(
-          color: Colors.black87,
-          fontSize: 14,
-          fontWeight: FontWeight.normal,
-        ),
-        menuMaxHeight: 200,
-      ),
+            },
+            isExpanded: true,
+            icon: Icon(
+              Icons.keyboard_arrow_down,
+              color: Colors.grey.shade600,
+              size: 20,
+            ),
+            dropdownColor: Colors.white,
+            style: const TextStyle(
+              color: Colors.black87,
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
+            ),
+            menuMaxHeight: 200,
+          ),
+        );
+      },
     );
   }
 
   Widget _buildUnitsSelection() {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: unitOptions.map((unit) {
-        final isSelected = selectedUnit == unit['label'];
+    return ValueListenableBuilder<String>(
+      valueListenable: selectedUnitNotifier,
+      builder: (context, selectedUnit, child) {
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: unitOptions.map((unit) {
+            final isSelected = selectedUnit == unit['label'];
 
-        return GestureDetector(
-          onTap: () {
-            if (mounted) {
-              setState(() {
-                selectedUnit = unit['label'];
-              });
-            }
-          },
-          child: Container(
-            width: (MediaQuery.of(context).size.width - 110) / 3,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? Theme.of(context).primaryColorDark.withOpacity(0.1)
-                  : Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(12),
-              border: isSelected
-                  ? Border.all(
-                      color: Theme.of(context).primaryColorDark, width: 2)
-                  : null,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Unit Icon
-                Container(
-                  width: 20,
-                  height: 20,
-                  child: Image.asset(
-                    unit['icon'],
-                    width: 20,
-                    height: 20,
-                    color: Theme.of(context).primaryColorDark,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Icon(
-                        Icons.restaurant,
+            return GestureDetector(
+              onTap: () {
+                selectedUnitNotifier.value = unit['label'];
+              },
+              child: Container(
+                width: (MediaQuery.of(context).size.width - 110) / 3,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Theme.of(context).primaryColorDark.withOpacity(0.1)
+                      : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                  border: isSelected
+                      ? Border.all(
+                          color: Theme.of(context).primaryColorDark, width: 2)
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Unit Icon
+                    Container(
+                      width: 20,
+                      height: 20,
+                      child: Image.asset(
+                        unit['icon'],
+                        width: 20,
+                        height: 20,
                         color: Theme.of(context).primaryColorDark,
-                        size: 20,
-                      );
-                    },
-                  ),
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            Icons.restaurant,
+                            color: Theme.of(context).primaryColorDark,
+                            size: 20,
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Unit Label
+                    Expanded(
+                      child: RegularText(
+                        unit['label'],
+                        fontSize: 12,
+                        textColor: Colors.black87,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                // Unit Label
-                Expanded(
-                  child: RegularText(
-                    unit['label'],
-                    fontSize: 12,
-                    textColor: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          }).toList(),
         );
-      }).toList(),
+      },
     );
   }
 
@@ -425,17 +474,12 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
               'foodName': selectedRecipeValue,
               'food_qty': _quantityController.text,
               'unit': selectedUnit,
-              'timestamp': DateTime.now(),
             });
 
             // Clear form
-            if (mounted) {
-              setState(() {
-                selectedRecipeKey = null;
-                selectedRecipeValue = null;
-              });
-              _quantityController.clear();
-            }
+            selectedRecipeKeyNotifier.value = null;
+            selectedRecipeValueNotifier.value = null;
+            _quantityController.clear();
           } else {
             Get.snackbar(
               'Error',
@@ -504,7 +548,7 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
                       final quantity = entry.foodQty;
                       final unit = entry.unit;
                       return DietEntryCardWidget(
-                        title: foodName,
+                        title: StaticData.getRecipeByKey(foodName) ?? foodName,
                         imagePath: MyImages.food1,
                         onTap: () {
                           // Handle card tap - you can implement your list functionality here

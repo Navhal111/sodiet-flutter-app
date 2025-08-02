@@ -28,7 +28,7 @@ class DietEntryCardWidget extends StatelessWidget {
     this.backgroundColor,
     this.textColor,
     this.fontSize = 16,
-    this.imageSize = 80,
+    this.imageSize = 90,
     this.padding = const EdgeInsets.all(0),
     this.margin = const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
   }) : super(key: key);
@@ -90,11 +90,11 @@ class DietEntryCardWidget extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Title
-                      MediumText(
-                        title,
-                        fontSize: fontSize,
-                        textColor: textColor ?? Colors.black87,
-                      ),
+                      MediumText(title,
+                          fontSize: fontSize,
+                          textColor: textColor ?? Colors.black87,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2),
                       SizedBox(
                         height: 20,
                       ),
@@ -109,7 +109,7 @@ class DietEntryCardWidget extends StatelessWidget {
 
                 // Action Buttons - Right side with light orange background
                 Container(
-                  margin: EdgeInsets.only(right: 16, top: 20),
+                  margin: EdgeInsets.only(right: 16, top: 40),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
