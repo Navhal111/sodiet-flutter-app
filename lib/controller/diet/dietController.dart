@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 
 import '../../constant/appConstant.dart';
-import '../../helper/response_model.dart';
 import '../../model/diet_recall_model.dart';
 import '../../repo/authRepo.dart';
 
@@ -38,10 +37,10 @@ class DietController extends GetxController implements GetxService {
       sendData: dietData,
       apiName: AppConstants.GET_DIET_RECALES,
     );
-    ResponseModel responseModel;
     Map<String, dynamic> responcejson = response.body;
+    print("==========${responcejson}");
     if (response.statusCode == 200) {
-      getDietRecallList();
+      // getDietRecallList();
       // Handle success
     } else {
       // Handle error

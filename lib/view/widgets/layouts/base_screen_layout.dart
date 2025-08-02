@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sodiet/view/widgets/header/app_header.dart';
 import 'package:sodiet/view/widgets/home/home_drawer.dart';
-import 'package:sodiet/controller/navigation/navigation_controller.dart';
 
 class BaseScreenLayout extends StatelessWidget {
   final Widget child;
@@ -26,10 +25,10 @@ class BaseScreenLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
-    // Update the current route in navigation controller
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.find<NavigationController>().updateCurrentRoute(currentRoute);
-    });
+    // // Update the current route in navigation controller
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   Get.find<NavigationController>().updateCurrentRoute(currentRoute);
+    // });
 
     return Scaffold(
       key: scaffoldKey,
