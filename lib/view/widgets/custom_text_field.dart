@@ -65,12 +65,12 @@ class CustomTextField extends StatelessWidget {
             FocusScope.of(context).requestFocus(nextFocus);
           }
         },
+
         decoration: inputDecoration ??
             InputDecoration(
               contentPadding:
                   EdgeInsets.symmetric(vertical: 10, horizontal: 16),
               hintText: hintText,
-              labelText: labelText,
               hintStyle: TextStyle(
                 color: Theme.of(context).hintColor.withOpacity(
                     0.6), // Using a definite grey shade for better visibility

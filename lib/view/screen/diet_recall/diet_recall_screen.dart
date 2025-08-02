@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sodiet/view/widgets/common/title_section_widget.dart';
-import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
-import 'package:sodiet/view/widgets/app_text.dart';
-import 'package:sodiet/view/widgets/custom_text_field.dart';
 import 'package:sodiet/route/app_routes.dart';
+import 'package:sodiet/utils/images.dart';
+import 'package:sodiet/view/widgets/app_text.dart';
+import 'package:sodiet/view/widgets/common/title_section_widget.dart';
+import 'package:sodiet/view/widgets/custom_text_field.dart';
+import 'package:sodiet/view/widgets/diet_recall/diet_entry_card_widget.dart';
+import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
+
+import '../../../controller/diet/dietController.dart';
 
 class DietRecallScreen extends StatefulWidget {
   const DietRecallScreen({Key? key}) : super(key: key);
@@ -17,6 +21,8 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _recipeController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
+
+  var dietController = Get.find<DietController>();
 
   String selectedTiming = 'Breakfast';
   String selectedUnit = 'Cup';
@@ -41,6 +47,7 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
     super.initState();
     // Set today's date by default
     _dateController.text = DateTime.now().toString().split(' ')[0];
+    dietController.getDietRecallList();
   }
 
   @override
@@ -71,7 +78,6 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.grey.withOpacity(0.1),
@@ -89,7 +95,7 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
                     fontSize: 18,
                     textColor: Colors.black87,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 8),
 
                   // Date Field
                   GestureDetector(
@@ -114,7 +120,7 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 8),
 
                   // Timing Section
                   SemiBoldText(
@@ -140,7 +146,7 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
                                 vertical: 12, horizontal: 8),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? const Color(0xFF4CAF50)
+                                  ? Theme.of(context).primaryColorDark
                                   : Colors.grey.shade100,
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -164,13 +170,14 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
                                     height: 20,
                                     color: isSelected
                                         ? Colors.white
-                                        : const Color(0xFF4CAF50),
+                                        : Theme.of(context).primaryColorDark,
                                     errorBuilder: (context, error, stackTrace) {
                                       return Icon(
                                         Icons.restaurant,
                                         color: isSelected
                                             ? Colors.white
-                                            : const Color(0xFF4CAF50),
+                                            : Theme.of(context)
+                                                .primaryColorDark,
                                         size: 20,
                                       );
                                     },
@@ -193,7 +200,7 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
                     }).toList(),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 8),
 
                   // Recipe Field
                   SemiBoldText(
@@ -209,7 +216,7 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
                     suffixIcon: const Icon(Icons.keyboard_arrow_down),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 8),
 
                   // Quantity Field
                   SemiBoldText(
@@ -225,7 +232,7 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
                     textInputType: TextInputType.number,
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 8),
 
                   // Units Section
                   SemiBoldText(
@@ -261,12 +268,15 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
                               horizontal: 8, vertical: 10),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? const Color(0xFF4CAF50).withOpacity(0.1)
+                                ? Theme.of(context)
+                                    .primaryColorDark
+                                    .withOpacity(0.1)
                                 : Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(12),
                             border: isSelected
                                 ? Border.all(
-                                    color: const Color(0xFF4CAF50), width: 2)
+                                    color: Theme.of(context).primaryColorDark,
+                                    width: 2)
                                 : null,
                           ),
                           child: Row(
@@ -280,14 +290,12 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
                                   unit['icon'],
                                   width: 20,
                                   height: 20,
-                                  color: isSelected
-                                      ? const Color(0xFF4CAF50)
-                                      : const Color(0xFF4CAF50),
+                                  color: Theme.of(context).primaryColorDark,
                                   errorBuilder: (context, error, stackTrace) {
                                     return Icon(
                                       Icons.dining,
                                       color: isSelected
-                                          ? const Color(0xFF4CAF50)
+                                          ? Theme.of(context).primaryColorDark
                                           : Colors.grey.shade600,
                                       size: 20,
                                     );
@@ -301,7 +309,7 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
                                   unit['label'],
                                   fontSize: 12,
                                   textColor: isSelected
-                                      ? const Color(0xFF4CAF50)
+                                      ? Theme.of(context).primaryColorDark
                                       : Colors.grey.shade700,
                                 ),
                               ),
@@ -311,65 +319,171 @@ class _DietRecallScreenState extends State<DietRecallScreen> {
                       );
                     },
                   ),
+
+                  const SizedBox(height: 20),
+
+                  // Add Button
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 0),
+                    width: double.infinity,
+                    height: 40,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (_dateController.text.isNotEmpty &&
+                            _recipeController.text.isNotEmpty &&
+                            _quantityController.text.isNotEmpty) {
+                          // Add entry to list
+                          print({
+                            'date': _dateController.text,
+                            'timing': selectedTiming,
+                            'foodName': _recipeController.text,
+                            'quantity': _quantityController.text,
+                            'unit': selectedUnit,
+                            'timestamp': DateTime.now(),
+                          });
+
+                          // Handle add entry
+                          Get.snackbar(
+                            'Entry Added',
+                            'Diet recall entry has been added successfully',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Theme.of(context).primaryColorDark,
+                            colorText: Colors.white,
+                            margin: const EdgeInsets.all(16),
+                            borderRadius: 8,
+                          );
+
+                          // Clear form
+                          _recipeController.clear();
+                          _quantityController.clear();
+                        } else {
+                          Get.snackbar(
+                            'Error',
+                            'Please fill all required fields',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: const Color(0xFFF44336),
+                            colorText: Colors.white,
+                            margin: const EdgeInsets.all(16),
+                            borderRadius: 8,
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF9800),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Add',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 20),
-
-            // Add Button
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              width: double.infinity,
-              height: 40,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (_dateController.text.isNotEmpty &&
-                      _recipeController.text.isNotEmpty &&
-                      _quantityController.text.isNotEmpty) {
-                    // Handle add entry
-                    Get.snackbar(
-                      'Entry Added',
-                      'Diet recall entry has been added successfully',
-                      snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: const Color(0xFF4CAF50),
-                      colorText: Colors.white,
-                      margin: const EdgeInsets.all(16),
-                      borderRadius: 8,
-                    );
-
-                    // Clear form
-                    _recipeController.clear();
-                    _quantityController.clear();
-                  } else {
-                    Get.snackbar(
-                      'Error',
-                      'Please fill all required fields',
-                      snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: const Color(0xFFF44336),
-                      colorText: Colors.white,
-                      margin: const EdgeInsets.all(16),
-                      borderRadius: 8,
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF9800),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Add',
-                  style: TextStyle(
+            Obx(() => Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  padding: const EdgeInsets.all(0),
+                  decoration: BoxDecoration(
                     color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-            ),
+                  child: Column(
+                    children: (dietController.dietRecallList.isNotEmpty)
+                        ? [
+                            Container(
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 10),
+                              child: Row(
+                                children: [
+                                  SemiBoldText(
+                                    'Recall All Records (${dietController.dietRecallList.length})',
+                                    fontSize: 16,
+                                    textColor: Colors.grey.shade800,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Example cards - you can customize these as needed
+                            ...dietController.dietRecallList.map((entry) {
+                              final timing = entry.timeOfDay ?? 'Breakfast';
+                              final foodName = entry.foodName ?? 'Unknown Food';
+                              final quantity = entry.foodQty ?? '0';
+                              final unit = entry.unit ?? 'Cup';
+                              return DietEntryCardWidget(
+                                title: '$foodName',
+                                imagePath: MyImages.food1,
+                                onTap: () {
+                                  // Handle card tap - you can implement your list functionality here
+                                  Get.snackbar(
+                                    'Entry Tapped',
+                                    'You tapped on $foodName',
+                                    snackPosition: SnackPosition.BOTTOM,
+                                    backgroundColor: const Color(0xFF2196F3),
+                                    colorText: Colors.white,
+                                    margin: const EdgeInsets.all(16),
+                                    borderRadius: 8,
+                                  );
+                                },
+                                subtitle: "$quantity $unit",
+                              );
+                            }).toList(),
+                          ]
+                        : [
+                            // Empty state
+                            Container(
+                              width: double.infinity,
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade200),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.restaurant_menu,
+                                    size: 48,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  RegularText(
+                                    'No diet entries yet',
+                                    fontSize: 16,
+                                    textColor: Colors.grey.shade600,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  RegularText(
+                                    'Add your first meal to get started',
+                                    fontSize: 14,
+                                    textColor: Colors.grey.shade500,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                  ),
+                )),
+            const SizedBox(height: 20),
+            // Diet Entries Section (Example using the card widget)
 
             const SizedBox(height: 20),
           ],

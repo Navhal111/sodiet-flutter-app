@@ -56,9 +56,9 @@ class ApiClient extends GetxService {
           sharedPreferences.getString("in"),
         );
       }
-      debugPrint('====> API Call: $appBaseUrl$uri\nHeader: $_mainHeaders');
+      debugPrint('====> API Call: $uri\nHeader: $_mainHeaders');
       Http.Response _response = await Http.get(
-        Uri.parse(appBaseUrl + uri),
+        Uri.parse(uri),
         headers: headers != null ? headers : _mainHeaders,
       ).timeout(Duration(seconds: timeoutInSeconds));
       return handleResponse(_response, uri);
@@ -115,10 +115,10 @@ class ApiClient extends GetxService {
       debugPrint('====> API Call: $uri\nHeader: $headers');
       debugPrint('====> API Body: $body');
 
-      debugPrint(appBaseUrl + uri);
+      debugPrint(uri);
 
       Http.Response _response = await Http.post(
-        Uri.parse(appBaseUrl + uri),
+        Uri.parse(uri),
         body: jsonEncode(body),
         headers: headers ?? _mainHeaders,
       ).timeout(Duration(seconds: timeoutInSeconds));

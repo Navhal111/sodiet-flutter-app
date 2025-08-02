@@ -6,8 +6,10 @@ class AppConstants {
 
   // API DOMAIN LINK
   static const String DOMAIN = 'https://datatools.sjri.res.in';
-  static const String BASE_URL = '${DOMAIN}VD/';
-  static const String GET_DIET_RECALES = '${BASE_URL}v1/api/recalls';
+  static const String BASE_URL = '${DOMAIN}/SD/api/v1/';
+
+  // API ENDPOINTS
+  static const String GET_DIET_RECALES = '${BASE_URL}log/diet-recall';
 
   // Contant Save data keys
   static const String INTRO = 'intro';
