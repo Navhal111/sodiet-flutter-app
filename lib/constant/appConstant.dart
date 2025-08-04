@@ -10,6 +10,7 @@ class AppConstants {
 
   // API ENDPOINTS
   static const String GET_DIET_RECALES = '${BASE_URL}log/diet-recall';
+  static const String GET_PA_RECALL = '${BASE_URL}log/pa-recall';
 
   // Contant Save data keys
   static const String INTRO = 'intro';

@@ -469,11 +469,11 @@ class _DietRecallScreenState extends State<DietRecallScreen>
             // Add entry to list
             dietController.addDietRecall({
               'entry_date': _dateController.text,
-              'time_of_day': selectedTiming,
+              'time_of_day': selectedTiming.toLowerCase(),
               'food_name': selectedRecipeKey,
               'foodName': selectedRecipeValue,
               'food_qty': _quantityController.text,
-              'unit': selectedUnit,
+              'unit': selectedUnit.toLowerCase(),
             });
 
             // Clear form

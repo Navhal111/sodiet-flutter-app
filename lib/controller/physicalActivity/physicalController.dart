@@ -17,7 +17,7 @@ class PhysicalActivityController extends GetxController implements GetxService {
   getDietRecallList() async {
     isLoadingList.value = true;
     Response response =
-        await authRepo.getDataSet(apiName: AppConstants.GET_DIET_RECALES);
+        await authRepo.getDataSet(apiName: AppConstants.GET_PA_RECALL);
     ResponseModel responseModel;
     Map<String, dynamic> responcejson = response.body;
     if (response.statusCode == 200) {
@@ -29,7 +29,7 @@ class PhysicalActivityController extends GetxController implements GetxService {
     isLoading.value = true;
     Response response = await authRepo.postDataSet(
       sendData: dietData,
-      apiName: AppConstants.GET_DIET_RECALES,
+      apiName: AppConstants.GET_PA_RECALL,
     );
     ResponseModel responseModel;
     Map<String, dynamic> responcejson = response.body;
