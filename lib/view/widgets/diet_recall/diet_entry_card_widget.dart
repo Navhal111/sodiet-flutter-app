@@ -95,7 +95,7 @@ class DietEntryCardWidget extends StatelessWidget {
                           textColor: textColor ?? Colors.black87,
                           overflow: TextOverflow.ellipsis,
                           maxLines: 2),
-                      SizedBox(
+                      const SizedBox(
                         height: 20,
                       ),
                       SemiBoldText(

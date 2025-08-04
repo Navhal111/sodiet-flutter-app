@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
-import 'package:sodiet/view/widgets/app_text.dart';
-import 'package:sodiet/view/widgets/common/title_section_widget.dart';
-import 'package:sodiet/view/widgets/chart/intake_overview_chart.dart';
+import 'package:sodiet/constant/staticData.dart';
+import 'package:sodiet/controller/physicalActivity/physicalController.dart';
 import 'package:sodiet/route/app_routes.dart';
+import 'package:sodiet/view/widgets/app_text.dart';
+import 'package:sodiet/view/widgets/chart/intake_overview_chart.dart';
+import 'package:sodiet/view/widgets/common/title_section_widget.dart';
+import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 
 class PhysicalActivityScreen extends StatefulWidget {
   const PhysicalActivityScreen({Key? key}) : super(key: key);
@@ -16,22 +18,14 @@ class PhysicalActivityScreen extends StatefulWidget {
 class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _durationController = TextEditingController();
+  final PhysicalActivityController controller =
+      Get.find<PhysicalActivityController>();
 
-  String selectedActivity = 'Tennis';
+  String selectedActivity = StaticData.PHYSICAL_ACTIVITIES.keys.first;
   String selectedTime = 'Morning';
 
-  final List<String> activities = [
-    'Tennis',
-    'Running',
-    'Walking',
-    'Swimming',
-    'Cycling',
-    'Yoga',
-    'Gym',
-    'Football',
-    'Basketball',
-    'Cricket'
-  ];
+  // Use activities from StaticData
+  List<String> get activities => StaticData.PHYSICAL_ACTIVITIES.keys.toList();
 
   final List<String> timeOptions = ['Morning', 'Afternoon', 'Evening', 'Night'];
 
@@ -49,6 +43,8 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
     super.initState();
     // Set today's date as default
     _dateController.text = _formatDate(DateTime.now());
+    // Load PA recall data
+    controller.getPaRecallList();
   }
 
   @override
@@ -60,6 +56,15 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
 
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  String _formatDateForAPI(String displayDate) {
+    // Convert DD/MM/YYYY to YYYY-MM-DD
+    List<String> parts = displayDate.split('/');
+    if (parts.length == 3) {
+      return '${parts[2]}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}';
+    }
+    return displayDate;
   }
 
   Future<void> _selectDate() async {
@@ -86,19 +91,22 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
     }
   }
 
-  void _addActivity() {
+  void _addActivity() async {
     if (_dateController.text.isNotEmpty &&
         _durationController.text.isNotEmpty &&
         selectedActivity.isNotEmpty) {
-      setState(() {
-        _activityEntries.add(ActivityEntry(
-          date: _dateController.text,
-          activity: selectedActivity,
-          duration: int.tryParse(_durationController.text) ?? 0,
-          time: selectedTime,
-        ));
-        _durationController.clear();
-      });
+      // Create JSON for API
+      Map<String, dynamic> activityData = {
+        "entry_date": _formatDateForAPI(_dateController.text),
+        "activity_name": selectedActivity,
+        "duration_minutes": int.tryParse(_durationController.text) ?? 0,
+        "time_of_day": selectedTime.toLowerCase()
+      };
+
+      // Call API to add activity
+      await controller.addPaRecall(activityData);
+
+      controller.getPaRecallList();
 
       // Show success message
       Get.snackbar(
@@ -261,7 +269,7 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
                     ),
                   ),
 
-                  // Activity Dropdown
+                  // Activity Dropdown - Updated to use StaticData
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: DropdownButtonFormField<String>(
@@ -395,28 +403,39 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
                     ],
                   ),
 
-                  // Add Button
+                  // Add Button - Updated to be loading aware
                   Container(
                     width: double.infinity,
                     height: 40,
-                    child: ElevatedButton(
-                      onPressed: _addActivity,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF9800),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Add',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                    child: Obx(() => ElevatedButton(
+                          onPressed:
+                              controller.isLoading.value ? null : _addActivity,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFF9800),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: controller.isLoading.value
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
+                                  ),
+                                )
+                              : const Text(
+                                  'Add',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        )),
                   ),
                 ],
               ),
@@ -552,6 +571,137 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
                 ],
               ),
             ),
+
+            const SizedBox(height: 10),
+
+            // PA Recall List Section
+            Obx(() => Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          SemiBoldText(
+                            'Activity History',
+                            fontSize: 18,
+                            textColor: Colors.black87,
+                          ),
+                          if (controller.isLoadingList.value)
+                            const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      if (controller.paRecallList.isNotEmpty) ...[
+                        // Table Header
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                  flex: 2,
+                                  child: SemiBoldText('Date',
+                                      fontSize: 12, textColor: Colors.black87)),
+                              Expanded(
+                                  flex: 2,
+                                  child: SemiBoldText('Activity',
+                                      fontSize: 12, textColor: Colors.black87)),
+                              Expanded(
+                                  flex: 2,
+                                  child: SemiBoldText('Duration',
+                                      fontSize: 12, textColor: Colors.black87)),
+                              Expanded(
+                                  flex: 2,
+                                  child: SemiBoldText('Time',
+                                      fontSize: 12, textColor: Colors.black87)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Activity List
+                        ...controller.paRecallList
+                            .map((recall) => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 12, horizontal: 8),
+                                  margin: const EdgeInsets.only(bottom: 4),
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(
+                                          color: Colors.grey.shade200,
+                                          width: 1),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                          flex: 2,
+                                          child: RegularText(recall.entryDate,
+                                              fontSize: 12,
+                                              textColor: Colors.black87)),
+                                      Expanded(
+                                          flex: 2,
+                                          child: RegularText(
+                                              recall.activityName,
+                                              fontSize: 12,
+                                              textColor: Colors.black87)),
+                                      Expanded(
+                                          flex: 2,
+                                          child: RegularText(
+                                              '${recall.durationMinutes}m',
+                                              fontSize: 12,
+                                              textColor: Colors.black87)),
+                                      Expanded(
+                                          flex: 2,
+                                          child: RegularText(
+                                              recall.timeOfDay.capitalizeFirst!,
+                                              fontSize: 12,
+                                              textColor: Colors.black87)),
+                                    ],
+                                  ),
+                                ))
+                            .toList(),
+
+                        const SizedBox(height: 16),
+                        RegularText(
+                          'Total: ${controller.totalCount.value} activities',
+                          fontSize: 12,
+                          textColor: Colors.grey.shade600,
+                        ),
+                      ] else if (!controller.isLoadingList.value) ...[
+                        Center(
+                          child: RegularText(
+                            'No activity records found',
+                            fontSize: 14,
+                            textColor: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                )),
 
             const SizedBox(height: 10),
 
