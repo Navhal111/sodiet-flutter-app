@@ -12,6 +12,8 @@ class AppConstants {
   static const String GET_DIET_RECALES = '${BASE_URL}log/diet-recall';
   static const String GET_PA_RECALL = '${BASE_URL}log/pa-recall';
 
+  static const String GET_RECIPES = '${BASE_URL}recipes';
+
   // Contant Save data keys
   static const String INTRO = 'intro';
   static const String TOKEN = 'token';
