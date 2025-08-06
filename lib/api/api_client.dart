@@ -136,7 +136,7 @@ class ApiClient extends GetxService {
       debugPrint('====> API Call: $uri\nHeader: $_mainHeaders');
       debugPrint('====> API Body: $body');
       Http.Response _response = await Http.put(
-        Uri.parse(appBaseUrl + uri),
+        Uri.parse(uri),
         body: jsonEncode(body),
         headers: headers ?? _mainHeaders,
       ).timeout(Duration(seconds: timeoutInSeconds));
@@ -151,7 +151,7 @@ class ApiClient extends GetxService {
     try {
       debugPrint('====> API Call: $uri\nHeader: $_mainHeaders');
       Http.Response _response = await Http.delete(
-        Uri.parse(appBaseUrl + uri),
+        Uri.parse(uri),
         headers: headers ?? _mainHeaders,
       ).timeout(Duration(seconds: timeoutInSeconds));
       return handleResponse(_response, uri);
