@@ -17,6 +17,7 @@ class CustomTextField extends StatelessWidget {
   final InputDecoration? inputDecoration;
   final EdgeInsets? padding;
   final int? maxLines;
+  final TextInputAction? textInputAction; // Add this
 
   const CustomTextField({
     Key? key,
@@ -26,7 +27,7 @@ class CustomTextField extends StatelessWidget {
     this.textInputType,
     this.isPassword = false,
     this.onChanged,
-    this.onSubmitted,
+    this.onSubmitted, // Add this
     this.validator,
     this.prefixIcon,
     this.suffixIcon,
@@ -36,6 +37,7 @@ class CustomTextField extends StatelessWidget {
     this.inputDecoration,
     this.padding,
     this.maxLines = 1,
+    this.textInputAction, // Add this
   }) : super(key: key);
 
   @override
@@ -57,6 +59,7 @@ class CustomTextField extends StatelessWidget {
           fontFamily: 'Poppins',
         ),
         keyboardType: textInputType ?? TextInputType.text,
+        textInputAction: textInputAction ?? TextInputAction.next, // Add this
         onChanged: onChanged,
         onFieldSubmitted: (text) {
           if (onSubmitted != null) {

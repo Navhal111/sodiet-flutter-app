@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sodiet/model/diet_recall_model.dart';
+import 'package:sodiet/model/recipe_model.dart';
 import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/utils/images.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
+import 'package:sodiet/view/widgets/common/custom_toast.dart';
 import 'package:sodiet/view/widgets/common/title_section_widget.dart';
 import 'package:sodiet/view/widgets/custom_text_field.dart';
 import 'package:sodiet/view/widgets/diet_recall/diet_entry_card_widget.dart';
@@ -66,6 +69,9 @@ class _DietRecallScreenState extends State<DietRecallScreen>
     _dateController.text = DateTime.now().toString().split(' ')[0];
     dietController.getDietRecallList();
     dietController.getRecipes(); // Fetch recipes from API
+
+    // Add scroll listener for pagination
+    _scrollController.addListener(_onScroll);
   }
 
   @override
@@ -79,6 +85,16 @@ class _DietRecallScreenState extends State<DietRecallScreen>
     selectedRecipeKeyNotifier.dispose();
     selectedRecipeValueNotifier.dispose();
     super.dispose();
+  }
+
+  // Pagination scroll listener for main scroll controller
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent * 0.8 &&
+        !dietController.isLoadingMore.value &&
+        dietController.hasMoreData.value) {
+      dietController.loadMoreDietRecalls();
+    }
   }
 
   @override
@@ -108,12 +124,15 @@ class _DietRecallScreenState extends State<DietRecallScreen>
               Expanded(
                 child: NotificationListener<ScrollNotification>(
                   onNotification: (scrollNotification) {
-                    // Prevent auto-scroll on setState
+                    // Handle pagination when reaching near bottom
+                    if (scrollNotification is ScrollUpdateNotification) {
+                      _onScroll();
+                    }
                     return false;
                   },
                   child: SingleChildScrollView(
                     controller: _scrollController,
-                    physics: const ClampingScrollPhysics(),
+                    physics: const BouncingScrollPhysics(),
                     keyboardDismissBehavior:
                         ScrollViewKeyboardDismissBehavior.manual,
                     child: Column(
@@ -230,10 +249,15 @@ class _DietRecallScreenState extends State<DietRecallScreen>
             child: CustomTextField(
               controller: _quantityController,
               labelText: '',
-              hintText: 'Quantity',
+              hintText: 'Enter quantity',
               textInputType: TextInputType.number,
               focusNode:
                   _quantityFocusNode, // Add focus node to maintain keyboard focus
+              textInputAction: TextInputAction.done, // Add done button
+              onSubmitted: (value) {
+                // Dismiss keyboard when done is pressed
+                _quantityFocusNode.unfocus();
+              },
             ),
           ),
 
@@ -330,45 +354,45 @@ class _DietRecallScreenState extends State<DietRecallScreen>
   }
 
   Widget _buildRecipeDropdown() {
-    return ValueListenableBuilder<String?>(
-      valueListenable: selectedRecipeKeyNotifier,
-      builder: (context, selectedRecipeKey, child) {
-        // Access loading state and recipe list outside of any nested widgets
-        final isLoadingRecipes = dietController.isLoadingRecipes.value;
-        final recipeList = dietController.recipeList;
+    // Move the reactive access outside of ValueListenableBuilder
+    final isLoadingRecipes = dietController.isLoadingRecipes.value;
+    final recipeList = dietController.recipeList;
 
-        return Container(
-          height: 50,
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor.withOpacity(0.8),
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: isLoadingRecipes
-              ? Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Theme.of(context).primaryColorDark,
-                          ),
-                        ),
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor.withOpacity(0.8),
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: isLoadingRecipes
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Theme.of(context).primaryColorDark,
                       ),
-                      const SizedBox(width: 12),
-                      RegularText(
-                        'Loading recipes...',
-                        fontSize: 14,
-                        textColor: Colors.grey.shade600,
-                      ),
-                    ],
+                    ),
                   ),
-                )
-              : DropdownButtonFormField<String>(
+                  const SizedBox(width: 12),
+                  RegularText(
+                    'Loading recipes...',
+                    fontSize: 14,
+                    textColor: Colors.grey.shade600,
+                  ),
+                ],
+              ),
+            )
+          : ValueListenableBuilder<String?>(
+              valueListenable: selectedRecipeKeyNotifier,
+              builder: (context, selectedRecipeKey, child) {
+                return DropdownButtonFormField<String>(
                   value: selectedRecipeKey,
                   decoration: const InputDecoration(
                     hintStyle: TextStyle(
@@ -415,9 +439,9 @@ class _DietRecallScreenState extends State<DietRecallScreen>
                     fontWeight: FontWeight.normal,
                   ),
                   menuMaxHeight: 200,
-                ),
-        );
-      },
+                );
+              },
+            ),
     );
   }
 
@@ -498,16 +522,15 @@ class _DietRecallScreenState extends State<DietRecallScreen>
             onPressed: dietController.isLoading.value
                 ? null
                 : () async {
+                    // Dismiss keyboard first
+                    FocusScope.of(context).unfocus();
+
                     if (_dateController.text.isNotEmpty &&
                         selectedRecipeKey != null &&
                         selectedRecipeValue != null &&
                         _quantityController.text.isNotEmpty) {
                       // Show loading toast
-                      _showCustomToast(
-                        message: 'Adding diet entry...',
-                        isSuccess: null, // neutral state
-                        icon: Icons.hourglass_empty,
-                      );
+                      CustomToast.showLoading('Adding diet entry...');
 
                       // Add entry to list - send proper recipe code as food_name
                       final result = await dietController.addDietRecall({
@@ -521,29 +544,21 @@ class _DietRecallScreenState extends State<DietRecallScreen>
 
                       // Show result toast
                       if (result['success']) {
-                        _showCustomToast(
-                          message: result['message'],
-                          isSuccess: true,
-                          icon: Icons.check_circle,
-                        );
+                        CustomToast.showSuccess(result['message']);
 
                         // Clear form on success
                         selectedRecipeKeyNotifier.value = null;
                         selectedRecipeValueNotifier.value = null;
                         _quantityController.clear();
+
+                        // Ensure keyboard stays dismissed
+                        _quantityFocusNode.unfocus();
                       } else {
-                        _showCustomToast(
-                          message: result['message'],
-                          isSuccess: false,
-                          icon: Icons.error,
-                        );
+                        CustomToast.showError(result['message']);
                       }
                     } else {
-                      _showCustomToast(
-                        message: 'Please fill all required fields',
-                        isSuccess: false,
-                        icon: Icons.warning,
-                      );
+                      CustomToast.showWarning(
+                          'Please fill all required fields');
                     }
                   },
             style: ElevatedButton.styleFrom(
@@ -588,64 +603,6 @@ class _DietRecallScreenState extends State<DietRecallScreen>
                     ),
                   ),
           )),
-    );
-  }
-
-  // Custom toast method
-  void _showCustomToast({
-    required String message,
-    bool? isSuccess, // null for neutral/loading state
-    required IconData icon,
-  }) {
-    Color backgroundColor;
-    Color iconColor;
-
-    if (isSuccess == null) {
-      // Neutral/loading state
-      backgroundColor = const Color(0xFF2196F3);
-      iconColor = Colors.white;
-    } else if (isSuccess) {
-      // Success state
-      backgroundColor = const Color(0xFF4CAF50);
-      iconColor = Colors.white;
-    } else {
-      // Error state
-      backgroundColor = const Color(0xFFF44336);
-      iconColor = Colors.white;
-    }
-
-    Get.snackbar(
-      '',
-      '',
-      titleText: Container(),
-      messageText: Row(
-        children: [
-          Icon(
-            icon,
-            color: iconColor,
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              message,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: backgroundColor,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: Duration(seconds: isSuccess == null ? 2 : 3),
-      animationDuration: const Duration(milliseconds: 300),
-      forwardAnimationCurve: Curves.easeOutCubic,
-      reverseAnimationCurve: Curves.easeInCubic,
     );
   }
 
@@ -747,11 +704,7 @@ class _DietRecallScreenState extends State<DietRecallScreen>
                         Get.back(); // Close dialog first
 
                         // Show loading toast
-                        _showCustomToast(
-                          message: 'Deleting diet entry...',
-                          isSuccess: null,
-                          icon: Icons.hourglass_empty,
-                        );
+                        CustomToast.showLoading('Deleting diet entry...');
 
                         // Call delete API
                         final result =
@@ -759,17 +712,9 @@ class _DietRecallScreenState extends State<DietRecallScreen>
 
                         // Show result toast
                         if (result['success']) {
-                          _showCustomToast(
-                            message: result['message'],
-                            isSuccess: true,
-                            icon: Icons.check_circle,
-                          );
+                          CustomToast.showSuccess(result['message']);
                         } else {
-                          _showCustomToast(
-                            message: result['message'],
-                            isSuccess: false,
-                            icon: Icons.error,
-                          );
+                          CustomToast.showError(result['message']);
                         }
                       },
                 style: ElevatedButton.styleFrom(
@@ -824,90 +769,143 @@ class _DietRecallScreenState extends State<DietRecallScreen>
         ],
       ),
       child: Column(
-        children: dietRecalls.isNotEmpty
-            ? [
-                Container(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  child: Row(
-                    children: [
-                      SemiBoldText(
-                        'Recall All Records (${dietRecalls.length})',
-                        fontSize: 16,
-                        textColor: Colors.grey.shade800,
-                      ),
-                    ],
+        children: [
+          // Header section
+          if (dietRecalls.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  SemiBoldText(
+                    'Recall All Records (${dietController.dietRecallListResponse!.totalCount})',
+                    fontSize: 16,
+                    textColor: Colors.grey.shade800,
                   ),
-                ),
-                // Example cards - you can customize these as needed
-                ...dietRecalls.map((entry) {
-                  final foodName = entry.foodName;
-                  final quantity = entry.foodQty;
-                  final unit = entry.unit;
-                  final recallId = entry.recallId; // Convert to string for API
+                ],
+              ),
+            ),
 
-                  // Find recipe name from dynamic data only
-                  final selectedRecipe = recipes.firstWhereOrNull(
-                      (recipe) => recipe.recipeCode == foodName);
-                  final displayName = selectedRecipe?.recipeName ?? foodName;
-
-                  return DietEntryCardWidget(
-                    title: displayName,
-                    imagePath: MyImages.food1,
-                    onTap: () {
-                      // Handle card tap - you can implement your list functionality here
-                      Get.snackbar(
-                        'Entry Tapped',
-                        'You tapped on $displayName',
-                        snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: const Color(0xFF2196F3),
-                        colorText: Colors.white,
-                        margin: const EdgeInsets.all(16),
-                        borderRadius: 8,
+          // Non-scrollable ListView that expands to fit content
+          dietRecalls.isNotEmpty
+              ? ListView.builder(
+                  shrinkWrap: true, // Let ListView fit its content
+                  physics:
+                      const NeverScrollableScrollPhysics(), // Disable ListView scrolling
+                  padding: const EdgeInsets.only(bottom: 16),
+                  itemCount: dietRecalls.length +
+                      (dietController.hasMoreData.value ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    // Show loading indicator at the bottom when loading more
+                    if (index == dietRecalls.length) {
+                      return Container(
+                        padding: const EdgeInsets.all(16),
+                        child: Center(
+                          child: dietController.isLoadingMore.value
+                              ? Column(
+                                  children: [
+                                    CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Theme.of(context).primaryColorDark,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    RegularText(
+                                      'Loading more...',
+                                      fontSize: 12,
+                                      textColor: Colors.grey.shade600,
+                                    ),
+                                  ],
+                                )
+                              : const SizedBox.shrink(),
+                        ),
                       );
-                    },
-                    subtitle: "$quantity $unit",
-                    onDelete: () {
-                      // Show delete confirmation dialog
-                      _showDeleteConfirmation(recallId, displayName);
-                    },
-                  );
-                }).toList(),
-              ]
-            : [
-                // Empty state
-                Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.restaurant_menu,
-                        size: 48,
-                        color: Colors.grey.shade400,
-                      ),
-                      const SizedBox(height: 12),
-                      RegularText(
-                        'No diet entries yet',
-                        fontSize: 16,
-                        textColor: Colors.grey.shade600,
-                      ),
-                      const SizedBox(height: 4),
-                      RegularText(
-                        'Add your first meal to get started',
-                        fontSize: 14,
-                        textColor: Colors.grey.shade500,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                    }
+
+                    final entry = dietRecalls[index];
+                    return _buildDietEntryItem(entry, recipes, index);
+                  },
+                )
+              : _buildEmptyState(),
+        ],
+      ),
+    );
+  }
+
+  // Optimized method for building individual items with index
+  Widget _buildDietEntryItem(
+      DietRecall entry, List<Recipe> recipes, int index) {
+    final foodName = entry.recipeName;
+    final quantity = entry.foodQty;
+    final unit = entry.unit;
+    final recallId = entry.recallId;
+
+    // Cache recipe lookup to avoid repeated searches
+    final displayName = _getCachedRecipeName(foodName, recipes);
+
+    return Container(
+      key: ValueKey('diet_entry_$index'), // Stable key for better performance
+      child: DietEntryCardWidget(
+        title: displayName,
+        imagePath: MyImages.food1,
+        onTap: () {
+          // Handle card tap
+          CustomToast.showInfo('You tapped on $displayName');
+        },
+        subtitle: "$quantity $unit",
+        onDelete: () {
+          // Show delete confirmation dialog
+          _showDeleteConfirmation(recallId, displayName);
+        },
+      ),
+    );
+  }
+
+  // Cache for recipe names to avoid repeated lookups
+  final Map<String, String> _recipeNameCache = {};
+
+  String _getCachedRecipeName(String foodName, List<Recipe> recipes) {
+    if (_recipeNameCache.containsKey(foodName)) {
+      return _recipeNameCache[foodName]!;
+    }
+
+    final selectedRecipe =
+        recipes.firstWhereOrNull((recipe) => recipe.recipeCode == foodName);
+    final displayName = selectedRecipe?.recipeName ?? foodName;
+
+    _recipeNameCache[foodName] = displayName;
+    return displayName;
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.restaurant_menu,
+            size: 48,
+            color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 12),
+          RegularText(
+            'No diet entries yet',
+            fontSize: 16,
+            textColor: Colors.grey.shade600,
+          ),
+          const SizedBox(height: 4),
+          RegularText(
+            'Add your first meal to get started',
+            fontSize: 14,
+            textColor: Colors.grey.shade500,
+          ),
+        ],
       ),
     );
   }

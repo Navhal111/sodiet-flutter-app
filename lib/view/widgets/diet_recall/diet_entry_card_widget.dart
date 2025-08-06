@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:sodiet/utils/images.dart';
+import 'package:sodiet/view/widgets/common/custom_toast.dart';
 
 import '../app_text.dart';
 
@@ -126,36 +126,8 @@ class DietEntryCardWidget extends StatelessWidget {
                           onPressed: onEdit ??
                               () {
                                 // Default edit action with toast
-                                Get.snackbar(
-                                  '',
-                                  '',
-                                  titleText: Container(),
-                                  messageText: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.info,
-                                        color: Colors.white,
-                                        size: 24,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          'Edit functionality coming soon!',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  snackPosition: SnackPosition.BOTTOM,
-                                  backgroundColor: const Color(0xFF2196F3),
-                                  margin: const EdgeInsets.all(16),
-                                  borderRadius: 12,
-                                  duration: const Duration(seconds: 2),
-                                );
+                                CustomToast.showInfo(
+                                    'Edit functionality coming soon!');
                               },
                           icon: const Icon(
                             Icons.edit,

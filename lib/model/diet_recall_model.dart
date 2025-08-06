@@ -1,4 +1,3 @@
-
 class DietRecall {
   final String entryDate;
   final String foodName;
@@ -7,6 +6,7 @@ class DietRecall {
   final String timeOfDay;
   final String recallId;
   final String createdAt;
+  final String recipeName;
 
   DietRecall({
     required this.entryDate,
@@ -16,6 +16,7 @@ class DietRecall {
     required this.timeOfDay,
     required this.recallId,
     required this.createdAt,
+    required this.recipeName,
   });
 
   factory DietRecall.fromJson(Map<String, dynamic> json) {
@@ -27,6 +28,7 @@ class DietRecall {
       timeOfDay: json['time_of_day'] ?? '',
       recallId: json['recall_id'] ?? '',
       createdAt: json['created_at'] ?? '',
+      recipeName: json['Recipe_name'] ?? '',
     );
   }
 }
