@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sodiet/controller/navigation/navigation_controller.dart';
 import 'package:sodiet/controller/physicalActivity/physicalController.dart';
+import 'package:sodiet/controller/recipe/recipeController.dart';
 import 'package:sodiet/controller/theme/themeController.dart';
 
 import '../api/api_client.dart';
@@ -13,6 +14,7 @@ import '../repo/authRepo.dart';
 init() async {
   // Core
   final sharedPreferences = await SharedPreferences.getInstance();
+
   Get.lazyPut(() => sharedPreferences);
 
   Get.lazyPut(
@@ -27,6 +29,7 @@ init() async {
   Get.lazyPut(() => DietController(authRepo: Get.find()), fenix: true);
   Get.lazyPut(() => PhysicalActivityController(authRepo: Get.find()),
       fenix: true);
+  Get.lazyPut(() => RecipeController(authRepo: Get.find()), fenix: true);
 
   // Navigation
   Get.lazyPut(() => NavigationController(), fenix: true);

@@ -40,6 +40,7 @@ class PaRecallItem {
   String timeOfDay;
   String recallId;
   String createdAt;
+  double energy; // Added energy field
 
   PaRecallItem({
     required this.entryDate,
@@ -48,6 +49,7 @@ class PaRecallItem {
     required this.timeOfDay,
     required this.recallId,
     required this.createdAt,
+    required this.energy, // Added energy parameter
   });
 
   factory PaRecallItem.fromJson(Map<String, dynamic> json) {
@@ -60,6 +62,7 @@ class PaRecallItem {
       timeOfDay: json['time_of_day'] ?? '',
       recallId: json['recall_id'] ?? '',
       createdAt: json['created_at'] ?? '',
+      energy: (json['energy'] ?? 0).toDouble(), // Added energy parsing
     );
   }
 
@@ -71,6 +74,7 @@ class PaRecallItem {
       'time_of_day': timeOfDay,
       'recall_id': recallId,
       'created_at': createdAt,
+      'energy': energy, // Added energy to JSON
     };
   }
 }

@@ -1,8 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../constant/appConstant.dart';
-import '../../helper/response_model.dart';
 import '../../model/pa_recall_model.dart';
 import '../../repo/authRepo.dart';
 
@@ -15,48 +13,84 @@ class PhysicalActivityController extends GetxController implements GetxService {
 
   RxBool isLoading = false.obs;
   RxBool isLoadingList = false.obs;
+  RxBool isLoadingMore = false.obs;
+  RxBool hasMoreData = true.obs;
 
   // Observable variables to store PA recall data
   Rx<PaRecallModel?> paRecallData = Rx<PaRecallModel?>(null);
   RxList<PaRecallItem> paRecallList = <PaRecallItem>[].obs;
   RxInt totalCount = 0.obs;
-  RxInt currentPage = 1.obs;
-  RxInt pageSize = 10.obs;
+  int currentPage = 1;
+  int pageSize = 20; // Load 20 items per page
 
-  getPaRecallList() async {
-    isLoadingList.value = true;
+  getPaRecallList({bool loadMore = false}) async {
+    if (loadMore) {
+      if (isLoadingMore.value || !hasMoreData.value) return;
+      isLoadingMore.value = true;
+      currentPage++;
+    } else {
+      isLoadingList.value = true;
+      currentPage = 1;
+      hasMoreData.value = true;
+      paRecallList.clear(); // Clear list on fresh load
+    }
+
     try {
-      Response response =
-          await authRepo.getDataSet(apiName: AppConstants.GET_PA_RECALL);
-      ResponseModel responseModel;
-      Map<String, dynamic> responcejson = response.body;
+      String apiUrl = AppConstants.GET_PA_RECALL;
+      // if (loadMore || currentPage > 1) {
+      apiUrl += '?page=$currentPage&page_size=$pageSize';
+      // }
+
+      Response response = await authRepo.getDataSet(apiName: apiUrl);
+      print("PA Recall API Response Status: ${response.statusCode}");
 
       if (response.statusCode == 200) {
         // Parse the response using the model
-        paRecallData.value = PaRecallModel.fromJson(responcejson);
+        paRecallData.value = PaRecallModel.fromJson(response.body);
 
-        // Store data in observable variables
-        paRecallList.value = paRecallData.value?.recalls ?? [];
+        if (loadMore) {
+          // Append new items for pagination
+          paRecallList.addAll(paRecallData.value?.recalls ?? []);
+          print(
+              "Loaded ${paRecallData.value?.recalls.length} more PA items. Total: ${paRecallList.length}");
+        } else {
+          // Replace all items for fresh load
+          paRecallList.addAll(paRecallData.value?.recalls ?? []);
+          print("Loaded ${paRecallList.length} PA items");
+        }
+
+        // Update total count
         totalCount.value = paRecallData.value?.totalCount ?? 0;
-        currentPage.value = paRecallData.value?.page ?? 1;
-        pageSize.value = paRecallData.value?.pageSize ?? 10;
 
-        // Handle success
-        print(
-            'PA Recall data loaded successfully: ${paRecallList.length} items');
+        // Check if there's more data
+        if ((paRecallData.value?.recalls.length ?? 0) < pageSize) {
+          hasMoreData.value = false;
+          print("No more PA data to load");
+        }
       } else {
-        // Handle error
-        print('Error loading PA recall data: ${response.statusCode}');
-        paRecallList.clear();
-        totalCount.value = 0;
+        print("PA API Error: ${response.statusCode}");
+        if (!loadMore) {
+          paRecallData.value = null;
+        }
       }
     } catch (e) {
       print('Exception in getPaRecallList: $e');
-      paRecallList.clear();
-      totalCount.value = 0;
-    } finally {
+      if (!loadMore) {
+        paRecallData.value = null;
+      }
+    }
+
+    if (loadMore) {
+      isLoadingMore.value = false;
+    } else {
       isLoadingList.value = false;
     }
+    update();
+  }
+
+  // Method to load more data when scrolling
+  void loadMorePaRecalls() {
+    getPaRecallList(loadMore: true);
   }
 
   addPaRecall(Map<String, dynamic> activityData) async {
@@ -66,45 +100,64 @@ class PhysicalActivityController extends GetxController implements GetxService {
         sendData: activityData,
         apiName: AppConstants.GET_PA_RECALL,
       );
-
-      Map<String, dynamic> responcejson = response.body;
+      print("Add PA Recall Response Status: ${response.statusCode}");
+      print("Add PA Recall Response Body: ${response.body}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print('Activity added successfully');
         // Refresh the list after successful addition
         await getPaRecallList();
-
-        Get.snackbar(
-          'Success',
-          'Physical activity added successfully!',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: const Color(0xFF4CAF50),
-          colorText: Colors.white,
-        );
+        isLoading.value = false;
+        return {
+          'success': true,
+          'message': 'Physical activity added successfully!'
+        };
       } else {
-        print('Error adding activity: ${response.statusCode}');
-        print('Response: $responcejson');
-
-        Get.snackbar(
-          'Error',
-          'Failed to add activity. Please try again.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: const Color(0xFFF44336),
-          colorText: Colors.white,
-        );
+        isLoading.value = false;
+        return {
+          'success': false,
+          'message': 'Failed to add activity. Please try again.'
+        };
       }
     } catch (e) {
       print('Exception in addPaRecall: $e');
-
-      Get.snackbar(
-        'Error',
-        'An error occurred. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFFF44336),
-        colorText: Colors.white,
-      );
-    } finally {
       isLoading.value = false;
+      return {
+        'success': false,
+        'message': 'Network error. Please check your connection.'
+      };
+    }
+  }
+
+  deletePaRecall(String recallId) async {
+    isLoading.value = true;
+    try {
+      String deleteUrl = "${AppConstants.GET_PA_RECALL}/$recallId";
+      Response response = await authRepo.deleteDataSet(apiName: deleteUrl);
+      print("Delete PA Recall Response Status: ${response.statusCode}");
+      print("Delete PA Recall Response Body: ${response.body}");
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        // Refresh the PA recall list after successful deletion
+        await getPaRecallList();
+        isLoading.value = false;
+        return {
+          'success': true,
+          'message': 'Physical activity deleted successfully!'
+        };
+      } else {
+        isLoading.value = false;
+        return {
+          'success': false,
+          'message': 'Failed to delete activity. Please try again.'
+        };
+      }
+    } catch (e) {
+      print("Exception in deletePaRecall: $e");
+      isLoading.value = false;
+      return {
+        'success': false,
+        'message': 'Network error. Please check your connection.'
+      };
     }
   }
 }
