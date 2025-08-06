@@ -52,4 +52,18 @@ class AuthRepo {
     };
     return await apiClient.deleteData(apiName, headers: headerExtra);
   }
+
+  Future<Response> putDataSet(
+      {required Map<String, dynamic> sendData, required String apiName}) async {
+    var DEVICEINFO = await ApiClient.DeviceInfo();
+    Map<String, String> headerExtra = {
+      'Content-Type': 'application/json',
+      "X-VERSION": Platform.isAndroid
+          ? AppConstants.ANDROID_VERSION
+          : AppConstants.IOS_VERSION,
+      "X-DEVICE-INFO": jsonEncode(DEVICEINFO),
+      "X-APPLICATION-ID": DEVICEINFO["X-APPLICATION-ID"]
+    };
+    return await apiClient.putData(apiName, sendData, headers: headerExtra);
+  }
 }

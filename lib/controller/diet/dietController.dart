@@ -187,4 +187,37 @@ class DietController extends GetxController implements GetxService {
       };
     }
   }
+
+  updateDietRecall(String recallId, Map<String, dynamic> dietData) async {
+    isLoading.value = true;
+    try {
+      String updateUrl = "${AppConstants.GET_DIET_RECALES}/$recallId";
+      Response response = await authRepo.putDataSet(
+        sendData: dietData,
+        apiName: updateUrl,
+      );
+      print("Update Diet Recall Response Status: ${response.statusCode}");
+      print("Update Diet Recall Response Body: ${response.body}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Refresh the diet recall list after successful update
+        await getDietRecallList();
+        isLoading.value = false;
+        return {'success': true, 'message': 'Diet entry updated successfully!'};
+      } else {
+        isLoading.value = false;
+        return {
+          'success': false,
+          'message': 'Failed to update diet entry. Please try again.'
+        };
+      }
+    } catch (e) {
+      print("Exception in updateDietRecall: $e");
+      isLoading.value = false;
+      return {
+        'success': false,
+        'message': 'Network error. Please check your connection.'
+      };
+    }
+  }
 }

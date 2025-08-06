@@ -25,8 +25,15 @@ class _DietRecallScreenState extends State<DietRecallScreen>
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final FocusNode _quantityFocusNode =
-      FocusNode(); // Add focus node for quantity field
+  final FocusNode _quantityFocusNode = FocusNode();
+
+  // Edit dialog controllers and notifiers
+  late TextEditingController _editDateController;
+  late TextEditingController _editQuantityController;
+  late ValueNotifier<String> _editTimingNotifier;
+  late ValueNotifier<String> _editUnitNotifier;
+  late ValueNotifier<String?> _editRecipeKeyNotifier;
+  late ValueNotifier<String?> _editRecipeValueNotifier;
 
   var dietController = Get.find<DietController>();
 
@@ -244,18 +251,15 @@ class _DietRecallScreenState extends State<DietRecallScreen>
           ),
           const SizedBox(height: 8),
           Container(
-            key: const ValueKey(
-                'quantity_field'), // Stable key to prevent rebuilds
+            key: const ValueKey('quantity_field'),
             child: CustomTextField(
               controller: _quantityController,
               labelText: '',
               hintText: 'Enter quantity',
               textInputType: TextInputType.number,
-              focusNode:
-                  _quantityFocusNode, // Add focus node to maintain keyboard focus
-              textInputAction: TextInputAction.done, // Add done button
+              focusNode: _quantityFocusNode,
+              textInputAction: TextInputAction.done,
               onSubmitted: (value) {
-                // Dismiss keyboard when done is pressed
                 _quantityFocusNode.unfocus();
               },
             ),
@@ -831,6 +835,482 @@ class _DietRecallScreenState extends State<DietRecallScreen>
     );
   }
 
+  // Custom edit dialog
+  void _showEditDialog(DietRecall entry) {
+    // Initialize controllers with current data
+    _editDateController = TextEditingController(text: entry.entryDate);
+    _editQuantityController =
+        TextEditingController(text: entry.foodQty.toString());
+    _editTimingNotifier =
+        ValueNotifier(entry.timeOfDay.capitalize ?? 'Breakfast');
+    _editUnitNotifier = ValueNotifier(entry.unit.capitalize ?? 'Cup');
+    _editRecipeKeyNotifier = ValueNotifier(entry.foodName);
+
+    // Find the recipe name for display
+    final selectedRecipe = dietController.recipeList
+        .firstWhereOrNull((recipe) => recipe.recipeCode == entry.foodName);
+    _editRecipeValueNotifier = ValueNotifier(selectedRecipe?.recipeName);
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(Get.context!).size.height * 0.8,
+            maxWidth: MediaQuery.of(Get.context!).size.width * 0.9,
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                children: [
+                  Icon(
+                    Icons.edit,
+                    color: Theme.of(Get.context!).primaryColorDark,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Edit Diet Entry',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () {
+                      Get.back();
+                      _disposeEditControllers();
+                    },
+                    icon: Icon(Icons.close, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // Scrollable content
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Date Field
+                      SemiBoldText(
+                        'Date',
+                        fontSize: 14,
+                        textColor: Colors.black87,
+                      ),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () async {
+                          final DateTime? picked = await showDatePicker(
+                            context: Get.context!,
+                            initialDate:
+                                DateTime.tryParse(_editDateController.text) ??
+                                    DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime.now(),
+                          );
+                          if (picked != null) {
+                            _editDateController.text =
+                                picked.toString().split(' ')[0];
+                          }
+                        },
+                        child: AbsorbPointer(
+                          child: CustomTextField(
+                            controller: _editDateController,
+                            labelText: '',
+                            hintText: 'Select date',
+                            suffixIcon: const Icon(Icons.calendar_today),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Timing Section
+                      SemiBoldText(
+                        'Timing',
+                        fontSize: 14,
+                        textColor: Colors.black87,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildEditTimingSelection(),
+
+                      const SizedBox(height: 16),
+
+                      // Recipe Field
+                      SemiBoldText(
+                        'Recipe',
+                        fontSize: 14,
+                        textColor: Colors.black87,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildEditRecipeDropdown(),
+
+                      const SizedBox(height: 16),
+
+                      // Quantity Field
+                      SemiBoldText(
+                        'Quantity',
+                        fontSize: 14,
+                        textColor: Colors.black87,
+                      ),
+                      const SizedBox(height: 8),
+                      CustomTextField(
+                        controller: _editQuantityController,
+                        labelText: '',
+                        hintText: 'Enter quantity',
+                        textInputType: TextInputType.number,
+                        textInputAction: TextInputAction.done,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Units Section
+                      SemiBoldText(
+                        'Units',
+                        fontSize: 14,
+                        textColor: Colors.black87,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildEditUnitsSelection(),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () {
+                        Get.back();
+                        _disposeEditControllers();
+                      },
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Obx(() => ElevatedButton(
+                          onPressed: dietController.isLoading.value
+                              ? null
+                              : () async {
+                                  await _handleEditSubmit(entry.recallId);
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: dietController.isLoading.value
+                                ? Colors.grey
+                                : Theme.of(Get.context!).primaryColorDark,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: dietController.isLoading.value
+                              ? SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
+                                  ),
+                                )
+                              : Text(
+                                  'Update',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        )),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+  Widget _buildEditTimingSelection() {
+    return ValueListenableBuilder<String>(
+      valueListenable: _editTimingNotifier,
+      builder: (context, selectedTiming, child) {
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: timingOptions.map((timing) {
+            final isSelected = selectedTiming == timing['label'];
+            return GestureDetector(
+              onTap: () {
+                _editTimingNotifier.value = timing['label'];
+              },
+              child: Container(
+                width: (MediaQuery.of(context).size.width - 120) / 4,
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Theme.of(context).primaryColorDark
+                      : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 20,
+                      height: 20,
+                      child: Image.asset(
+                        timing['icon'],
+                        width: 20,
+                        height: 20,
+                        color: isSelected
+                            ? Colors.white
+                            : Theme.of(context).primaryColorDark,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            Icons.restaurant,
+                            color: isSelected
+                                ? Colors.white
+                                : Theme.of(context).primaryColorDark,
+                            size: 16,
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    RegularText(
+                      timing['label'],
+                      fontSize: 10,
+                      textColor: isSelected ? Colors.white : Colors.black87,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildEditRecipeDropdown() {
+    final isLoadingRecipes = dietController.isLoadingRecipes.value;
+    final recipeList = dietController.recipeList;
+
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: Theme.of(Get.context!).cardColor.withOpacity(0.8),
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: isLoadingRecipes
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Theme.of(Get.context!).primaryColorDark,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  RegularText(
+                    'Loading recipes...',
+                    fontSize: 14,
+                    textColor: Colors.grey.shade600,
+                  ),
+                ],
+              ),
+            )
+          : ValueListenableBuilder<String?>(
+              valueListenable: _editRecipeKeyNotifier,
+              builder: (context, selectedRecipeKey, child) {
+                return DropdownButtonFormField<String>(
+                  value: selectedRecipeKey,
+                  decoration: const InputDecoration(
+                    hintStyle: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                      fontWeight: FontWeight.normal,
+                    ),
+                    hintText: 'Select a recipe',
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                  ),
+                  items: recipeList.map((recipe) {
+                    return DropdownMenuItem<String>(
+                      value: recipe.recipeCode,
+                      child: RegularText(
+                        recipe.recipeName,
+                        fontSize: 14,
+                        textColor: Colors.black87,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    _editRecipeKeyNotifier.value = newValue;
+                    final selectedRecipe = recipeList.firstWhereOrNull(
+                        (recipe) => recipe.recipeCode == newValue);
+                    _editRecipeValueNotifier.value = selectedRecipe?.recipeName;
+                  },
+                  isExpanded: true,
+                  icon: Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Colors.grey.shade600,
+                    size: 20,
+                  ),
+                  dropdownColor: Colors.white,
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontSize: 14,
+                    fontWeight: FontWeight.normal,
+                  ),
+                  menuMaxHeight: 200,
+                );
+              },
+            ),
+    );
+  }
+
+  Widget _buildEditUnitsSelection() {
+    return ValueListenableBuilder<String>(
+      valueListenable: _editUnitNotifier,
+      builder: (context, selectedUnit, child) {
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: unitOptions.map((unit) {
+            final isSelected = selectedUnit == unit['label'];
+
+            return GestureDetector(
+              onTap: () {
+                _editUnitNotifier.value = unit['label'];
+              },
+              child: Container(
+                width: (MediaQuery.of(context).size.width - 120) / 3,
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Theme.of(context).primaryColorDark.withOpacity(0.1)
+                      : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                  border: isSelected
+                      ? Border.all(
+                          color: Theme.of(context).primaryColorDark, width: 2)
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 16,
+                      height: 16,
+                      child: Image.asset(
+                        unit['icon'],
+                        width: 16,
+                        height: 16,
+                        color: Theme.of(context).primaryColorDark,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            Icons.restaurant,
+                            color: Theme.of(context).primaryColorDark,
+                            size: 16,
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: RegularText(
+                        unit['label'],
+                        fontSize: 10,
+                        textColor: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Future<void> _handleEditSubmit(String recallId) async {
+    if (_editDateController.text.isNotEmpty &&
+        _editRecipeKeyNotifier.value != null &&
+        _editRecipeValueNotifier.value != null &&
+        _editQuantityController.text.isNotEmpty) {
+      Get.back(); // Close dialog first
+      CustomToast.showLoading('Updating diet entry...');
+
+      // Update entry
+      final result = await dietController.updateDietRecall(recallId, {
+        'entry_date': _editDateController.text,
+        'time_of_day': _editTimingNotifier.value.toLowerCase(),
+        'food_name': _editRecipeKeyNotifier.value,
+        'food_qty': _editQuantityController.text,
+        'unit': _editUnitNotifier.value.toLowerCase(),
+      });
+
+      // Show result toast
+      if (result['success']) {
+        CustomToast.showSuccess(result['message']);
+      } else {
+        CustomToast.showError(result['message']);
+      }
+
+      _disposeEditControllers();
+    } else {
+      CustomToast.showWarning('Please fill all required fields');
+    }
+  }
+
+  void _disposeEditControllers() {
+    _editDateController.dispose();
+    _editQuantityController.dispose();
+    _editTimingNotifier.dispose();
+    _editUnitNotifier.dispose();
+    _editRecipeKeyNotifier.dispose();
+    _editRecipeValueNotifier.dispose();
+  }
+
   // Optimized method for building individual items with index
   Widget _buildDietEntryItem(
       DietRecall entry, List<Recipe> recipes, int index) {
@@ -852,6 +1332,10 @@ class _DietRecallScreenState extends State<DietRecallScreen>
           CustomToast.showInfo('You tapped on $displayName');
         },
         subtitle: "$quantity $unit",
+        onEdit: () {
+          // Show edit dialog
+          _showEditDialog(entry);
+        },
         onDelete: () {
           // Show delete confirmation dialog
           _showDeleteConfirmation(recallId, displayName);

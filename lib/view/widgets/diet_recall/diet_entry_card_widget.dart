@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sodiet/utils/images.dart';
-import 'package:sodiet/view/widgets/common/custom_toast.dart';
 
 import '../app_text.dart';
 
@@ -123,12 +122,7 @@ class DietEntryCardWidget extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
-                          onPressed: onEdit ??
-                              () {
-                                // Default edit action with toast
-                                CustomToast.showInfo(
-                                    'Edit functionality coming soon!');
-                              },
+                          onPressed: onEdit,
                           icon: const Icon(
                             Icons.edit,
                             color: const Color(0xFFFFB74D),
