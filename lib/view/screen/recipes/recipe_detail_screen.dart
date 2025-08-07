@@ -17,7 +17,6 @@ class RecipeDetailScreen extends StatefulWidget {
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   bool _isNutrientsSelected = true;
   bool _isExpanded = false;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

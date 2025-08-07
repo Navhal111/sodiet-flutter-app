@@ -1,16 +1,45 @@
 import 'package:flutter/material.dart';
 
-class RecipesSearchWidget extends StatelessWidget {
+class RecipesSearchWidget extends StatefulWidget {
   final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onFilterTap;
+  final VoidCallback? onSubmitted;
+  final VoidCallback? onClear;
 
   const RecipesSearchWidget({
     Key? key,
     this.controller,
     this.onChanged,
     this.onFilterTap,
+    this.onSubmitted,
+    this.onClear,
   }) : super(key: key);
+
+  @override
+  State<RecipesSearchWidget> createState() => _RecipesSearchWidgetState();
+}
+
+class _RecipesSearchWidgetState extends State<RecipesSearchWidget> {
+  bool _hasText = false;
+  @override
+  void initState() {
+    super.initState();
+    widget.controller?.addListener(_textListener);
+    _hasText = widget.controller?.text.isNotEmpty ?? false;
+  }
+
+  @override
+  void dispose() {
+    widget.controller?.removeListener(_textListener);
+    super.dispose();
+  }
+
+  void _textListener() {
+    setState(() {
+      _hasText = widget.controller?.text.isNotEmpty ?? false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,10 +63,12 @@ class RecipesSearchWidget extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
-              controller: controller,
-              onChanged: onChanged,
+              controller: widget.controller,
+              onChanged: widget.onChanged,
+              onSubmitted: (_) => widget.onSubmitted?.call(),
+              textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: 'Type something',
+                hintText: 'Search recipes...',
                 hintStyle: TextStyle(
                   color: Colors.grey.shade400,
                   fontSize: 14,
@@ -52,9 +83,21 @@ class RecipesSearchWidget extends StatelessWidget {
               ),
             ),
           ),
+          // Show clear button when there's text
+          if (_hasText) ...[
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: widget.onClear,
+              child: Icon(
+                Icons.clear,
+                color: Colors.grey.shade500,
+                size: 20,
+              ),
+            ),
+          ],
           const SizedBox(width: 12),
           GestureDetector(
-            onTap: onFilterTap,
+            onTap: widget.onFilterTap,
             child: Icon(
               Icons.tune,
               color: Colors.grey.shade500,

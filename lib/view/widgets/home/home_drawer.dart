@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sodiet/controller/navigation/navigation_controller.dart';
 import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/utils/images.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
-import 'package:sodiet/controller/navigation/navigation_controller.dart';
 
-class HomeDrawer extends StatelessWidget {
+class HomeDrawer extends StatefulWidget {
   const HomeDrawer({Key? key}) : super(key: key);
+
+  @override
+  State<HomeDrawer> createState() => _HomeDrawerState();
+}
+
+class _HomeDrawerState extends State<HomeDrawer> {
+  bool isRecipesExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +63,6 @@ class HomeDrawer extends StatelessWidget {
                   onTap: () => navigationController.navigateToHome(),
                 ),
               ),
-
               // Menu items
               Expanded(
                 child: ListView(
@@ -70,6 +76,7 @@ class HomeDrawer extends StatelessWidget {
                           .isRouteActive(AppRoutes.planScreen),
                       onTap: () => navigationController.navigateToPlan(),
                     ),
+                    // Recipes with submenu
                     _buildDrawerItem(
                       context,
                       Icons.restaurant_menu_outlined,
@@ -77,8 +84,40 @@ class HomeDrawer extends StatelessWidget {
                       hasDropdown: true,
                       isSelected: navigationController
                           .isRouteActive(AppRoutes.recipesScreen),
-                      onTap: () => navigationController.navigateToRecipes(),
+                      onTap: () {
+                        setState(() {
+                          isRecipesExpanded = !isRecipesExpanded;
+                        });
+                      },
+                      isExpanded: isRecipesExpanded,
                     ),
+                    // Recipes submenu
+                    if (isRecipesExpanded) ...[
+                      _buildSubMenuItem(
+                        context,
+                        'All Recipes',
+                        onTap: () => navigationController.navigateToRecipes(),
+                      ),
+                      _buildSubMenuItem(
+                        context,
+                        'Custom Recipes',
+                        onTap: () => navigationController.navigateToRecipes(),
+                      ),
+                      _buildSubMenuItem(
+                        context,
+                        'New Recipes',
+                        onTap: () {
+                          // TODO: Navigate to New Recipes screen
+                        },
+                      ),
+                      _buildSubMenuItem(
+                        context,
+                        'New Ingredient',
+                        onTap: () {
+                          // TODO: Navigate to New Ingredient screen
+                        },
+                      ),
+                    ],
                     _buildDrawerItem(
                       context,
                       Icons.tune_outlined,
@@ -155,6 +194,7 @@ class HomeDrawer extends StatelessWidget {
     Function? onTap,
     bool isSelected = false,
     bool hasDropdown = false,
+    bool isExpanded = false,
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
@@ -188,10 +228,45 @@ class HomeDrawer extends StatelessWidget {
               ),
         trailing: hasDropdown
             ? Icon(
-                Icons.keyboard_arrow_down,
+                isExpanded
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
                 color: Colors.grey.shade600,
               )
             : null,
+        onTap: () {
+          if (hasDropdown) {
+            // Don't close drawer for dropdown items
+            if (onTap != null) {
+              onTap();
+            }
+          } else {
+            // Close drawer first
+            Get.back();
+            // Then perform action if provided
+            if (onTap != null) {
+              onTap();
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildSubMenuItem(
+    BuildContext context,
+    String title, {
+    Function? onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(left: 32, right: 0, top: 2, bottom: 2),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+        title: RegularText(
+          title,
+          fontSize: 14,
+          textColor: Colors.black54,
+        ),
         onTap: () {
           // Close drawer first
           Get.back();

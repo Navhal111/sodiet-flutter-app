@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sodiet/constant/appConstant.dart';
 import 'package:sodiet/controller/recipe/recipeController.dart';
+import 'package:sodiet/model/recipe_model.dart';
 import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/screen/recipes/recipe_detail_screen.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
@@ -22,6 +24,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late RecipeController recipeController;
+  Timer? _debounceTimer;
 
   String _searchQuery = '';
 
@@ -33,22 +36,39 @@ class _RecipesScreenState extends State<RecipesScreen> {
 
     // Add scroll listener for pagination
     _scrollController.addListener(_onScroll);
+
+    // Add listener to search controller to update search query
+    _searchController.addListener(() {
+      _searchQuery = _searchController.text;
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
   // Pagination scroll listener
   void _onScroll() {
     if (_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent * 0.8 &&
-        !recipeController.isLoadingMore.value &&
-        recipeController.hasMoreData.value) {
-      recipeController.loadMoreRecipes();
+        _scrollController.position.maxScrollExtent * 0.8) {
+      // Check if we're currently searching or browsing all recipes
+      if (recipeController.isCurrentlySearching) {
+        // Load more search results
+        if (!recipeController.isLoadingSearchMore.value &&
+            recipeController.hasMoreSearchData.value) {
+          recipeController.loadMoreSearchResults();
+        }
+      } else {
+        // Load more regular recipes
+        if (!recipeController.isLoadingMore.value &&
+            recipeController.hasMoreData.value) {
+          recipeController.loadMoreRecipes();
+        }
+      }
     }
   }
 
@@ -57,9 +77,43 @@ class _RecipesScreenState extends State<RecipesScreen> {
   }
 
   void _handleSearch(String value) {
-    setState(() {
-      _searchQuery = value;
+    // Update search query without setState to avoid rebuilding
+    _searchQuery = value;
+
+    // Cancel previous timer
+    _debounceTimer?.cancel();
+
+    // Set up new timer for debounced search
+    _debounceTimer = Timer(const Duration(milliseconds: 800), () {
+      if (_searchQuery.trim().isEmpty) {
+        recipeController.clearSearchResults();
+      } else {
+        // Call search API with the query
+        recipeController.searchRecipesAPI(_searchQuery.trim());
+      }
     });
+  }
+
+  void _handleSearchSubmit() {
+    // Cancel any pending debounced search
+    _debounceTimer?.cancel();
+
+    if (_searchQuery.trim().isEmpty) {
+      recipeController.clearSearchResults();
+    } else {
+      // Call search API immediately
+      recipeController.searchRecipesAPI(_searchQuery.trim());
+    }
+
+    // Dismiss keyboard
+    FocusScope.of(context).unfocus();
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    _searchQuery = '';
+    recipeController.clearSearchResults();
+    FocusScope.of(context).unfocus();
   }
 
   void _handleFilter() {
@@ -94,6 +148,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
                 RecipesSearchWidget(
                   controller: _searchController,
                   onChanged: _handleSearch,
+                  onSubmitted: _handleSearchSubmit,
+                  onClear: _clearSearch,
                   onFilterTap: _handleFilter,
                 ),
                 const SizedBox(height: 4),
@@ -132,8 +188,16 @@ class _RecipesScreenState extends State<RecipesScreen> {
 
   Widget _buildRecipeGrid() {
     return Obx(() {
-      if (recipeController.isLoadingRecipes.value &&
-          recipeController.recipeList.isEmpty) {
+      // Check if we're currently searching
+      bool isCurrentlySearching = recipeController.isCurrentlySearching;
+
+      // Show loading state
+      if ((isCurrentlySearching &&
+              recipeController.isSearching.value &&
+              recipeController.searchResultsList.isEmpty) ||
+          (!isCurrentlySearching &&
+              recipeController.isLoadingRecipes.value &&
+              recipeController.recipeList.isEmpty)) {
         return Container(
           height: 400,
           child: Center(
@@ -147,7 +211,9 @@ class _RecipesScreenState extends State<RecipesScreen> {
                 ),
                 const SizedBox(height: 16),
                 RegularText(
-                  'Loading recipes...',
+                  isCurrentlySearching
+                      ? 'Searching recipes...'
+                      : 'Loading recipes...',
                   fontSize: 16,
                   textColor: Colors.grey.shade600,
                 ),
@@ -157,41 +223,82 @@ class _RecipesScreenState extends State<RecipesScreen> {
         );
       }
 
-      if (recipeController.recipeList.isEmpty &&
-          !recipeController.isLoadingRecipes.value) {
-        return Container(
-          height: 400,
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.restaurant_menu,
-                  size: 64,
-                  color: Colors.grey.shade400,
-                ),
-                const SizedBox(height: 16),
-                SemiBoldText(
-                  'No Recipes Found',
-                  fontSize: 18,
-                  textColor: Colors.grey.shade600,
-                ),
-                const SizedBox(height: 8),
-                RegularText(
-                  'Try refreshing or check your connection',
-                  fontSize: 14,
-                  textColor: Colors.grey.shade500,
-                ),
-              ],
+      // Get current display list
+      List<Recipe> currentList = recipeController.getCurrentDisplayList();
+
+      // Show empty state
+      if (currentList.isEmpty &&
+          !recipeController.isLoadingRecipes.value &&
+          !recipeController.isSearching.value) {
+        if (isCurrentlySearching) {
+          // Empty search results
+          return Container(
+            height: 400,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.search_off,
+                    size: 64,
+                    color: Colors.grey.shade400,
+                  ),
+                  const SizedBox(height: 16),
+                  SemiBoldText(
+                    'No recipes found',
+                    fontSize: 18,
+                    textColor: Colors.grey.shade600,
+                  ),
+                  const SizedBox(height: 8),
+                  RegularText(
+                    'Try searching with different keywords',
+                    fontSize: 14,
+                    textColor: Colors.grey.shade500,
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          // Empty recipe list
+          return Container(
+            height: 400,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.restaurant_menu,
+                    size: 64,
+                    color: Colors.grey.shade400,
+                  ),
+                  const SizedBox(height: 16),
+                  SemiBoldText(
+                    'No Recipes Found',
+                    fontSize: 18,
+                    textColor: Colors.grey.shade600,
+                  ),
+                  const SizedBox(height: 8),
+                  RegularText(
+                    'Try refreshing or check your connection',
+                    fontSize: 14,
+                    textColor: Colors.grey.shade500,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
       }
 
-      // Filter recipes based on search query
-      final filteredRecipes = _searchQuery.isEmpty
-          ? recipeController.recipeList
-          : recipeController.searchRecipes(_searchQuery);
+      // Determine if we should show loading indicator for pagination
+      bool hasMoreData = isCurrentlySearching
+          ? recipeController.hasMoreSearchData.value
+          : recipeController.hasMoreData.value;
+
+      bool isLoadingMore = isCurrentlySearching
+          ? recipeController.isLoadingSearchMore.value
+          : recipeController.isLoadingMore.value;
 
       return Column(
         children: [
@@ -204,15 +311,14 @@ class _RecipesScreenState extends State<RecipesScreen> {
               mainAxisSpacing: 12,
               childAspectRatio: 0.75,
             ),
-            itemCount: filteredRecipes.length +
-                (recipeController.hasMoreData.value ? 1 : 0),
+            itemCount: currentList.length + (hasMoreData ? 1 : 0),
             itemBuilder: (context, index) {
               // Show loading indicator at the bottom when loading more
-              if (index == filteredRecipes.length) {
+              if (index == currentList.length) {
                 return Container(
                   padding: const EdgeInsets.all(16),
                   child: Center(
-                    child: recipeController.isLoadingMore.value
+                    child: isLoadingMore
                         ? Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -234,32 +340,10 @@ class _RecipesScreenState extends State<RecipesScreen> {
                 );
               }
 
-              final recipe = filteredRecipes[index];
+              final recipe = currentList[index];
               return _buildRecipeCard(recipe);
             },
           ),
-          if (filteredRecipes.isEmpty && _searchQuery.isNotEmpty)
-            Container(
-              height: 200,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.search_off,
-                      size: 48,
-                      color: Colors.grey.shade400,
-                    ),
-                    const SizedBox(height: 16),
-                    RegularText(
-                      'No recipes found for "$_searchQuery"',
-                      fontSize: 16,
-                      textColor: Colors.grey.shade600,
-                    ),
-                  ],
-                ),
-              ),
-            ),
         ],
       );
     });
@@ -311,53 +395,139 @@ class _RecipesScreenState extends State<RecipesScreen> {
                   ),
                   color: Colors.grey.shade200,
                 ),
-                child: Hero(
-                  tag: heroTag, // Hero tag for animation
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12),
+                child: Stack(
+                  children: [
+                    // Main image with Hero animation
+                    Hero(
+                      tag: heroTag, // Hero tag for animation
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          topRight: Radius.circular(12),
+                        ),
+                        child: Image.network(
+                          imageUrl,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              color: Colors.grey.shade200,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Theme.of(context).primaryColorDark,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.grey.shade200,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.image_not_supported,
+                                    color: Colors.grey.shade400,
+                                    size: 40,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  RegularText(
+                                    'No image',
+                                    fontSize: 10,
+                                    textColor: Colors.grey.shade600,
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
-                    child: Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          color: Colors.grey.shade200,
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Theme.of(context).primaryColorDark,
+                    // Like and Dislike buttons positioned in top-right corner
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Like button
+                          GestureDetector(
+                            onTap: () async {
+                              // Handle like action
+                              bool success = await recipeController
+                                  .likeRecipe(recipe.recipeCode);
+                              if (success) {
+                                CustomToast.showSuccess(
+                                    'Liked ${recipe.recipeName}');
+                              } else {
+                                CustomToast.showError(
+                                    'Failed to like recipe. Please try again.');
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade500,
+                                borderRadius: BorderRadius.circular(6),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 2,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.thumb_up,
+                                color: Colors.white,
+                                size: 16,
                               ),
                             ),
                           ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey.shade200,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.image_not_supported,
-                                color: Colors.grey.shade400,
-                                size: 40,
+                          const SizedBox(width: 6),
+                          // Dislike button
+                          GestureDetector(
+                            onTap: () async {
+                              // Handle dislike action
+                              bool success = await recipeController
+                                  .dislikeRecipe(recipe.recipeCode);
+                              if (success) {
+                                CustomToast.showSuccess(
+                                    'Disliked ${recipe.recipeName}');
+                              } else {
+                                CustomToast.showError(
+                                    'Failed to dislike recipe. Please try again.');
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade500,
+                                borderRadius: BorderRadius.circular(6),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 2,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 4),
-                              RegularText(
-                                'No image',
-                                fontSize: 10,
-                                textColor: Colors.grey.shade600,
+                              child: const Icon(
+                                Icons.thumb_down,
+                                color: Colors.white,
+                                size: 16,
                               ),
-                            ],
+                            ),
                           ),
-                        );
-                      },
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),

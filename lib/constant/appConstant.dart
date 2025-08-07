@@ -12,8 +12,17 @@ class AppConstants {
   // API ENDPOINTS
   static const String GET_DIET_RECALES = '${BASE_URL}log/diet-recall';
   static const String GET_PA_RECALL = '${BASE_URL}log/pa-recall';
-
   static const String GET_RECIPES = '${BASE_URL}recipes';
+  static const String GET_RECIPES_SEARCH = '${BASE_URL}recipes/search';
+
+  // Recipe Like/Dislike endpoints
+  static String getRecipeLikeUrl(String recipeCode) =>
+      '${GET_RECIPES}/$recipeCode/like';
+  static String getRecipeDislikeUrl(String recipeCode) =>
+      '${GET_RECIPES}/$recipeCode/dislike';
+
+  static const String GET_PLAN_ACTIVE = '${BASE_URL}bwp/active-plan-id';
+  static const String GET_PLAN_DETAILS = '${BASE_URL}bwp/plan-details';
 
   // Contant Save data keys
   static const String INTRO = 'intro';
