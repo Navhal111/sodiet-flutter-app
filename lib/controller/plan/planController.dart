@@ -23,6 +23,11 @@ class PlanController extends GetxController implements GetxService {
   Rx<PlanDetailsResponse?> planDetailsResponse = Rx<PlanDetailsResponse?>(null);
   RxList<PlanData> planDataList = <PlanData>[].obs;
 
+  // Observable variables to store dashboard summary data
+  RxBool isLoadingDashboardSummary = false.obs;
+  Rx<DashboardSummaryResponse?> dashboardSummaryResponse =
+      Rx<DashboardSummaryResponse?>(null);
+
   // Raw response storage
   Map<String, dynamic>? activePlanResponse;
 
@@ -107,6 +112,44 @@ class PlanController extends GetxController implements GetxService {
     }
   }
 
+  getDashboardSummary() async {
+    isLoadingDashboardSummary.value = true;
+    try {
+      Response response = await authRepo.getDataSet(
+          apiName: AppConstants.GET_DASHBOARD_SUMMARY);
+      print("Dashboard Summary API Response Status: ${response.statusCode}");
+      print("Dashboard Summary API Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        dashboardSummaryResponse.value =
+            DashboardSummaryResponse.fromJson(response.body);
+
+        print('Dashboard Summary loaded successfully');
+        return {
+          'success': true,
+          'message': 'Dashboard summary loaded successfully!'
+        };
+      } else {
+        print('Error loading dashboard summary: ${response.statusCode}');
+        dashboardSummaryResponse.value = null;
+        return {
+          'success': false,
+          'message': 'Failed to load dashboard summary'
+        };
+      }
+    } catch (e) {
+      print('Exception in getDashboardSummary: $e');
+      dashboardSummaryResponse.value = null;
+      return {
+        'success': false,
+        'message': 'Network error. Please check your connection.'
+      };
+    } finally {
+      isLoadingDashboardSummary.value = false;
+      update();
+    }
+  }
+
   // Method to get active plan details (combines both API calls)
   getActivePlanDetails() async {
     final activePlanResult = await getActivePlan();
@@ -150,6 +193,25 @@ class PlanController extends GetxController implements GetxService {
   // Method to check if plan details are loaded
   bool get hasPlanDetails => planDataList.isNotEmpty;
 
+  // Dashboard Summary Helper Methods
+  bool get hasDashboardSummary => dashboardSummaryResponse.value != null;
+
+  KpiData? get dashboardKpi => dashboardSummaryResponse.value?.kpi;
+
+  SummaryData? get dashboardSummaryData =>
+      dashboardSummaryResponse.value?.summaryData;
+
+  List<DailyData> get dailyDataList =>
+      dashboardSummaryResponse.value?.summaryData.dailyData ?? [];
+
+  LegacyFormat? get legacyFormat =>
+      dashboardSummaryResponse.value?.summaryData.legacyFormat;
+
+  // Method to refresh dashboard summary
+  void refreshDashboardSummary() {
+    getDashboardSummary();
+  }
+
   // Method to clear plan data
   void clearPlanData() {
     activePlanResponse = null;
@@ -157,6 +219,7 @@ class PlanController extends GetxController implements GetxService {
     isActive.value = false;
     planDetailsResponse.value = null;
     planDataList.clear();
+    dashboardSummaryResponse.value = null;
     update();
   }
 }

@@ -21,8 +21,17 @@ class AppConstants {
   static String getRecipeDislikeUrl(String recipeCode) =>
       '${GET_RECIPES}/$recipeCode/dislike';
 
+  // Recipe ingredients endpoint
+  static String getRecipeIngredientsUrl(String recipeCode) =>
+      '${GET_RECIPES}/$recipeCode/ingredients';
+
+  // Recipe nutrition endpoint
+  static String getRecipeNutritionUrl(String recipeCode) =>
+      '${GET_RECIPES}/$recipeCode/nutrition';
+
   static const String GET_PLAN_ACTIVE = '${BASE_URL}bwp/active-plan-id';
   static const String GET_PLAN_DETAILS = '${BASE_URL}bwp/plan-details';
+  static const String GET_DASHBOARD_SUMMARY = '${BASE_URL}dashboard/summary';
 
   // Contant Save data keys
   static const String INTRO = 'intro';

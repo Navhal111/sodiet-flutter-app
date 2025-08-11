@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:sodiet/controller/recipe/recipeController.dart';
+import 'package:sodiet/model/recipe_model.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/common/custom_toast.dart';
 
@@ -17,6 +20,27 @@ class RecipeDetailScreen extends StatefulWidget {
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   bool _isNutrientsSelected = true;
   bool _isExpanded = false;
+  late RecipeController recipeController = Get.find<RecipeController>();
+
+  @override
+  void initState() {
+    super.initState();
+    recipeController = Get.find<RecipeController>();
+
+    // Automatically call nutrition API when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadNutritionData();
+    });
+  }
+
+  // Method to load nutrition data automatically
+  void _loadNutritionData() async {
+    String? recipeCode = widget.recipe['recipeCode'];
+    if (recipeCode != null && recipeCode.isNotEmpty) {
+      await recipeController.getRecipeNutrition(recipeCode);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -264,12 +288,23 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                             ),
                             Expanded(
                               child: GestureDetector(
-                                onTap: () {
+                                onTap: () async {
                                   setState(() {
                                     _isNutrientsSelected = false;
                                   });
-                                  CustomToast.showInfo(
-                                      'Ingredients data will be available soon');
+
+                                  // Extract recipe code from the title to make API call
+                                  // Assuming the recipe code is passed in the recipe data
+                                  String? recipeCode =
+                                      widget.recipe['recipeCode'];
+                                  if (recipeCode != null &&
+                                      recipeCode.isNotEmpty) {
+                                    await recipeController
+                                        .getRecipeIngredients(recipeCode);
+                                  } else {
+                                    CustomToast.showError(
+                                        'Recipe code not available');
+                                  }
                                 },
                                 child: Container(
                                   margin: const EdgeInsets.all(4),
@@ -307,7 +342,362 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       ),
                     ),
 
-                    // ...existing tab content sections...
+                    // Tab content sections
+                    const SizedBox(height: 16),
+
+                    // Ingredients Section
+                    if (!_isNutrientsSelected) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Obx(() {
+                          if (recipeController.isLoadingIngredients.value) {
+                            return Container(
+                              height: 200,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Theme.of(context).primaryColorDark,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    RegularText(
+                                      'Loading ingredients...',
+                                      fontSize: 14,
+                                      textColor: Colors.grey.shade600,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+
+                          if (recipeController.ingredientsResponse.value ==
+                              null) {
+                            return Container(
+                              height: 200,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.restaurant_menu,
+                                      size: 48,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    SemiBoldText(
+                                      'No ingredients data',
+                                      fontSize: 16,
+                                      textColor: Colors.grey.shade600,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    RegularText(
+                                      'Ingredients information not available',
+                                      fontSize: 14,
+                                      textColor: Colors.grey.shade500,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+
+                          final ingredients = recipeController
+                              .ingredientsResponse.value!.ingredients;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SemiBoldText(
+                                'Ingredients (${ingredients.length})',
+                                fontSize: 18,
+                                textColor: const Color(0xFF091242),
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Ingredients Table
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.1),
+                                      spreadRadius: 1,
+                                      blurRadius: 5,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    // Table Header
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: const BoxDecoration(
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(12),
+                                          topRight: Radius.circular(12),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            flex: 3,
+                                            child: SemiBoldText(
+                                              'Ingredient',
+                                              fontSize: 14,
+                                              textColor:
+                                                  const Color(0xffA2A2A2),
+                                              textAlign: TextAlign.left,
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 2,
+                                            child: SemiBoldText(
+                                              'Quantity',
+                                              fontSize: 14,
+                                              textColor:
+                                                  const Color(0xffA2A2A2),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 2,
+                                            child: SemiBoldText(
+                                              'Unit',
+                                              fontSize: 14,
+                                              textColor:
+                                                  const Color(0xffA2A2A2),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 2,
+                                            child: SemiBoldText(
+                                              'Weight (gram)',
+                                              fontSize: 14,
+                                              textColor:
+                                                  const Color(0xffA2A2A2),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    // Table Rows
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      itemCount: ingredients.length,
+                                      itemBuilder: (context, index) {
+                                        final ingredient = ingredients[index];
+                                        return _buildIngredientItem(
+                                            ingredient, index);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        }),
+                      ),
+                    ],
+
+                    // Nutrients Section (shown when nutrients tab is selected)
+                    if (_isNutrientsSelected) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Obx(() {
+                          if (recipeController.isLoadingNutrition.value) {
+                            return Container(
+                              height: 200,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Theme.of(context).primaryColorDark,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    RegularText(
+                                      'Loading nutrition information...',
+                                      fontSize: 14,
+                                      textColor: Colors.grey.shade600,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+
+                          if (recipeController.nutritionResponse.value ==
+                              null) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SemiBoldText(
+                                  'Nutrition Information',
+                                  fontSize: 18,
+                                  textColor: const Color(0xFF091242),
+                                ),
+                                const SizedBox(height: 16),
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.grey.shade300,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Column(
+                                      children: [
+                                        Icon(
+                                          Icons.info_outline,
+                                          size: 48,
+                                          color: Colors.grey.shade400,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        RegularText(
+                                          'Nutrition information not available',
+                                          fontSize: 14,
+                                          textColor: Colors.grey.shade600,
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+
+                          final nutrition = recipeController
+                              .nutritionResponse.value!.nutrition;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Nutrition Grid
+                              GridView.count(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                                childAspectRatio: 0.85,
+                                children: [
+                                  _buildNutritionCard(
+                                    'Energy Kcal',
+                                    nutrition.energyKcal.toStringAsFixed(0),
+                                    Icons.local_fire_department,
+                                    Colors.orange,
+                                  ),
+                                  _buildNutritionCard(
+                                    'Protein (g)',
+                                    nutrition.proteinG.toStringAsFixed(2),
+                                    Icons.fitness_center,
+                                    Colors.orange,
+                                  ),
+                                  _buildNutritionCard(
+                                    'Fat (g)',
+                                    nutrition.totalFatG.toStringAsFixed(2),
+                                    Icons.water_drop,
+                                    Colors.orange,
+                                  ),
+                                  _buildNutritionCard(
+                                    'Iron (mg)',
+                                    nutrition.ironMg.toStringAsFixed(2),
+                                    Icons.settings,
+                                    Colors.orange,
+                                  ),
+                                  _buildNutritionCard(
+                                    'Calcium (mg)',
+                                    nutrition.calciumMg.toStringAsFixed(2),
+                                    Icons.medication,
+                                    Colors.orange,
+                                  ),
+                                  _buildNutritionCard(
+                                    'Dietary Fiber (g)',
+                                    nutrition.totalDietaryFibreG
+                                        .toStringAsFixed(2),
+                                    Icons.grass,
+                                    Colors.orange,
+                                  ),
+                                  _buildNutritionCard(
+                                    'Magnesium (mg)',
+                                    nutrition.magnesiumMg.toStringAsFixed(2),
+                                    Icons.science,
+                                    Colors.orange,
+                                  ),
+                                  _buildNutritionCard(
+                                    'Folate (ug)',
+                                    nutrition.totalFolatesMcg
+                                        .toStringAsFixed(2),
+                                    Icons.biotech,
+                                    Colors.orange,
+                                  ),
+                                  _buildNutritionCard(
+                                    'Vit B12 (ug)',
+                                    nutrition.vb12Ug.toStringAsFixed(2),
+                                    Icons.medication,
+                                    Colors.orange,
+                                  ),
+                                  _buildNutritionCard(
+                                    'Vit B1 (ug)',
+                                    nutrition.thiamineMg.toStringAsFixed(2),
+                                    Icons.medication,
+                                    Colors.orange,
+                                  ),
+                                  _buildNutritionCard(
+                                    'Vit B2 (ug)',
+                                    nutrition.riboflavinMg.toStringAsFixed(2),
+                                    Icons.medication,
+                                    Colors.orange,
+                                  ),
+                                  _buildNutritionCard(
+                                    'Vit B3 (ug)',
+                                    nutrition.niacinMg.toStringAsFixed(2),
+                                    Icons.medication,
+                                    Colors.orange,
+                                  ),
+                                  _buildNutritionCard(
+                                    'Vit B6 (ug)',
+                                    nutrition.totalB6AMg.toStringAsFixed(2),
+                                    Icons.medication,
+                                    Colors.orange,
+                                  ),
+                                  _buildNutritionCard(
+                                    'Vit C (ug)',
+                                    nutrition.totalAscorbicAcidMg
+                                        .toStringAsFixed(1),
+                                    Icons.medication,
+                                    Colors.orange,
+                                  ),
+                                  _buildNutritionCard(
+                                    'Vit A (ug)',
+                                    nutrition.vaRaeMcg.toStringAsFixed(2),
+                                    Icons.medication,
+                                    Colors.orange,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        }),
+                      ),
+                    ],
 
                     const SizedBox(height: 40),
                   ],
@@ -316,6 +706,134 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildIngredientItem(Ingredient ingredient, int index) {
+    final isEvenRow = index % 2 == 0;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isEvenRow ? Colors.white : Colors.transparent,
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.grey.shade300,
+            width: 0.5,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Ingredient Name with Icon
+          Expanded(
+            flex: 3,
+            child: Row(
+              children: [
+                // Small ingredient icon
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.restaurant,
+                    color: Theme.of(context).primaryColorDark,
+                    size: 14,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: MediumText(
+                    ingredient.ingredients,
+                    fontSize: 14,
+                    textColor: const Color(0xFF091242),
+                    maxLines: 2,
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Quantity
+          Expanded(
+            flex: 2,
+            child: MediumText(
+              ingredient.qty.toStringAsFixed(2),
+              fontSize: 14,
+              textColor: const Color(0xffA2A2A2),
+              textAlign: TextAlign.center,
+            ),
+          ),
+
+          // Unit
+          Expanded(
+            flex: 2,
+            child: MediumText(
+              ingredient.unit.isNotEmpty ? ingredient.unit : 'none',
+              fontSize: 14,
+              textColor: const Color(0xffA2A2A2),
+              textAlign: TextAlign.center,
+            ),
+          ),
+
+          // Weight (gram)
+          Expanded(
+            flex: 2,
+            child: MediumText(
+              '${ingredient.ingRawAmountsG.toStringAsFixed(2)}gm',
+              fontSize: 14,
+              textColor: const Color(0xffA2A2A2),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNutritionCard(
+      String title, String value, IconData icon, Color iconColor) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100, // Light gray background like tab
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start, // Align to left
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          // Orange icon at top left
+          Icon(
+            Icons.local_fire_department, // Orange flame icon for all
+            color: Colors.orange,
+            size: 28,
+          ),
+          const SizedBox(height: 15),
+
+          // Title/label first
+          RegularText(
+            title,
+            fontSize: 12,
+            textAlign: TextAlign.left,
+            maxLines: 2,
+          ),
+          const SizedBox(height: 4),
+
+          // Large value in primary dark color (green) - below title
+          SemiBoldText(
+            value,
+            fontSize: 20,
+            textColor: Theme.of(context).primaryColorDark,
+            textAlign: TextAlign.left,
+            maxLines: 1,
+          ),
+        ],
       ),
     );
   }

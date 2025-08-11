@@ -22,6 +22,12 @@ class RecipeController extends GetxController implements GetxService {
   RxBool hasMoreSearchData = true.obs;
   RxString currentSearchTerm = ''.obs;
 
+  // Ingredients related variables
+  RxBool isLoadingIngredients = false.obs;
+
+  // Nutrition related variables
+  RxBool isLoadingNutrition = false.obs;
+
   int currentPage = 1;
   int pageSize = 20; // Load 20 items per page
   int searchCurrentPage = 1;
@@ -29,6 +35,12 @@ class RecipeController extends GetxController implements GetxService {
   RecipeResponse? recipeResponse;
   RxList<Recipe> recipeList = <Recipe>[].obs;
   RxList<Recipe> searchResultsList = <Recipe>[].obs;
+
+  // Ingredients data
+  Rx<IngredientsResponse?> ingredientsResponse = Rx<IngredientsResponse?>(null);
+
+  // Nutrition data
+  Rx<NutritionResponse?> nutritionResponse = Rx<NutritionResponse?>(null);
 
   getRecipes({bool loadMore = false}) async {
     if (loadMore) {
@@ -296,5 +308,76 @@ class RecipeController extends GetxController implements GetxService {
       print("Exception in dislikeRecipe: $e");
       return false;
     }
+  }
+
+  // Method to get recipe ingredients
+  Future<bool> getRecipeIngredients(String recipeCode) async {
+    print("Starting to fetch ingredients for recipe: $recipeCode");
+
+    isLoadingIngredients.value = true;
+
+    try {
+      String apiUrl = AppConstants.getRecipeIngredientsUrl(recipeCode);
+
+      Response response = await authRepo.getDataSet(apiName: apiUrl);
+      print("Ingredients API Response Status: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        ingredientsResponse.value = IngredientsResponse.fromJson(response.body);
+        print(
+            "Loaded ${ingredientsResponse.value?.ingredients.length ?? 0} ingredients");
+        return true;
+      } else {
+        print("Ingredients API Error: ${response.statusCode}");
+        ingredientsResponse.value = null;
+        return false;
+      }
+    } catch (e) {
+      print("Exception in getRecipeIngredients: $e");
+      ingredientsResponse.value = null;
+      return false;
+    } finally {
+      isLoadingIngredients.value = false;
+    }
+  }
+
+  // Method to clear ingredients data
+  void clearIngredients() {
+    ingredientsResponse.value = null;
+  }
+
+  // Method to get recipe nutrition
+  Future<bool> getRecipeNutrition(String recipeCode) async {
+    print("Starting to fetch nutrition for recipe: $recipeCode");
+    isLoadingNutrition.value = true;
+
+    try {
+      String apiUrl = AppConstants.getRecipeNutritionUrl(recipeCode);
+
+      Response response = await authRepo.getDataSet(apiName: apiUrl);
+      print("Nutrition API Response Status: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        nutritionResponse.value = NutritionResponse.fromJson(response.body);
+        print(
+            "Loaded nutrition data for recipe: ${nutritionResponse.value?.recipeName}");
+        return true;
+      } else {
+        print("Nutrition API Error: ${response.statusCode}");
+        nutritionResponse.value = null;
+        return false;
+      }
+    } catch (e) {
+      print("Exception in getRecipeNutrition: $e");
+      nutritionResponse.value = null;
+      return false;
+    } finally {
+      isLoadingNutrition.value = false;
+    }
+  }
+
+  // Method to clear nutrition data
+  void clearNutrition() {
+    nutritionResponse.value = null;
   }
 }

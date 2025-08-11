@@ -357,6 +357,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
       onTap: () {
         // Navigate to recipe detail with Recipe object - Pass imageUrl and heroTag
         Get.to(() => RecipeDetailScreen(recipe: {
+              'recipeCode':
+                  recipe.recipeCode, // Pass the recipe code for API calls
               'title': recipe.recipeName,
               'imageUrl': imageUrl, // Pass the network image URL
               'heroTag': heroTag, // Pass the hero tag
