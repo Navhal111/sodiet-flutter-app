@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:sodiet/controller/plan/planController.dart';
+import 'package:sodiet/model/plan_model.dart';
 import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/home/data_summary_widget.dart';
 import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 import 'package:sodiet/view/widgets/plan/plan_status_widget.dart';
-import 'package:sodiet/view/widgets/plan/plan_table_widget.dart';
+import 'package:sodiet/view/widgets/plan/plan_table_widget.dart' as table;
 
 class PlanScreen extends StatefulWidget {
   const PlanScreen({Key? key}) : super(key: key);
@@ -14,51 +17,131 @@ class PlanScreen extends StatefulWidget {
 }
 
 class _PlanScreenState extends State<PlanScreen> {
-  // Sample plan data for the table
-  List<PlanData> samplePlanData = [
-    PlanData(
-      day: 1,
-      date: '2025-02-28',
-      weight: 100.00,
-      intake: 2127.00,
-      expenditure: 2827.00,
-    ),
-    PlanData(
-      day: 2,
-      date: '2025-03-01',
-      weight: 99.68,
-      intake: 2127.00,
-      expenditure: 2827.00,
-    ),
-    PlanData(
-      day: 3,
-      date: '2025-03-02',
-      weight: 56.00,
-      intake: 2127.00,
-      expenditure: 2827.00,
-    ),
-    PlanData(
-      day: 4,
-      date: '2025-03-03',
-      weight: 78.00,
-      intake: 2127.00,
-      expenditure: 2827.00,
-    ),
-    PlanData(
-      day: 5,
-      date: '2025-03-04',
-      weight: 92.50,
-      intake: 2127.00,
-      expenditure: 2827.00,
-    ),
-    PlanData(
-      day: 6,
-      date: '2025-03-05',
-      weight: 112.22,
-      intake: 2127.00,
-      expenditure: 2827.00,
-    ),
-  ];
+  final PlanController planController = Get.find<PlanController>();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardData();
+  }
+
+  _loadDashboardData() async {
+    await planController.getDashboardSummary();
+  }
+
+  // Method to build KPI widgets from dashboard summary data
+  List<Widget> _buildKpiWidgets() {
+    if (!planController.hasDashboardSummary ||
+        planController.dashboardKpi == null) {
+      return [
+        Container(
+          margin: const EdgeInsets.only(right: 8),
+          child: DataSummaryWidget(
+            title: 'Loading...',
+            startValue: '--',
+            endValue: '--',
+            onClick: () {},
+          ),
+        ),
+      ];
+    }
+
+    final kpiData = planController.dashboardKpi!;
+
+    return [
+      // Plan transformation (start weight -> target weight)
+      Container(
+        margin: const EdgeInsets.only(right: 8),
+        child: DataSummaryWidget(
+          title: 'Plan Transformation',
+          startValue: '${kpiData.startWeightKg.toStringAsFixed(1)}kg',
+          endValue: '${kpiData.targetWeightKg.toStringAsFixed(1)}kg',
+          onClick: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Plan transformation details clicked'),
+                backgroundColor: Color(0xFFE57373),
+              ),
+            );
+          },
+        ),
+      ),
+      // Current progress
+      Container(
+        margin: const EdgeInsets.only(right: 8),
+        child: DataSummaryWidget(
+          title: 'Current Weight',
+          startValue: '${kpiData.mostRecentWeightKg.toStringAsFixed(1)}kg',
+          endValue: '',
+          onClick: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Current progress details clicked'),
+                backgroundColor: Color(0xFFE57373),
+              ),
+            );
+          },
+        ),
+      ),
+      // Plan duration
+      Container(
+        margin: const EdgeInsets.only(right: 8),
+        child: DataSummaryWidget(
+          title: 'Plan Duration',
+          startValue: 'Day ${kpiData.currentPlanDay}',
+          endValue: '${kpiData.totalPlanDurationDays} days',
+          onClick: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Plan duration details clicked'),
+                backgroundColor: Color(0xFFE57373),
+              ),
+            );
+          },
+        ),
+      ),
+      // Plan start date
+      Container(
+        margin: const EdgeInsets.only(right: 8),
+        child: DataSummaryWidget(
+          title: 'Start Date',
+          startValue: kpiData.planStartDate,
+          endValue: '',
+          onClick: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Plan start date details clicked'),
+                backgroundColor: Color(0xFFE57373),
+              ),
+            );
+          },
+        ),
+      ),
+    ];
+  }
+
+  // Method to convert DailyData to PlanData for table display
+  List<table.PlanData> _convertDailyDataToTableData(
+      List<DailyData> dailyDataList) {
+    return dailyDataList.map((dailyData) {
+      return table.PlanData(
+        day: int.tryParse(dailyData.day) ?? 0,
+        date: dailyData.date,
+        weight: dailyData.loggedWeight ?? dailyData.projectedWeight,
+        intake: dailyData.actualIntake,
+        expenditure: dailyData.actualExpenditure,
+      );
+    }).toList();
+  }
+
+  // Method to get table data from API or fallback to empty list
+  List<table.PlanData> _getTableData() {
+    if (planController.hasDashboardSummary &&
+        planController.dailyDataList.isNotEmpty) {
+      return _convertDailyDataToTableData(planController.dailyDataList);
+    }
+    return [];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,36 +173,33 @@ class _PlanScreenState extends State<PlanScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: SizedBox(
                   height: 80,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: 10,
-                    itemBuilder: (context, index) {
-                      return Container(
-                        margin: const EdgeInsets.only(right: 8),
-                        child: DataSummaryWidget(
-                          title: 'Plan transformation',
-                          startValue: '100kg',
-                          endValue: '96Kg',
-                          onClick: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content:
-                                    Text('Plan transformation details clicked'),
-                                backgroundColor: Color(0xFFE57373),
-                              ),
-                            );
-                          },
-                        ),
+                  child: Obx(() {
+                    if (planController.isLoadingDashboardSummary.value) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
                       );
-                    },
-                  ),
+                    }
+
+                    final kpiWidgets = _buildKpiWidgets();
+
+                    return ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: kpiWidgets.length,
+                      itemBuilder: (context, index) {
+                        return kpiWidgets[index];
+                      },
+                    );
+                  }),
                 ),
               ),
               const SizedBox(height: 10),
               // Plan Table Widget
-              PlanTableWidget(
-                planDataList: samplePlanData,
-              ),
+              Obx(() {
+                final tableData = _getTableData();
+                return table.PlanTableWidget(
+                  planDataList: tableData,
+                );
+              }),
             ],
           ),
         ),

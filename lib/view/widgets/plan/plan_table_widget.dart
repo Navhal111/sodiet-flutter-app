@@ -144,7 +144,7 @@ class PlanTableWidget extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: MediumText(
-                        data.weight.toString(),
+                        '${data.weight.toStringAsFixed(2)} kg',
                         fontSize: 14,
                         textColor: const Color(0xffA2A2A2),
                         textAlign: TextAlign.center,
