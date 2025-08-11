@@ -216,3 +216,55 @@ class NutritionData {
     );
   }
 }
+
+// Food Categories Models
+class FoodCategoriesResponse {
+  final List<FoodCategory> foodCategories;
+  final int totalCount;
+
+  FoodCategoriesResponse({
+    required this.foodCategories,
+    required this.totalCount,
+  });
+
+  factory FoodCategoriesResponse.fromJson(Map<String, dynamic> json) {
+    return FoodCategoriesResponse(
+      foodCategories: (json['food_categories'] as List<dynamic>?)
+              ?.map((item) => FoodCategory.fromJson(item))
+              .toList() ??
+          [],
+      totalCount: json['total_count'] ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'food_categories': foodCategories.map((item) => item.toJson()).toList(),
+      'total_count': totalCount,
+    };
+  }
+}
+
+class FoodCategory {
+  final String code;
+  final String category;
+
+  FoodCategory({
+    required this.code,
+    required this.category,
+  });
+
+  factory FoodCategory.fromJson(Map<String, dynamic> json) {
+    return FoodCategory(
+      code: json['Code'] ?? '',
+      category: json['Category'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'Code': code,
+      'Category': category,
+    };
+  }
+}

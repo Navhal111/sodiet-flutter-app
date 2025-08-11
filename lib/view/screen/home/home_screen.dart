@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:sodiet/controller/home/homeController.dart';
 import 'package:sodiet/model/weight_data.dart';
 import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
@@ -17,39 +19,227 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final HomeController homeController = Get.find<HomeController>();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardData();
+  }
+
+  _loadDashboardData() async {
+    await homeController.getDashboardSummary();
+    await homeController.getNutrientWeeklySummary();
+  }
+
+  // Method to build KPI widgets from dashboard summary data
+  List<Widget> _buildKpiWidgets() {
+    if (!homeController.hasDashboardSummary ||
+        homeController.dashboardKpi == null) {
+      return [
+        Container(
+          margin: const EdgeInsets.only(right: 8),
+          child: DataSummaryWidget(
+            title: 'Loading...',
+            startValue: '--',
+            endValue: '--',
+            onClick: () {},
+          ),
+        ),
+      ];
+    }
+
+    final kpiData = homeController.dashboardKpi!;
+
+    return [
+      // Plan transformation (start weight -> target weight)
+      Container(
+        margin: const EdgeInsets.only(right: 8),
+        child: DataSummaryWidget(
+          title: 'Plan Transformation',
+          startValue: '${kpiData.startWeightKg.toStringAsFixed(1)}kg',
+          endValue: '${kpiData.targetWeightKg.toStringAsFixed(1)}kg',
+          onClick: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Plan transformation details clicked'),
+                backgroundColor: Color(0xFFE57373),
+              ),
+            );
+          },
+        ),
+      ),
+      // Current progress
+      Container(
+        margin: const EdgeInsets.only(right: 8),
+        child: DataSummaryWidget(
+          title: 'Current Weight',
+          startValue: '${kpiData.mostRecentWeightKg.toStringAsFixed(1)}kg',
+          endValue: '',
+          onClick: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Current progress details clicked'),
+                backgroundColor: Color(0xFFE57373),
+              ),
+            );
+          },
+        ),
+      ),
+      // Plan duration
+      Container(
+        margin: const EdgeInsets.only(right: 8),
+        child: DataSummaryWidget(
+          title: 'Plan Duration',
+          startValue: 'Day ${kpiData.currentPlanDay}',
+          endValue: '${kpiData.totalPlanDurationDays} days',
+          onClick: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Plan duration details clicked'),
+                backgroundColor: Color(0xFFE57373),
+              ),
+            );
+          },
+        ),
+      ),
+      // Plan start date
+      Container(
+        margin: const EdgeInsets.only(right: 8),
+        child: DataSummaryWidget(
+          title: 'Start Date',
+          startValue: kpiData.planStartDate,
+          endValue: '',
+          onClick: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Plan start date details clicked'),
+                backgroundColor: Color(0xFFE57373),
+              ),
+            );
+          },
+        ),
+      ),
+    ];
+  }
+
+  // Variable to track selected week
+  RxInt selectedWeek = 1.obs;
+
+  // Method to build week tabs
+  Widget _buildWeekTabs() {
+    if (!homeController.hasNutrientWeeklySummary) {
+      return const SizedBox.shrink();
+    }
+
+    // Get available weeks and filter out 999 (since it's used for Average)
+    final availableWeeks =
+        homeController.availableWeeks.where((week) => week != 999).toList();
+
+    return Container(
+      height: 40,
+      margin: const EdgeInsets.only(bottom: 16),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: availableWeeks.length + 1, // +1 for Average tab
+        itemBuilder: (context, index) {
+          if (index == availableWeeks.length) {
+            // Average tab (using week 999 from API)
+            return Obx(
+                () => _buildWeekTab('Average', 999, selectedWeek.value == 999));
+          } else {
+            final week = availableWeeks[index];
+            return Obx(() =>
+                _buildWeekTab('Week $week', week, selectedWeek.value == week));
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildWeekTab(String title, int weekValue, bool isSelected) {
+    return GestureDetector(
+      onTap: () {
+        selectedWeek.value = weekValue;
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF007BFF) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF007BFF) : Colors.grey.shade400,
+            width: 1,
+          ),
+        ),
+        child: Center(
+          child: MediumText(
+            title,
+            fontSize: 14,
+            textColor: isSelected ? Colors.white : Colors.grey.shade600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Method to get color based on percentage
+  Color _getColorForPercentage(double percentage) {
+    if (percentage >= 80) {
+      return const Color(0xFF8BC34A); // Green for good
+    } else if (percentage >= 50) {
+      return const Color(0xFFFFA500); // Orange for moderate
+    } else {
+      return const Color(0xFFC82333); // Red for low
+    }
+  }
+
+  // Method to build nutrient widgets from API data
+  List<Widget> _buildNutrientWidgets() {
+    if (!homeController.hasNutrientWeeklySummary) {
+      return [
+        const Center(
+          child: CircularProgressIndicator(),
+        ),
+      ];
+    }
+
+    final nutrients = homeController.getNutrientsForWeek(selectedWeek.value);
+
+    if (nutrients.isEmpty) {
+      return [
+        Center(
+          child: MediumText(
+            'No data available for this week',
+            fontSize: 14,
+            textColor: Colors.grey.shade600,
+          ),
+        ),
+      ];
+    }
+
+    return nutrients.map((nutrient) {
+      return NutrientProgressWidget(
+        nutrientName: '${nutrient.nutrient} (${nutrient.unit})',
+        percentage: nutrient.percentMet,
+        inputValue: nutrient.actualAverageIntake,
+        requiredValue: nutrient.requiredAverageIntake,
+        progressColor: _getColorForPercentage(nutrient.percentMet),
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  '${nutrient.nutrient}: ${nutrient.percentMet.toStringAsFixed(2)}% met'),
+              backgroundColor: _getColorForPercentage(nutrient.percentMet),
+            ),
+          );
+        },
+      );
+    }).toList();
+  }
+
   // Sample data for nutrient progress
-  List<Map<String, dynamic>> poritinelist = [
-    {
-      "title": "Protein",
-      "value": 75.0,
-      "requiredValue": 100.0,
-      "color": const Color(0xFF8BC34A)
-    },
-    {
-      "title": "Zinc (mg)",
-      "value": 50.09,
-      "requiredValue": 100.0,
-      "color": const Color(0xFFC82333)
-    },
-    {
-      "title": "Folate (µg)",
-      "value": 50.0,
-      "requiredValue": 100.0,
-      "color": const Color(0xFFC82333)
-    },
-    {
-      "title": "Vitamin B3 (mg)",
-      "value": 108.4,
-      "requiredValue": 100.0,
-      "color": const Color(0xFF8BC34A)
-    },
-    {
-      "title": "Iron (mg)",
-      "value": 82.3,
-      "requiredValue": 100.0,
-      "color": const Color(0xFFFFA500)
-    },
-  ];
 
   // Sample data for the weight progress chart - matching the design screenshot
   List<WeightData> sampleWeightData = [
@@ -121,21 +311,23 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 14),
               SizedBox(
                 height: 80,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: 10,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      child: DataSummaryWidget(
-                        title: 'Plan transformation',
-                        startValue: '100kg',
-                        endValue: '96Kg',
-                        onClick: () {},
-                      ),
+                child: Obx(() {
+                  if (homeController.isLoadingDashboardSummary.value) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
                     );
-                  },
-                ),
+                  }
+
+                  final kpiWidgets = _buildKpiWidgets();
+
+                  return ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: kpiWidgets.length,
+                    itemBuilder: (context, index) {
+                      return kpiWidgets[index];
+                    },
+                  );
+                }),
               ),
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 10),
@@ -156,8 +348,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   maxWeight: 100.0, // Weight scale 96.0-100.0 kg
                 ),
               ),
-
               const SizedBox(height: 10),
+
               // Nutrient Analysis Section
               Container(
                 padding: const EdgeInsets.all(16),
@@ -181,15 +373,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontSize: 16,
                       textColor: const Color(0xFF091242), // Dark blue
                     ),
-                    const SizedBox(height: 10),
-                    ...List.generate(poritinelist.length, (index) {
-                      return NutrientProgressWidget(
-                        nutrientName: poritinelist[index]['title'],
-                        percentage: poritinelist[index]['value'],
-                        inputValue: poritinelist[index]['value'],
-                        requiredValue: poritinelist[index]['requiredValue'],
-                        progressColor: poritinelist[index]['color'],
-                        onTap: () {},
+                    const SizedBox(height: 16),
+                    // Week Tabs
+
+                    // Nutrient Progress List
+                    Obx(() {
+                      if (homeController.isLoadingNutrientWeeklySummary.value) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(20.0),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+
+                      final nutrientWidgets = _buildNutrientWidgets();
+
+                      return Column(
+                        children: [_buildWeekTabs(), ...nutrientWidgets],
                       );
                     }),
                   ],

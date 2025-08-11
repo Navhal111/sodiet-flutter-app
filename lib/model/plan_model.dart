@@ -362,3 +362,68 @@ class DataSets {
     };
   }
 }
+
+// Nutrient Weekly Summary Models
+class NutrientWeeklySummaryResponse {
+  final List<WeeklyNutrientData> weeklyNutrientSummary;
+
+  NutrientWeeklySummaryResponse({
+    required this.weeklyNutrientSummary,
+  });
+
+  factory NutrientWeeklySummaryResponse.fromJson(Map<String, dynamic> json) {
+    return NutrientWeeklySummaryResponse(
+      weeklyNutrientSummary: (json['weekly_nutrient_summary'] as List<dynamic>?)
+              ?.map((item) => WeeklyNutrientData.fromJson(item))
+              .toList() ??
+          [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'weekly_nutrient_summary':
+          weeklyNutrientSummary.map((item) => item.toJson()).toList(),
+    };
+  }
+}
+
+class WeeklyNutrientData {
+  final int weekNumber;
+  final String nutrient;
+  final String unit;
+  final double actualAverageIntake;
+  final double requiredAverageIntake;
+  final double percentMet;
+
+  WeeklyNutrientData({
+    required this.weekNumber,
+    required this.nutrient,
+    required this.unit,
+    required this.actualAverageIntake,
+    required this.requiredAverageIntake,
+    required this.percentMet,
+  });
+
+  factory WeeklyNutrientData.fromJson(Map<String, dynamic> json) {
+    return WeeklyNutrientData(
+      weekNumber: json['week_number'] ?? 0,
+      nutrient: json['nutrient'] ?? '',
+      unit: json['unit'] ?? '',
+      actualAverageIntake: (json['actual_average_intake'] ?? 0).toDouble(),
+      requiredAverageIntake: (json['required_average_intake'] ?? 0).toDouble(),
+      percentMet: (json['percent_met'] ?? 0).toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'week_number': weekNumber,
+      'nutrient': nutrient,
+      'unit': unit,
+      'actual_average_intake': actualAverageIntake,
+      'required_average_intake': requiredAverageIntake,
+      'percent_met': percentMet,
+    };
+  }
+}

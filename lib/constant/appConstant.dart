@@ -5,7 +5,8 @@ class AppConstants {
   static const String somethingWentWrong = 'something Went Wrong';
 
   // API DOMAIN LINK
-  static const String DOMAIN = 'https://datatools.sjri.res.in';
+  // static const String DOMAIN = 'https://datatools.sjri.res.in';
+  static const String DOMAIN = 'http://49.204.74.61';
   static const String BASE_URL = '${DOMAIN}/SD/api/v1/';
   static const String BASE_URL_IMAGE = '${DOMAIN}/static/VD/food_images_large/';
 
@@ -14,6 +15,8 @@ class AppConstants {
   static const String GET_PA_RECALL = '${BASE_URL}log/pa-recall';
   static const String GET_RECIPES = '${BASE_URL}recipes';
   static const String GET_RECIPES_SEARCH = '${BASE_URL}recipes/search';
+  static const String GET_FOOD_CATEGORIES =
+      '${BASE_URL}recipes/food-categories';
 
   // Recipe Like/Dislike endpoints
   static String getRecipeLikeUrl(String recipeCode) =>
@@ -32,6 +35,8 @@ class AppConstants {
   static const String GET_PLAN_ACTIVE = '${BASE_URL}bwp/active-plan-id';
   static const String GET_PLAN_DETAILS = '${BASE_URL}bwp/plan-details';
   static const String GET_DASHBOARD_SUMMARY = '${BASE_URL}dashboard/summary';
+  static const String GET_NUTRIENT_WEEKLY_SUMMARY =
+      '${BASE_URL}dashboard/nutrient-weekly-summary';
 
   // Contant Save data keys
   static const String INTRO = 'intro';

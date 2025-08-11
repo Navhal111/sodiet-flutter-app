@@ -28,6 +28,9 @@ class RecipeController extends GetxController implements GetxService {
   // Nutrition related variables
   RxBool isLoadingNutrition = false.obs;
 
+  // Food categories related variables
+  RxBool isLoadingFoodCategories = false.obs;
+
   int currentPage = 1;
   int pageSize = 20; // Load 20 items per page
   int searchCurrentPage = 1;
@@ -41,6 +44,10 @@ class RecipeController extends GetxController implements GetxService {
 
   // Nutrition data
   Rx<NutritionResponse?> nutritionResponse = Rx<NutritionResponse?>(null);
+
+  // Food categories data
+  Rx<FoodCategoriesResponse?> foodCategoriesResponse =
+      Rx<FoodCategoriesResponse?>(null);
 
   getRecipes({bool loadMore = false}) async {
     if (loadMore) {
@@ -379,5 +386,75 @@ class RecipeController extends GetxController implements GetxService {
   // Method to clear nutrition data
   void clearNutrition() {
     nutritionResponse.value = null;
+  }
+
+  // Method to get food categories
+  Future<bool> getFoodCategories() async {
+    print("Starting to fetch food categories");
+    isLoadingFoodCategories.value = true;
+
+    try {
+      String apiUrl = AppConstants.GET_FOOD_CATEGORIES;
+
+      Response response = await authRepo.getDataSet(apiName: apiUrl);
+      print("Food Categories API Response Status: ${response.statusCode}");
+      print("Food Categories API Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        foodCategoriesResponse.value =
+            FoodCategoriesResponse.fromJson(response.body);
+        print(
+            "Loaded ${foodCategoriesResponse.value?.foodCategories.length ?? 0} food categories");
+        return true;
+      } else {
+        print("Food Categories API Error: ${response.statusCode}");
+        foodCategoriesResponse.value = null;
+        return false;
+      }
+    } catch (e) {
+      print("Exception in getFoodCategories: $e");
+      foodCategoriesResponse.value = null;
+      return false;
+    } finally {
+      isLoadingFoodCategories.value = false;
+    }
+  }
+
+  // Method to get food categories list
+  List<FoodCategory> get foodCategoriesList =>
+      foodCategoriesResponse.value?.foodCategories ?? [];
+
+  // Method to get food category by code
+  FoodCategory? getFoodCategoryByCode(String code) {
+    try {
+      return foodCategoriesList.firstWhere((category) => category.code == code);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Method to search food categories by name
+  List<FoodCategory> searchFoodCategories(String query) {
+    if (query.isEmpty) {
+      return foodCategoriesList;
+    }
+    return foodCategoriesList
+        .where((category) =>
+            category.category.toLowerCase().contains(query.toLowerCase()) ||
+            category.code.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+  }
+
+  // Method to check if food categories are loaded
+  bool get hasFoodCategories => foodCategoriesResponse.value != null;
+
+  // Method to clear food categories data
+  void clearFoodCategories() {
+    foodCategoriesResponse.value = null;
+  }
+
+  // Method to refresh food categories
+  void refreshFoodCategories() {
+    getFoodCategories();
   }
 }
