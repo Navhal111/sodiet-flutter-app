@@ -44,12 +44,12 @@ class _RecipeHeaderSectionWidgetState extends State<RecipeHeaderSectionWidget> {
 
         const SizedBox(height: 20),
 
-        // Category Filter
-        RecipeCategoryFilterWidget(
-          categories: RecipeConstants.categories,
-          selectedCategory: _selectedCategory,
-          onCategorySelected: _onCategorySelected,
-        ),
+        //   // Category Filter
+        //   RecipeCategoryFilterWidget(
+        //     categories: RecipeConstants.categories,
+        //     selectedCategory: _selectedCategory,
+        //     onCategorySelected: _onCategorySelected,
+        //   ),
       ],
     );
   }

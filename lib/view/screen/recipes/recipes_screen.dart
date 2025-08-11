@@ -12,6 +12,7 @@ import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 import 'package:sodiet/view/widgets/recipes/recipe_header_section_widget.dart';
 import 'package:sodiet/view/widgets/recipes/recipes_header_widget.dart';
 import 'package:sodiet/view/widgets/recipes/recipes_search_widget.dart';
+import 'package:sodiet/view/widgets/recipes/filter_popup_widget.dart';
 
 class RecipesScreen extends StatefulWidget {
   const RecipesScreen({Key? key}) : super(key: key);
@@ -33,6 +34,10 @@ class _RecipesScreenState extends State<RecipesScreen> {
     super.initState();
     recipeController = Get.find<RecipeController>();
     recipeController.getRecipes();
+    // Load food categories for filtering
+    recipeController.getFoodCategories();
+    // Load food subcategories for filtering
+    recipeController.getFoodSubcategories();
 
     // Add scroll listener for pagination
     _scrollController.addListener(_onScroll);
@@ -117,7 +122,19 @@ class _RecipesScreenState extends State<RecipesScreen> {
   }
 
   void _handleFilter() {
-    CustomToast.showInfo('Filter functionality will be implemented soon');
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return FilterPopupWidget(
+          onApplyFilter: (String? selectedCategory, String? selectedSubcategory,
+              String selectedSortBy) {
+            // Apply filters through the controller
+            recipeController.applyFiltersAndSort(
+                selectedCategory, selectedSubcategory, selectedSortBy);
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -153,24 +170,26 @@ class _RecipesScreenState extends State<RecipesScreen> {
                   onFilterTap: _handleFilter,
                 ),
                 const SizedBox(height: 4),
+                // Filter indicator chip
+                _buildFilterIndicator(),
                 // Categories and Dishes Section in white container
-                Container(
-                  margin: EdgeInsets.zero,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 5,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const RecipeHeaderSectionWidget(),
-                ),
+                // Container(
+                //   margin: EdgeInsets.zero,
+                //   padding: const EdgeInsets.all(16),
+                //   decoration: BoxDecoration(
+                //     color: Colors.white,
+                //     borderRadius: BorderRadius.circular(12),
+                //     boxShadow: [
+                //       BoxShadow(
+                //         color: Colors.grey.withOpacity(0.1),
+                //         spreadRadius: 1,
+                //         blurRadius: 5,
+                //         offset: const Offset(0, 2),
+                //       ),
+                //     ],
+                //   ),
+                //   child: const RecipeHeaderSectionWidget(),
+                // ),
 
                 const SizedBox(height: 8),
                 // Recipe Grid with API data
@@ -184,6 +203,84 @@ class _RecipesScreenState extends State<RecipesScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildFilterIndicator() {
+    return Obx(() {
+      if (!recipeController.hasActiveFilters) {
+        return const SizedBox.shrink();
+      }
+
+      String filterText = '';
+      if (recipeController.selectedCategoryCode.value.isNotEmpty) {
+        FoodCategory? category = recipeController
+            .getFoodCategoryByCode(recipeController.selectedCategoryCode.value);
+        filterText = 'Category: ${category?.category ?? 'Unknown'}';
+      }
+
+      if (recipeController.selectedSortBy.value != 'Name (A-Z)') {
+        if (filterText.isNotEmpty) filterText += ' • ';
+        filterText += 'Sort: ${recipeController.selectedSortBy.value}';
+      }
+
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Theme.of(context).primaryColor.withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.filter_alt,
+                      size: 16,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: RegularText(
+                        filterText,
+                        fontSize: 12,
+                        textColor: Theme.of(context).primaryColor,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: () {
+                        recipeController.clearFilters();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          size: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildRecipeGrid() {

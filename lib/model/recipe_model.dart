@@ -268,3 +268,62 @@ class FoodCategory {
     };
   }
 }
+
+class FoodSubcategoriesResponse {
+  final List<FoodSubcategory> foodSubcategories;
+  final int totalCount;
+  final String? mainCategoryCode;
+
+  FoodSubcategoriesResponse({
+    required this.foodSubcategories,
+    required this.totalCount,
+    this.mainCategoryCode,
+  });
+
+  factory FoodSubcategoriesResponse.fromJson(Map<String, dynamic> json) {
+    return FoodSubcategoriesResponse(
+      foodSubcategories: (json['food_subcategories'] as List)
+          .map((item) => FoodSubcategory.fromJson(item))
+          .toList(),
+      totalCount: json['total_count'] ?? 0,
+      mainCategoryCode: json['main_category_code'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'food_subcategories':
+          foodSubcategories.map((item) => item.toJson()).toList(),
+      'total_count': totalCount,
+      'main_category_code': mainCategoryCode,
+    };
+  }
+}
+
+class FoodSubcategory {
+  final String code;
+  final String subCategory;
+  final String mainCategoryCode;
+
+  FoodSubcategory({
+    required this.code,
+    required this.subCategory,
+    required this.mainCategoryCode,
+  });
+
+  factory FoodSubcategory.fromJson(Map<String, dynamic> json) {
+    return FoodSubcategory(
+      code: json['Code'] ?? '',
+      subCategory: json['SubCategory'] ?? '',
+      mainCategoryCode: json['MainCategoryCode'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'Code': code,
+      'SubCategory': subCategory,
+      'MainCategoryCode': mainCategoryCode,
+    };
+  }
+}

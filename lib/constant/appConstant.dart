@@ -17,6 +17,8 @@ class AppConstants {
   static const String GET_RECIPES_SEARCH = '${BASE_URL}recipes/search';
   static const String GET_FOOD_CATEGORIES =
       '${BASE_URL}recipes/food-categories';
+  static const String GET_FOOD_SUBCATEGORIES =
+      '${BASE_URL}recipes/food-subcategories';
 
   // Recipe Like/Dislike endpoints
   static String getRecipeLikeUrl(String recipeCode) =>
