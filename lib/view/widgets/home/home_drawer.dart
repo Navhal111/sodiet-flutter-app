@@ -138,6 +138,12 @@ class _HomeDrawerState extends State<HomeDrawer> {
                             .isRouteActive(AppRoutes.weightLogManagerScreen),
                         onTap: () =>
                             navigationController.navigateToWeightLogManager()),
+                    _buildDrawerItem(
+                        context, Icons.trending_up_outlined, 'Fat Log Manager',
+                        isSelected: navigationController
+                            .isRouteActive(AppRoutes.fatLogManagerScreen),
+                        onTap: () =>
+                            navigationController.navigateToFatLogManager()),
                     _buildDrawerItem(context, Icons.directions_run_outlined,
                         'Physical Activity',
                         isSelected: navigationController

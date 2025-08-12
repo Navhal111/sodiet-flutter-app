@@ -92,6 +92,14 @@ class NavigationController extends GetxController {
     }
   }
 
+  void navigateToFatLogManager() {
+    if (_currentRoute.value != AppRoutes.fatLogManagerScreen) {
+      Get.offNamed(AppRoutes.fatLogManagerScreen);
+      _currentRoute.value = AppRoutes.fatLogManagerScreen;
+      update();
+    }
+  }
+
   void navigateToPhysicalActivity() {
     if (_currentRoute.value != AppRoutes.physicalActivityScreen) {
       Get.offNamed(AppRoutes.physicalActivityScreen);

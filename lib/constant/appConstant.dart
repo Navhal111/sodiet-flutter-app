@@ -49,6 +49,12 @@ class AppConstants {
   static const String UPDATE_WEIGHT_LOG = '${BASE_URL}log/weight-log';
   static const String DELETE_WEIGHT_LOG = '${BASE_URL}log/weight-log';
 
+  // Fat Log endpoints
+  static const String GET_FAT_LOGS = '${BASE_URL}log/bodyfat-log';
+  static const String ADD_FAT_LOG = '${BASE_URL}log/bodyfat-log';
+  static const String UPDATE_FAT_LOG = '${BASE_URL}log/bodyfat-log';
+  static const String DELETE_FAT_LOG = '${BASE_URL}log/bodyfat-log';
+
   // Contant Save data keys
   static const String INTRO = 'intro';
   static const String TOKEN = 'token';

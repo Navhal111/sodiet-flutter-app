@@ -13,6 +13,7 @@ class AppRoutes {
   static const String preferenceOnboardingScreen =
       '/preference_onboarding_screen';
   static const String weightLogManagerScreen = '/weight_log_manager_screen';
+  static const String fatLogManagerScreen = '/fat_log_manager_screen';
   static const String physicalActivityScreen = '/physical_activity_screen';
   static const String physicalActivityPlannerScreen =
       '/physical_activity_planner_screen';
