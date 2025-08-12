@@ -6,6 +6,7 @@ import 'package:sodiet/controller/recipe/recipeController.dart';
 import 'package:sodiet/model/recipe_model.dart';
 import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/screen/recipes/recipe_detail_screen.dart';
+import 'package:sodiet/view/screen/recipes/add_recipe_screen.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/common/custom_toast.dart';
 import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
@@ -78,7 +79,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
   }
 
   void _handleAddRecipe() {
-    CustomToast.showInfo('Add recipe functionality will be implemented soon');
+    Get.to(() => const AddRecipeScreen());
   }
 
   void _handleSearch(String value) {

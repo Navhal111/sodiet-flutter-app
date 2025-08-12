@@ -44,6 +44,14 @@ class NavigationController extends GetxController {
     }
   }
 
+  void navigateToAddRecipes() {
+    if (_currentRoute.value != AppRoutes.addRecipeScreen) {
+      Get.offNamed(AppRoutes.addRecipeScreen);
+      _currentRoute.value = AppRoutes.addRecipeScreen;
+      update();
+    }
+  }
+
   void navigateToOptimization() {
     if (_currentRoute.value != AppRoutes.optimizationScreen) {
       Get.offNamed(AppRoutes.optimizationScreen);

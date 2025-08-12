@@ -4,6 +4,7 @@ import 'package:sodiet/view/screen/auth/login_screen.dart';
 import 'package:sodiet/view/screen/course_correction/course_correction_screen.dart';
 import 'package:sodiet/view/screen/home/home_screen.dart';
 import 'package:sodiet/view/screen/plan/plan_screen.dart';
+import 'package:sodiet/view/screen/recipes/add_recipe_screen.dart';
 import 'package:sodiet/view/screen/recipes/recipes_screen.dart';
 import 'package:sodiet/view/screen/recipes/recipe_detail_screen.dart';
 import 'package:sodiet/view/screen/optimization/optimization_screen.dart';
@@ -84,6 +85,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.dietRecallScreen,
       page: () => const DietRecallScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.addRecipeScreen,
+      page: () => const AddRecipeScreen(),
     ),
   ];
 }

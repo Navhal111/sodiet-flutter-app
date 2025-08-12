@@ -6,6 +6,7 @@ import 'package:sodiet/controller/physicalActivity/physicalController.dart';
 import 'package:sodiet/controller/plan/planController.dart';
 import 'package:sodiet/controller/recipe/recipeController.dart';
 import 'package:sodiet/controller/theme/themeController.dart';
+import 'package:sodiet/controller/weight_log/weight_log_controller.dart';
 
 import '../api/api_client.dart';
 import '../constant/appConstant.dart';
@@ -34,6 +35,7 @@ init() async {
   Get.lazyPut(() => PlanController(authRepo: Get.find()), fenix: true);
   Get.lazyPut(() => HomeController(authRepo: Get.find()), fenix: true);
   Get.lazyPut(() => RecipeController(authRepo: Get.find()), fenix: true);
+  Get.lazyPut(() => WeightLogController(authRepo: Get.find()), fenix: true);
 
   // Navigation
   Get.lazyPut(() => NavigationController(), fenix: true);

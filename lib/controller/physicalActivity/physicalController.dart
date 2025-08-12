@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../constant/appConstant.dart';
 import '../../model/pa_recall_model.dart';
+import '../../model/physical_activity_model.dart';
 import '../../repo/authRepo.dart';
 
 class PhysicalActivityController extends GetxController implements GetxService {
@@ -15,11 +16,18 @@ class PhysicalActivityController extends GetxController implements GetxService {
   RxBool isLoadingList = false.obs;
   RxBool isLoadingMore = false.obs;
   RxBool hasMoreData = true.obs;
+  RxBool isLoadingActivities = false.obs;
 
   // Observable variables to store PA recall data
   Rx<PaRecallModel?> paRecallData = Rx<PaRecallModel?>(null);
   RxList<PaRecallItem> paRecallList = <PaRecallItem>[].obs;
   RxInt totalCount = 0.obs;
+
+  // Observable variables to store physical activities data
+  Rx<PhysicalActivityModel?> physicalActivitiesData =
+      Rx<PhysicalActivityModel?>(null);
+  RxList<PhysicalActivity> activitiesList = <PhysicalActivity>[].obs;
+
   int currentPage = 1;
   int pageSize = 20; // Load 20 items per page
 
@@ -91,6 +99,36 @@ class PhysicalActivityController extends GetxController implements GetxService {
   // Method to load more data when scrolling
   void loadMorePaRecalls() {
     getPaRecallList(loadMore: true);
+  }
+
+  // Method to get physical activities list
+  getPhysicalActivitiesList() async {
+    isLoadingActivities.value = true;
+    try {
+      String apiUrl = AppConstants.GET_PHYSICAL_ACTIVITIES;
+      Response response = await authRepo.getDataSet(apiName: apiUrl);
+      print("Physical Activities API Response Status: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        // Parse the response using the model
+        physicalActivitiesData.value =
+            PhysicalActivityModel.fromJson(response.body);
+        activitiesList.value = physicalActivitiesData.value?.activities ?? [];
+
+        print("Loaded ${activitiesList.length} physical activities");
+      } else {
+        print("Physical Activities API Error: ${response.statusCode}");
+        physicalActivitiesData.value = null;
+        activitiesList.clear();
+      }
+    } catch (e) {
+      print('Exception in getPhysicalActivitiesList: $e');
+      physicalActivitiesData.value = null;
+      activitiesList.clear();
+    }
+
+    isLoadingActivities.value = false;
+    update();
   }
 
   addPaRecall(Map<String, dynamic> activityData) async {

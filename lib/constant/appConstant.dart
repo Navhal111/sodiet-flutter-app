@@ -13,12 +13,15 @@ class AppConstants {
   // API ENDPOINTS
   static const String GET_DIET_RECALES = '${BASE_URL}log/diet-recall';
   static const String GET_PA_RECALL = '${BASE_URL}log/pa-recall';
+  static const String GET_PHYSICAL_ACTIVITIES =
+      '${BASE_URL}log/physical-activities';
   static const String GET_RECIPES = '${BASE_URL}recipes';
   static const String GET_RECIPES_SEARCH = '${BASE_URL}recipes/search';
   static const String GET_FOOD_CATEGORIES =
       '${BASE_URL}recipes/food-categories';
   static const String GET_FOOD_SUBCATEGORIES =
       '${BASE_URL}recipes/food-subcategories';
+  static const String SUBMIT_RECIPE = '${BASE_URL}recipes/';
 
   // Recipe Like/Dislike endpoints
   static String getRecipeLikeUrl(String recipeCode) =>
@@ -39,6 +42,12 @@ class AppConstants {
   static const String GET_DASHBOARD_SUMMARY = '${BASE_URL}dashboard/summary';
   static const String GET_NUTRIENT_WEEKLY_SUMMARY =
       '${BASE_URL}dashboard/nutrient-weekly-summary';
+
+  // Weight Log endpoints
+  static const String GET_WEIGHT_LOGS = '${BASE_URL}log/weight-log';
+  static const String ADD_WEIGHT_LOG = '${BASE_URL}log/weight-log';
+  static const String UPDATE_WEIGHT_LOG = '${BASE_URL}log/weight-log';
+  static const String DELETE_WEIGHT_LOG = '${BASE_URL}log/weight-log';
 
   // Contant Save data keys
   static const String INTRO = 'intro';

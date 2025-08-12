@@ -62,6 +62,9 @@ class RecipeController extends GetxController implements GetxService {
   RxString selectedSortBy = 'Name (A-Z)'.obs;
   RxList<Recipe> filteredRecipeList = <Recipe>[].obs;
 
+  // Recipe submission related variables
+  RxBool isSubmittingRecipe = false.obs;
+
   getRecipes({bool loadMore = false}) async {
     if (loadMore) {
       if (isLoadingMore.value || !hasMoreData.value) return;
@@ -697,4 +700,84 @@ class RecipeController extends GetxController implements GetxService {
       selectedCategoryCode.value.isNotEmpty ||
       selectedSubcategoryCode.value.isNotEmpty ||
       selectedSortBy.value != 'Name (A-Z)';
+
+  // Method to submit a new recipe
+  Future<Map<String, dynamic>> submitRecipe({
+    required String recipeName,
+    required String cookingTime,
+    required String description,
+    required String categoryCode,
+    required String subcategoryCode,
+    required double portion,
+    required double portionWeight,
+    required double servings,
+    required List<String> regional,
+    required List<String> mealtime,
+    required List<String> dietary,
+    required List<String> attributes,
+    required List<Map<String, dynamic>> tableData,
+  }) async {
+    print("Starting to submit recipe: $recipeName");
+    isSubmittingRecipe.value = true;
+
+    try {
+      String apiUrl = AppConstants.SUBMIT_RECIPE;
+
+      Map<String, dynamic> requestBody = {
+        'code_cooccurence': categoryCode,
+        'subcategories': subcategoryCode,
+        'portion': portion,
+        'description': description,
+        'portion_weight': portionWeight,
+        'servings': servings,
+        'cookingTime': cookingTime,
+        'recipeName': recipeName,
+        'regional': regional,
+        'mealtime': mealtime,
+        'dietary': dietary,
+        'attributes': attributes,
+        'tableData': tableData,
+      };
+
+      print("Recipe submission payload: $requestBody");
+
+      Response response = await authRepo.postDataSet(
+        apiName: apiUrl,
+        sendData: requestBody,
+      );
+
+      print("Submit Recipe API Response Status: ${response.statusCode}");
+      print("Submit Recipe API Response Body: ${response.body}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print("Recipe submitted successfully");
+
+        // Refresh recipes list to include the new recipe
+        refreshRecipes();
+
+        return {
+          'success': true,
+          'message':
+              response.body['message'] ?? 'Recipe submitted successfully',
+          'data': response.body
+        };
+      } else {
+        print("Failed to submit recipe. Status: ${response.statusCode}");
+        return {
+          'success': false,
+          'message': response.body['message'] ?? 'Failed to submit recipe',
+          'error': response.body
+        };
+      }
+    } catch (e) {
+      print("Exception in submitRecipe: $e");
+      return {
+        'success': false,
+        'message': 'An error occurred while submitting recipe',
+        'error': e.toString()
+      };
+    } finally {
+      isSubmittingRecipe.value = false;
+    }
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sodiet/controller/physicalActivity/physicalController.dart';
 import 'package:sodiet/view/widgets/common/title_section_widget.dart';
 import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
@@ -16,67 +17,61 @@ class PhysicalActivityPlannerScreen extends StatefulWidget {
 class _PhysicalActivityPlannerScreenState
     extends State<PhysicalActivityPlannerScreen> {
   String selectedActivity = '';
-  double duration = 0; // Duration in minutes
-  double estimatedCalories = 0.0;
+  double duration = 5; // Duration in minutes (default 5 minutes)
+  double estimatedCaloriesMale = 0.0;
+  double estimatedCaloriesFemale = 0.0;
 
-  final List<String> activities = [
-    'Batting',
-    'Dancing',
-    'Golf',
-    'VolleyBall',
-    'Tennis',
-    'Running- Long distance',
-    'Rowing',
-    'Basketball',
-    'Circuit Training',
-    'Walking uphill',
-    'Football',
-    'Sailing',
-    'Walking Around',
-    'Walking Slowly',
-    'Dancing',
-    'Calisthenics',
-    'Walking Quickly',
-    'Batting',
-    'Aerobic Dancing - Low intensity',
-    'Climbing Stairs',
-    'Cycling'
-  ];
+  // ValueNotifiers for smooth updates without rebuilding entire widget
+  final ValueNotifier<double> durationNotifier = ValueNotifier<double>(5.0);
+  final ValueNotifier<double> caloriesMaleNotifier = ValueNotifier<double>(0.0);
+  final ValueNotifier<double> caloriesFemaleNotifier =
+      ValueNotifier<double>(0.0);
 
-  // Calories per minute for different activities (approximate values)
-  final Map<String, double> caloriesPerMinute = {
-    'Batting': 4.5,
-    'Dancing': 3.5,
-    'Golf': 3.0,
-    'VolleyBall': 6.0,
-    'Tennis': 7.0,
-    'Running- Long distance': 12.0,
-    'Rowing': 8.5,
-    'Basketball': 8.0,
-    'Circuit Training': 9.0,
-    'Walking uphill': 6.5,
-    'Football': 9.5,
-    'Sailing': 2.5,
-    'Walking Around': 3.0,
-    'Walking Slowly': 2.0,
-    'Calisthenics': 5.5,
-    'Walking Quickly': 4.5,
-    'Aerobic Dancing - Low intensity': 4.0,
-    'Climbing Stairs': 8.0,
-    'Cycling': 7.5,
-  };
+  final PhysicalActivityController physicalActivityController =
+      Get.find<PhysicalActivityController>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Load physical activities when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      physicalActivityController.getPhysicalActivitiesList();
+    });
+  }
+
+  @override
+  void dispose() {
+    durationNotifier.dispose();
+    caloriesMaleNotifier.dispose();
+    caloriesFemaleNotifier.dispose();
+    super.dispose();
+  }
+
+  double _getMaleCaloriesPerMinute(String activityName) {
+    final activity = physicalActivityController.activitiesList
+        .firstWhereOrNull((activity) => activity.paName == activityName);
+    return activity?.maleValue ?? 5.0;
+  }
+
+  double _getFemaleCaloriesPerMinute(String activityName) {
+    final activity = physicalActivityController.activitiesList
+        .firstWhereOrNull((activity) => activity.paName == activityName);
+    return activity?.femaleValue ?? 5.0;
+  }
 
   void _calculateCalories() {
     if (selectedActivity.isNotEmpty && duration > 0) {
       setState(() {
-        estimatedCalories =
-            (caloriesPerMinute[selectedActivity] ?? 5.0) * duration;
+        estimatedCaloriesMale =
+            _getMaleCaloriesPerMinute(selectedActivity) * duration;
+        estimatedCaloriesFemale =
+            _getFemaleCaloriesPerMinute(selectedActivity) * duration;
       });
 
       // Show success message
       Get.snackbar(
         'Calculated',
-        'Estimated calories: ${estimatedCalories.toStringAsFixed(2)} Kcal',
+        'Estimated calories calculated for both genders',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFF4CAF50),
         colorText: Colors.white,
@@ -134,63 +129,133 @@ class _PhysicalActivityPlannerScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Choose Activity Section
-                  SemiBoldText(
-                    'Choose your Activity',
-                    fontSize: 18,
-                    textColor: Colors.black87,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SemiBoldText(
+                        'Choose your Activity',
+                        fontSize: 18,
+                        textColor: Colors.black87,
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          physicalActivityController
+                              .getPhysicalActivitiesList();
+                        },
+                        icon: const Icon(
+                          Icons.refresh,
+                          color: Color(0xFF091242),
+                        ),
+                        tooltip: 'Refresh Activities',
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
 
                   // Activity chips
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: activities.map((activity) {
-                      final isSelected = selectedActivity == activity;
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedActivity = activity;
-                            // Recalculate calories when activity changes
-                            if (duration > 0) {
-                              estimatedCalories =
-                                  (caloriesPerMinute[activity] ?? 5.0) *
-                                      duration;
-                            }
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? Theme.of(context)
-                                    .primaryColorDark
-                                    .withOpacity(0.2)
-                                : Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(16),
-                            border: isSelected
-                                ? Border.all(
-                                    color: Theme.of(context).primaryColorDark,
-                                    width: 2)
-                                : null,
-                          ),
-                          child: Text(
-                            activity,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isSelected
-                                  ? const Color(0xFF091242)
-                                  : Colors.grey.shade700,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                            ),
+                  Obx(() {
+                    if (physicalActivityController.isLoadingActivities.value) {
+                      return const SizedBox(
+                        height: 100,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircularProgressIndicator(
+                                color: Color(0xFF091242),
+                              ),
+                              SizedBox(height: 8),
+                              Text('Loading activities...'),
+                            ],
                           ),
                         ),
                       );
-                    }).toList(),
-                  ),
+                    }
+
+                    if (physicalActivityController.activitiesList.isEmpty) {
+                      return const SizedBox(
+                        height: 100,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: Colors.grey,
+                                size: 32,
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'No activities available',
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: physicalActivityController.activitiesList
+                          .map((activity) {
+                        final isSelected = selectedActivity == activity.paName;
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedActivity = activity.paName;
+                              // Calculate calories for both genders when activity changes
+                              if (duration > 0) {
+                                estimatedCaloriesMale =
+                                    _getMaleCaloriesPerMinute(activity.paName) *
+                                        duration;
+                                estimatedCaloriesFemale =
+                                    _getFemaleCaloriesPerMinute(
+                                            activity.paName) *
+                                        duration;
+
+                                // Update ValueNotifiers for smooth display
+                                caloriesMaleNotifier.value =
+                                    estimatedCaloriesMale;
+                                caloriesFemaleNotifier.value =
+                                    estimatedCaloriesFemale;
+                              }
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Theme.of(context)
+                                      .primaryColorDark
+                                      .withOpacity(0.2)
+                                  : Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(16),
+                              border: isSelected
+                                  ? Border.all(
+                                      color: Theme.of(context).primaryColorDark,
+                                      width: 2)
+                                  : null,
+                            ),
+                            child: Text(
+                              activity.paName,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isSelected
+                                    ? const Color(0xFF091242)
+                                    : Colors.grey.shade700,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  }),
 
                   const SizedBox(height: 24),
 
@@ -202,44 +267,91 @@ class _PhysicalActivityPlannerScreenState
                   ),
                   const SizedBox(height: 16),
 
-                  // Slider
-                  SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: Colors.green,
-                      inactiveTrackColor: Colors.grey.shade300,
-                      thumbColor: Colors.green,
-                      overlayColor: Colors.green.withAlpha(32),
-                      thumbShape:
-                          const RoundSliderThumbShape(enabledThumbRadius: 12),
-                      trackHeight: 4,
-                    ),
-                    child: Slider(
-                      value: duration,
-                      min: 0,
-                      max: 120,
-                      divisions: 24,
-                      label: '${duration.round()} mins',
-                      onChanged: (value) {
-                        setState(() {
-                          duration = value;
-                          // Recalculate calories when duration changes
-                          if (selectedActivity.isNotEmpty) {
-                            estimatedCalories =
-                                (caloriesPerMinute[selectedActivity] ?? 5.0) *
-                                    duration;
-                          }
-                        });
-                      },
-                    ),
-                  ),
-
-                  // Duration display
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: RegularText(
-                      'Duration: ${duration.round()} mins',
-                      fontSize: 14,
-                      textColor: Colors.grey.shade600,
+                  // Slider Container with fixed width to prevent scrolling issues
+                  SizedBox(
+                    width: double.infinity,
+                    child: Column(
+                      children: [
+                        ValueListenableBuilder<double>(
+                          valueListenable: durationNotifier,
+                          builder: (context, durationValue, child) {
+                            return SliderTheme(
+                              data: SliderTheme.of(context).copyWith(
+                                activeTrackColor: Colors.green,
+                                inactiveTrackColor: Colors.grey.shade300,
+                                thumbColor: Colors.green,
+                                overlayColor: Colors.green.withAlpha(32),
+                                thumbShape: const RoundSliderThumbShape(
+                                    enabledThumbRadius: 12),
+                                trackHeight: 4,
+                              ),
+                              child: Slider(
+                                value: durationValue,
+                                min: 5,
+                                max: 120,
+                                divisions:
+                                    23, // (120-5)/5 = 23 divisions for 5-minute increments
+                                label: '${durationValue.round()} mins',
+                                onChanged: (value) {
+                                  // Update duration smoothly without setState
+                                  durationNotifier.value = value;
+                                  duration = value;
+                                  // Calculate calories smoothly
+                                  if (selectedActivity.isNotEmpty) {
+                                    caloriesMaleNotifier.value =
+                                        _getMaleCaloriesPerMinute(
+                                                selectedActivity) *
+                                            value;
+                                    caloriesFemaleNotifier.value =
+                                        _getFemaleCaloriesPerMinute(
+                                                selectedActivity) *
+                                            value;
+                                    estimatedCaloriesMale =
+                                        caloriesMaleNotifier.value;
+                                    estimatedCaloriesFemale =
+                                        caloriesFemaleNotifier.value;
+                                  }
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                        // Duration display with ValueListenableBuilder for smooth updates
+                        ValueListenableBuilder<double>(
+                          valueListenable: durationNotifier,
+                          builder: (context, durationValue, child) {
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '5 mins',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  RegularText(
+                                    'Duration: ${durationValue.round()} mins',
+                                    fontSize: 14,
+                                    textColor: const Color(0xFF091242),
+                                  ),
+                                  Text(
+                                    '120 mins',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ),
 
@@ -252,10 +364,94 @@ class _PhysicalActivityPlannerScreenState
                     textColor: Colors.black87,
                   ),
                   const SizedBox(height: 8),
-                  SemiBoldText(
-                    '${estimatedCalories.toStringAsFixed(2)} Kcal',
-                    fontSize: 20,
-                    textColor: const Color(0xFF091242),
+
+                  // Display both male and female calories with smooth updates
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ValueListenableBuilder<double>(
+                          valueListenable: caloriesMaleNotifier,
+                          builder: (context, maleCalories, child) {
+                            return Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.blue.shade200),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  SemiBoldText(
+                                    'Male',
+                                    fontSize: 14,
+                                    textColor: Colors.blue.shade700,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  SemiBoldText(
+                                    '${maleCalories.toStringAsFixed(1)} Kcal',
+                                    fontSize: 16,
+                                    textColor: const Color(0xFF091242),
+                                  ),
+                                  if (selectedActivity.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${_getMaleCaloriesPerMinute(selectedActivity).toStringAsFixed(1)} Kcal/min',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ValueListenableBuilder<double>(
+                          valueListenable: caloriesFemaleNotifier,
+                          builder: (context, femaleCalories, child) {
+                            return Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.pink.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.pink.shade200),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  SemiBoldText(
+                                    'Female',
+                                    fontSize: 14,
+                                    textColor: Colors.pink.shade700,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  SemiBoldText(
+                                    '${femaleCalories.toStringAsFixed(1)} Kcal',
+                                    fontSize: 16,
+                                    textColor: const Color(0xFF091242),
+                                  ),
+                                  if (selectedActivity.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${_getFemaleCaloriesPerMinute(selectedActivity).toStringAsFixed(1)} Kcal/min',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

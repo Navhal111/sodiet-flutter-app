@@ -106,9 +106,8 @@ class _HomeDrawerState extends State<HomeDrawer> {
                       _buildSubMenuItem(
                         context,
                         'New Recipes',
-                        onTap: () {
-                          // TODO: Navigate to New Recipes screen
-                        },
+                        onTap: () =>
+                            navigationController.navigateToAddRecipes(),
                       ),
                       _buildSubMenuItem(
                         context,
