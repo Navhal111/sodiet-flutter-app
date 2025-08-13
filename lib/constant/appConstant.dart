@@ -5,8 +5,8 @@ class AppConstants {
   static const String somethingWentWrong = 'something Went Wrong';
 
   // API DOMAIN LINK
-  // static const String DOMAIN = 'https://datatools.sjri.res.in';
-  static const String DOMAIN = 'http://49.204.74.61';
+  static const String DOMAIN = 'https://datatools.sjri.res.in';
+  // static const String DOMAIN = 'http://49.204.74.61';
   static const String BASE_URL = '${DOMAIN}/SD/api/v1/';
   static const String BASE_URL_IMAGE = '${DOMAIN}/static/VD/food_images_large/';
 
@@ -22,6 +22,9 @@ class AppConstants {
   static const String GET_FOOD_SUBCATEGORIES =
       '${BASE_URL}recipes/food-subcategories';
   static const String SUBMIT_RECIPE = '${BASE_URL}recipes/';
+  static const String GET_FOOD_GROUPS =
+      '${BASE_URL}recipes/ingredients/food-groups';
+  static const String SUBMIT_INGREDIENT = '${BASE_URL}recipes/ingredients';
 
   // Recipe Like/Dislike endpoints
   static String getRecipeLikeUrl(String recipeCode) =>

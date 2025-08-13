@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../constant/appConstant.dart';
 import '../../model/recipe_model.dart';
+import '../../model/food_group.dart';
 import '../../repo/authRepo.dart';
 
 class RecipeController extends GetxController implements GetxService {
@@ -55,6 +56,10 @@ class RecipeController extends GetxController implements GetxService {
   // Food subcategories data
   Rx<FoodSubcategoriesResponse?> foodSubcategoriesResponse =
       Rx<FoodSubcategoriesResponse?>(null);
+
+  // Food groups data
+  RxBool isLoadingFoodGroups = false.obs;
+  Rx<FoodGroupResponse?> foodGroupsResponse = Rx<FoodGroupResponse?>(null);
 
   // Filter and Sort variables
   RxString selectedCategoryCode = ''.obs;
@@ -513,6 +518,72 @@ class RecipeController extends GetxController implements GetxService {
     foodCategoriesResponse.value = null;
   }
 
+  // ==================== FOOD GROUPS METHODS ====================
+
+  Future<bool> getFoodGroups() async {
+    try {
+      isLoadingFoodGroups.value = true;
+
+      final response = await authRepo.getDataSet(
+        apiName: AppConstants.GET_FOOD_GROUPS,
+      );
+
+      if (response.statusCode == 200) {
+        print("Food groups API response: ${response.body}");
+
+        final responseData = FoodGroupResponse.fromJson(response.body);
+        foodGroupsResponse.value = responseData;
+
+        print(
+            "Food groups loaded successfully: ${responseData.foodGroups.length} groups");
+        return true;
+      } else {
+        print("Failed to load food groups: ${response.statusCode}");
+        foodGroupsResponse.value = null;
+        return false;
+      }
+    } catch (e) {
+      print("Exception in getFoodGroups: $e");
+      foodGroupsResponse.value = null;
+      return false;
+    } finally {
+      isLoadingFoodGroups.value = false;
+    }
+  }
+
+  // Method to get food groups list
+  List<FoodGroup> get foodGroupsList =>
+      foodGroupsResponse.value?.foodGroups ?? [];
+
+  // Method to get food group by name
+  FoodGroup? getFoodGroupByName(String name) {
+    try {
+      return foodGroupsList.firstWhere((group) => group.groupName == name);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Method to search food groups by name
+  List<FoodGroup> searchFoodGroups(String query) {
+    if (query.isEmpty) {
+      return foodGroupsList;
+    }
+    return foodGroupsList
+        .where((group) =>
+            group.groupName.toLowerCase().contains(query.toLowerCase()) ||
+            group.description.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+  }
+
+  // Method to check if food groups are loaded
+  bool get hasFoodGroups => foodGroupsResponse.value != null;
+
+  // Method to clear food groups data
+  void clearFoodGroups() {
+    foodGroupsResponse.value = null;
+  }
+
   // Method to refresh food categories
   void refreshFoodCategories() {
     getFoodCategories();
@@ -778,6 +849,77 @@ class RecipeController extends GetxController implements GetxService {
       };
     } finally {
       isSubmittingRecipe.value = false;
+    }
+  }
+
+  // ==================== INGREDIENT SUBMISSION METHODS ====================
+
+  RxBool isSubmittingIngredient = false.obs;
+
+  Future<Map<String, dynamic>> submitIngredient({
+    required String foodName,
+    required String foodGroup,
+    String? otherFoodGroup,
+    required Map<String, double> nutritionalInfo,
+  }) async {
+    try {
+      isSubmittingIngredient.value = true;
+
+      // Prepare the payload according to the API specification
+      Map<String, dynamic> payload = {
+        "food_name": foodName,
+        "food_group": foodGroup,
+        "other_food_group": otherFoodGroup ?? "",
+        "Energy.ENERC_KJ": nutritionalInfo['energy_kcal'] ?? 0,
+        "Protein.PROTCNT g ": nutritionalInfo['protein_g'] ?? 0,
+        "TotalFat.FATCE g ": nutritionalInfo['fat_g'] ?? 0,
+        "TotalDietaryFibre.FIBTG g ": nutritionalInfo['dietary_fibre_g'] ?? 0,
+        "CalciumCa.CA mg ": nutritionalInfo['calcium_mg'] ?? 0,
+        "ZincZn.ZN mg ": nutritionalInfo['zinc_mg'] ?? 0,
+        "IronFe.FE mg ": nutritionalInfo['iron_mg'] ?? 0,
+        "MagnesiumMg.MG mg ": nutritionalInfo['magnesium_mg'] ?? 0,
+        "TotalFolatesB9.FOLSUM Î¼g ": nutritionalInfo['folate_ug'] ?? 0,
+        "VB12": nutritionalInfo['vitamin_b12_ug'] ?? 0,
+        "ThiamineB1.THIA mg ": nutritionalInfo['vitamin_b1_mg'] ?? 0,
+        "RiboflavinB2.RIBF mg ": nutritionalInfo['vitamin_b2_mg'] ?? 0,
+        "NiacinB3.NIA mg ": nutritionalInfo['vitamin_b3_mg'] ?? 0,
+        "TotalB6A.VITB6A mg ": nutritionalInfo['vitamin_b6_mg'] ?? 0,
+        "TotalAscorbicAcid.VITC mg ": nutritionalInfo['vitamin_c_mg'] ?? 0,
+        "VA_RAE_mcg": nutritionalInfo['vitamin_a_ug'] ?? 0,
+      };
+
+      print("Submitting ingredient with payload: $payload");
+
+      final response = await authRepo.postDataSet(
+        apiName: AppConstants.SUBMIT_INGREDIENT,
+        sendData: payload,
+      );
+
+      print("Ingredient submission response: ${response.statusCode}");
+      print("Ingredient submission body: ${response.body}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {
+          'success': true,
+          'message': 'Ingredient submitted successfully!',
+          'data': response.body
+        };
+      } else {
+        return {
+          'success': false,
+          'message': response.body['message'] ?? 'Failed to submit ingredient',
+          'statusCode': response.statusCode
+        };
+      }
+    } catch (e) {
+      print("Exception in submitIngredient: $e");
+      return {
+        'success': false,
+        'message': 'An error occurred while submitting ingredient',
+        'error': e.toString()
+      };
+    } finally {
+      isSubmittingIngredient.value = false;
     }
   }
 }

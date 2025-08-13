@@ -38,36 +38,20 @@ class _HomeDrawerState extends State<HomeDrawer> {
                 height: 20,
               ),
               // Dashboard item (highlighted based on current route)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                decoration: BoxDecoration(
-                  color:
-                      navigationController.isRouteActive(AppRoutes.homeScreen)
-                          ? Colors.grey.shade100
-                          : Colors.transparent,
-                  border:
-                      navigationController.isRouteActive(AppRoutes.homeScreen)
-                          ? Border.all(
-                              color: Theme.of(context).primaryColor,
-                              width: 2,
-                            )
-                          : null,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: _buildDrawerItem(
-                  context,
-                  Icons.dashboard_outlined,
-                  'Dashboard',
-                  isSelected:
-                      navigationController.isRouteActive(AppRoutes.homeScreen),
-                  onTap: () => navigationController.navigateToHome(),
-                ),
-              ),
+
               // Menu items
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: [
+                    _buildDrawerItem(
+                      context,
+                      Icons.assignment_outlined,
+                      'Dashboard',
+                      // isSelected:
+                      //     navigationController.isRouteActive(AppRoutes.homeScreen),
+                      onTap: () => navigationController.navigateToHome(),
+                    ),
                     _buildDrawerItem(
                       context,
                       Icons.assignment_outlined,
@@ -112,9 +96,8 @@ class _HomeDrawerState extends State<HomeDrawer> {
                       _buildSubMenuItem(
                         context,
                         'New Ingredient',
-                        onTap: () {
-                          // TODO: Navigate to New Ingredient screen
-                        },
+                        onTap: () =>
+                            navigationController.navigateToAddIngredient(),
                       ),
                     ],
                     _buildDrawerItem(
