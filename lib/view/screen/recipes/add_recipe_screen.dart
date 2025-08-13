@@ -25,16 +25,18 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
   @override
   bool get wantKeepAlive => true;
 
-  // Simple setState method without scroll preservation to avoid UI issues
+  // Method to update state without triggering rebuilds for dropdowns
   void _updateState(VoidCallback fn) {
-    setState(fn);
+    fn(); // Just execute the function, no setState for dropdowns
   }
 
   // Form controllers
   final TextEditingController _recipeNameController = TextEditingController();
   final TextEditingController _cookingTimeController = TextEditingController();
+
   final TextEditingController _tagsController = TextEditingController();
   final TextEditingController _portionController = TextEditingController();
+
   final TextEditingController _portionWeightController =
       TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
@@ -114,6 +116,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
             controller: _mainScrollController,
             physics: const ClampingScrollPhysics(),
             child: Column(
+              key: const ValueKey('main_content_column'),
               children: [
                 // Image Upload Section at the top
                 Padding(
@@ -137,9 +140,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
             ),
           ),
         ),
-      ), // Close GestureDetector
-    );
-  }
+      ),
+    ); // Close GestureDetector
+  } // Close build method
 
   Widget _buildRecipeFormContent() {
     return Padding(
@@ -370,6 +373,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
 
         // Additional Details Section
         Container(
+          key: const ValueKey('additional_details_section'),
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -397,30 +401,25 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
               // Code Co-occurrence Dropdown
               Obx(() {
                 final categories = recipeController.foodCategoriesList;
-                return Container(
-                  key: const ValueKey('category_dropdown'),
-                  child: _buildDropdownField(
-                    value: _selectedCategory,
-                    hint: 'Code Co-occurrence',
-                    items: categories.map((e) => e.category).toList(),
-                    onChanged: (value) async {
-                      if (value != _selectedCategory) {
-                        _updateState(() {
-                          _selectedCategory = value;
-                          _selectedSubcategory = null; // Reset subcategory
-                        });
-                        if (value != null) {
-                          // Find the code for the selected category
-                          final categoryCode = categories
-                              .firstWhere((cat) => cat.category == value)
-                              .code;
-                          await recipeController.getFoodSubcategories(
-                              mainCategoryCode: categoryCode);
-                        }
+                return _buildDropdownField(
+                  value: _selectedCategory,
+                  hint: 'Code Co-occurrence',
+                  items: categories.map((e) => e.category).toList(),
+                  onChanged: (value) async {
+                    if (value != _selectedCategory) {
+                      _selectedCategory = value;
+                      _selectedSubcategory = null; // Reset subcategory
+                      if (value != null) {
+                        // Find the code for the selected category
+                        final categoryCode = categories
+                            .firstWhere((cat) => cat.category == value)
+                            .code;
+                        await recipeController.getFoodSubcategories(
+                            mainCategoryCode: categoryCode);
                       }
-                    },
-                    searchHint: 'Search categories...',
-                  ),
+                    }
+                  },
+                  searchHint: 'Search categories...',
                 );
               }),
 
@@ -429,23 +428,18 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
               // Subcategories Dropdown
               Obx(() {
                 final subcategories = recipeController.foodSubcategoriesList;
-                return Container(
-                  key: const ValueKey('subcategory_dropdown'),
-                  child: _buildDropdownField(
-                    value: _selectedSubcategory,
-                    hint: 'Subcategories',
-                    items: _selectedCategory != null
-                        ? subcategories.map((e) => e.subCategory).toList()
-                        : [],
-                    onChanged: (value) {
-                      if (value != _selectedSubcategory) {
-                        _updateState(() {
-                          _selectedSubcategory = value;
-                        });
-                      }
-                    },
-                    searchHint: 'Search subcategories...',
-                  ),
+                return _buildDropdownField(
+                  value: _selectedSubcategory,
+                  hint: 'Subcategories',
+                  items: _selectedCategory != null
+                      ? subcategories.map((e) => e.subCategory).toList()
+                      : [],
+                  onChanged: (value) {
+                    if (value != _selectedSubcategory) {
+                      _selectedSubcategory = value;
+                    }
+                  },
+                  searchHint: 'Search subcategories...',
                 );
               }),
 
@@ -465,9 +459,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
                 hint: 'Description',
                 items: _descriptionOptions,
                 onChanged: (value) {
-                  setState(() {
-                    _selectedDescription = value;
-                  });
+                  _selectedDescription = value;
                 },
                 searchHint: 'Select description...',
               ),
@@ -793,6 +785,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
 
   Widget _buildRecipeAttributesSection() {
     return Container(
+      key: const ValueKey('recipe_attributes_section'),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -818,7 +811,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
 
           // Regional Cuisine
           _buildCheckboxSection(
-            key: 'regional_cuisine',
             title: 'Regional cuisine',
             options: ['North', 'South', 'Continental'],
             selectedItems: _selectedRegionalCuisine,
@@ -828,7 +820,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
 
           // Meal Time
           _buildCheckboxSection(
-            key: 'meal_time',
             title: 'Meal Time',
             options: ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Dessert'],
             selectedItems: _selectedMealTime,
@@ -838,7 +829,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
 
           // Dietary Preference
           _buildCheckboxSection(
-            key: 'dietary_preference',
             title: 'Dietary Preference',
             options: ['Vegetarian', 'Non - Vegetarian', 'Ovo Vegetarian'],
             selectedItems: _selectedDietaryPreference,
@@ -848,7 +838,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
 
           // Other Attributes
           _buildCheckboxSection(
-            key: 'other_attributes',
             title: 'Other Attributes',
             options: ['Beverages', 'Savoury', 'Sweet', 'Spicy'],
             selectedItems: _selectedOtherAttributes,
@@ -859,12 +848,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
   }
 
   Widget _buildCheckboxSection({
-    String? key,
     required String title,
     required List<String> options,
     required List<String> selectedItems,
   }) {
     return Column(
+      key: ValueKey('${title}_${selectedItems.join('_')}'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SemiBoldText(
@@ -880,14 +869,14 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
             final isSelected = selectedItems.contains(option);
             return GestureDetector(
               onTap: () {
-                // Use the simple update state method
-                _updateState(() {
-                  if (isSelected) {
-                    selectedItems.remove(option);
-                  } else {
-                    selectedItems.add(option);
-                  }
-                });
+                // Use the simple state update method
+                if (isSelected) {
+                  selectedItems.remove(option);
+                } else {
+                  selectedItems.add(option);
+                }
+                // Force a rebuild only for this specific section
+                setState(() {});
               },
               child: Container(
                 padding:
@@ -918,8 +907,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
                       option,
                       style: TextStyle(
                         fontSize: 12,
-                        color:
-                            isSelected ? Colors.white : Colors.grey.shade700,
+                        color: isSelected ? Colors.white : Colors.grey.shade700,
                         fontWeight:
                             isSelected ? FontWeight.w500 : FontWeight.normal,
                       ),
@@ -932,7 +920,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
         ),
       ],
     );
-  }
   }
 
   Widget _buildIngredientsFormSection() {

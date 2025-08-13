@@ -681,44 +681,41 @@ class _AddIngredientScreenState extends State<AddIngredientScreen>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       width: double.infinity,
-      child: Obx(() {
-        final isSubmitting = _isSubmitting;
-        return ElevatedButton(
-          onPressed: isSubmitting ? null : _submitIngredient,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFFF8C00),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+      child: ElevatedButton(
+        onPressed: _isSubmitting ? null : _submitIngredient,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFFF8C00),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: isSubmitting
-              ? Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        strokeWidth: 2,
-                      ),
+        ),
+        child: _isSubmitting
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      strokeWidth: 2,
                     ),
-                    SizedBox(width: 12),
-                    RegularText(
-                      'Submitting...',
-                      fontSize: 16,
-                      textColor: Colors.white,
-                    ),
-                  ],
-                )
-              : RegularText(
-                  'Add Ingredient',
-                  fontSize: 14,
-                  textColor: Colors.white,
-                ),
-        );
-      }),
+                  ),
+                  SizedBox(width: 12),
+                  RegularText(
+                    'Submitting...',
+                    fontSize: 16,
+                    textColor: Colors.white,
+                  ),
+                ],
+              )
+            : RegularText(
+                'Add Ingredient',
+                fontSize: 14,
+                textColor: Colors.white,
+              ),
+      ),
     );
   }
 

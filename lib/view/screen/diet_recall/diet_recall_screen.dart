@@ -6,6 +6,7 @@ import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/utils/images.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/common/custom_toast.dart';
+import 'package:sodiet/view/widgets/common/searchable_bottom_sheet.dart';
 import 'package:sodiet/view/widgets/common/title_section_widget.dart';
 import 'package:sodiet/view/widgets/custom_text_field.dart';
 import 'package:sodiet/view/widgets/diet_recall/diet_entry_card_widget.dart';
@@ -358,94 +359,96 @@ class _DietRecallScreenState extends State<DietRecallScreen>
   }
 
   Widget _buildRecipeDropdown() {
-    // Move the reactive access outside of ValueListenableBuilder
     final isLoadingRecipes = dietController.isLoadingRecipes.value;
     final recipeList = dietController.recipeList;
 
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor.withOpacity(0.8),
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: isLoadingRecipes
-          ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Theme.of(context).primaryColorDark,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  RegularText(
-                    'Loading recipes...',
-                    fontSize: 14,
-                    textColor: Colors.grey.shade600,
-                  ),
-                ],
+    if (isLoadingRecipes) {
+      return Container(
+        height: 50,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Theme.of(context).primaryColorDark,
+                ),
               ),
-            )
-          : ValueListenableBuilder<String?>(
-              valueListenable: selectedRecipeKeyNotifier,
-              builder: (context, selectedRecipeKey, child) {
-                return DropdownButtonFormField<String>(
-                  value: selectedRecipeKey,
-                  decoration: const InputDecoration(
-                    hintStyle: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                      fontWeight: FontWeight.normal,
-                    ),
-                    hintText: 'Select a recipe',
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                  ),
-                  items: recipeList.map((recipe) {
-                    return DropdownMenuItem<String>(
-                      value: recipe.recipeCode,
-                      child: RegularText(
-                        recipe.recipeName,
-                        fontSize: 14,
-                        textColor: Colors.black87,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    selectedRecipeKeyNotifier.value = newValue;
-                    final selectedRecipe = recipeList.firstWhereOrNull(
-                        (recipe) => recipe.recipeCode == newValue);
-                    selectedRecipeValueNotifier.value =
-                        selectedRecipe?.recipeName;
-                  },
-                  isExpanded: true,
-                  icon: Icon(
-                    Icons.keyboard_arrow_down,
-                    color: Colors.grey.shade600,
-                    size: 20,
-                  ),
-                  dropdownColor: Colors.white,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 14,
-                    fontWeight: FontWeight.normal,
-                  ),
-                  menuMaxHeight: 200,
-                );
-              },
             ),
+            const SizedBox(width: 12),
+            Text(
+              'Loading recipes...',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ValueListenableBuilder<String?>(
+      valueListenable: selectedRecipeValueNotifier,
+      builder: (context, selectedRecipeValue, child) {
+        return GestureDetector(
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (context) => SearchableBottomSheet(
+                title: 'Select Recipe',
+                items: recipeList.map((recipe) => recipe.recipeName).toList(),
+                selectedValue: selectedRecipeValue,
+                onSelected: (String? selectedValue) {
+                  selectedRecipeValueNotifier.value = selectedValue;
+                  // Find the corresponding recipe code
+                  final selectedRecipe = recipeList.firstWhereOrNull(
+                      (recipe) => recipe.recipeName == selectedValue);
+                  selectedRecipeKeyNotifier.value = selectedRecipe?.recipeCode;
+                },
+                searchHint: 'Search recipes...',
+              ),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    selectedRecipeValue ?? 'Select a recipe',
+                    style: TextStyle(
+                      color: selectedRecipeValue != null
+                          ? const Color(0xFF091242)
+                          : Colors.grey.shade600,
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(
+                  Icons.keyboard_arrow_down,
+                  color: Colors.grey.shade600,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1121,89 +1124,93 @@ class _DietRecallScreenState extends State<DietRecallScreen>
     final isLoadingRecipes = dietController.isLoadingRecipes.value;
     final recipeList = dietController.recipeList;
 
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        color: Theme.of(Get.context!).cardColor.withOpacity(0.8),
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: isLoadingRecipes
-          ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Theme.of(Get.context!).primaryColorDark,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  RegularText(
-                    'Loading recipes...',
-                    fontSize: 14,
-                    textColor: Colors.grey.shade600,
-                  ),
-                ],
+    if (isLoadingRecipes) {
+      return Container(
+        height: 50,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Theme.of(Get.context!).primaryColorDark,
+                ),
               ),
-            )
-          : ValueListenableBuilder<String?>(
-              valueListenable: _editRecipeKeyNotifier,
-              builder: (context, selectedRecipeKey, child) {
-                return DropdownButtonFormField<String>(
-                  value: selectedRecipeKey,
-                  decoration: const InputDecoration(
-                    hintStyle: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                      fontWeight: FontWeight.normal,
-                    ),
-                    hintText: 'Select a recipe',
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                  ),
-                  items: recipeList.map((recipe) {
-                    return DropdownMenuItem<String>(
-                      value: recipe.recipeCode,
-                      child: RegularText(
-                        recipe.recipeName,
-                        fontSize: 14,
-                        textColor: Colors.black87,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    _editRecipeKeyNotifier.value = newValue;
-                    final selectedRecipe = recipeList.firstWhereOrNull(
-                        (recipe) => recipe.recipeCode == newValue);
-                    _editRecipeValueNotifier.value = selectedRecipe?.recipeName;
-                  },
-                  isExpanded: true,
-                  icon: Icon(
-                    Icons.keyboard_arrow_down,
-                    color: Colors.grey.shade600,
-                    size: 20,
-                  ),
-                  dropdownColor: Colors.white,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 14,
-                    fontWeight: FontWeight.normal,
-                  ),
-                  menuMaxHeight: 200,
-                );
-              },
             ),
+            const SizedBox(width: 12),
+            Text(
+              'Loading recipes...',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ValueListenableBuilder<String?>(
+      valueListenable: _editRecipeValueNotifier,
+      builder: (context, selectedRecipeValue, child) {
+        return GestureDetector(
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (context) => SearchableBottomSheet(
+                title: 'Select Recipe',
+                items: recipeList.map((recipe) => recipe.recipeName).toList(),
+                selectedValue: selectedRecipeValue,
+                onSelected: (String? selectedValue) {
+                  _editRecipeValueNotifier.value = selectedValue;
+                  // Find the corresponding recipe code
+                  final selectedRecipe = recipeList.firstWhereOrNull(
+                      (recipe) => recipe.recipeName == selectedValue);
+                  _editRecipeKeyNotifier.value = selectedRecipe?.recipeCode;
+                },
+                searchHint: 'Search recipes...',
+              ),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    selectedRecipeValue ?? 'Select a recipe',
+                    style: TextStyle(
+                      color: selectedRecipeValue != null
+                          ? const Color(0xFF091242)
+                          : Colors.grey.shade600,
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(
+                  Icons.keyboard_arrow_down,
+                  color: Colors.grey.shade600,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
