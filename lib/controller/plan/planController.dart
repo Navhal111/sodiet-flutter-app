@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:sodiet/route/app_routes.dart';
 
 import '../../constant/appConstant.dart';
 import '../../model/plan_model.dart';
@@ -14,6 +15,7 @@ class PlanController extends GetxController implements GetxService {
   RxBool isLoading = false.obs;
   RxBool isLoadingActivePlan = false.obs;
   RxBool isLoadingPlanDetails = false.obs;
+  RxBool isGeneratingPlan = false.obs;
 
   // Observable variables to store active plan data
   RxString planId = ''.obs;
@@ -150,11 +152,52 @@ class PlanController extends GetxController implements GetxService {
     }
   }
 
+  deletePlan(String planId) async {
+    isLoading.value = true;
+    try {
+      Response response = await authRepo.deleteDataSet(
+          apiName: "${AppConstants.DELETE_PLAN_ACTIVE}/$planId");
+      print("Delete Plan API Response Status: ${response.statusCode}");
+      print("Delete Plan API Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        print('Plan deleted successfully: ${response.body['message']}');
+        Get.offNamed(AppRoutes.generatePlanScreen);
+
+        return {
+          'success': true,
+          'message': response.body['message'] ?? 'Plan deleted successfully!',
+          'planId': response.body['plan_id']?.toString() ?? planId,
+          'status': response.body['status'] ?? 'DEACTIVATED'
+        };
+      } else {
+        print('Error deleting plan: ${response.statusCode}');
+        return {
+          'success': false,
+          'message': 'Failed to delete plan',
+          'statusCode': response.statusCode
+        };
+      }
+    } catch (e) {
+      print('Exception in deletePlan: $e');
+      return {
+        'success': false,
+        'message': 'Network error. Please check your connection.'
+      };
+    } finally {
+      isLoading.value = false;
+      update();
+    }
+  }
+
   // Method to get active plan details (combines both API calls)
   getActivePlanDetails() async {
     final activePlanResult = await getActivePlan();
     if (activePlanResult['success'] && planId.value.isNotEmpty) {
+      await getDashboardSummary();
       return await getPlanDetails(planId.value);
+    } else {
+      Get.offNamed(AppRoutes.generatePlanScreen);
     }
     return activePlanResult;
   }
@@ -221,5 +264,77 @@ class PlanController extends GetxController implements GetxService {
     planDataList.clear();
     dashboardSummaryResponse.value = null;
     update();
+  }
+
+  // Method to generate a new plan
+  generatePlan({
+    required int age,
+    required String sex,
+    required double height,
+    required double weight,
+    required double targetWeight,
+    required int duration,
+    required String startDate,
+  }) async {
+    isGeneratingPlan.value = true;
+    try {
+      // Prepare the payload according to the API specification
+      Map<String, dynamic> payload = {
+        "username": "Testlogin",
+        "bwp_form_data": {
+          "age": age,
+          "sex": sex,
+          "height": height,
+          "weight": weight,
+          "target_weight": targetWeight,
+          "duration": duration,
+          "start_date": startDate,
+          "sleep": 0,
+          "school": 0,
+          "WSA": 0,
+          "PALText": "string",
+          "DeltaPALText": ""
+        }
+      };
+
+      print("Generate Plan API Payload: $payload");
+
+      Response response = await authRepo.postDataSet(
+        apiName: AppConstants.GENERATE_PLAN,
+        sendData: payload,
+      );
+
+      print("Generate Plan API Response Status: ${response.statusCode}");
+      print("Generate Plan API Response Body: ${response.body}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('Plan generated successfully: ${response.body}');
+
+        // Refresh active plan data after successful generation
+        await getActivePlan();
+
+        return {
+          'success': true,
+          'message': response.body['message'] ?? 'Plan generated successfully!',
+          'data': response.body
+        };
+      } else {
+        print('Error generating plan: ${response.statusCode}');
+        return {
+          'success': false,
+          'message': response.body['message'] ?? 'Failed to generate plan',
+          'statusCode': response.statusCode
+        };
+      }
+    } catch (e) {
+      print('Exception in generatePlan: $e');
+      return {
+        'success': false,
+        'message': 'Network error. Please check your connection.'
+      };
+    } finally {
+      isGeneratingPlan.value = false;
+      update();
+    }
   }
 }

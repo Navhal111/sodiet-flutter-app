@@ -4,139 +4,162 @@ import 'package:sodiet/route/app_routes.dart';
 class NavigationController extends GetxController {
   static NavigationController get instance => Get.find();
 
+  @override
+  void onInit() {
+    super.onInit();
+    print('NavigationController: onInit() called');
+  }
+
+  @override
+  void onReady() {
+    super.onReady();
+    print('NavigationController: onReady() called');
+  }
+
+  @override
+  void onClose() {
+    print(
+        'NavigationController: onClose() called - Controller is being disposed!');
+    super.onClose();
+  }
+
   // Current active route
   RxString _currentRoute = AppRoutes.homeScreen.obs;
-  String get currentRoute => _currentRoute.value;
+  String get currentRoute {
+    print(
+        'NavigationController: currentRoute getter called, returning: ${_currentRoute.value}');
+    return _currentRoute.value;
+  }
 
   // Update current route
   void updateCurrentRoute(String route) {
+    print(
+        'NavigationController: Updating route from ${_currentRoute.value} to $route');
     _currentRoute.value = route;
+    _currentRoute.refresh();
+    print('Check the values chnages ${_currentRoute.value}');
     update();
   }
 
   // Check if route is currently active
   bool isRouteActive(String route) {
-    return _currentRoute.value == route;
+    // Access .value to ensure Obx reactivity
+    bool isActive = _currentRoute.value == route;
+    print(
+        'NavigationController: Checking if $route is active. Current: ${_currentRoute.value}, Result: $isActive');
+    return isActive;
   }
 
   // Navigation methods with route tracking
   void navigateToHome() {
     if (_currentRoute.value != AppRoutes.homeScreen) {
       Get.offNamed(AppRoutes.homeScreen);
-      _currentRoute.value = AppRoutes.homeScreen;
-      update();
+      // Route will be updated by BaseScreenLayout
     }
   }
 
   void navigateToPlan() {
     if (_currentRoute.value != AppRoutes.planScreen) {
       Get.offNamed(AppRoutes.planScreen);
-      _currentRoute.value = AppRoutes.planScreen;
-      update();
+      // Route will be updated by BaseScreenLayout
+    }
+  }
+
+  void navigateToGeneratePlan() {
+    if (_currentRoute.value != AppRoutes.generatePlanScreen) {
+      Get.offNamed(AppRoutes.generatePlanScreen);
+      // Route will be updated by BaseScreenLayout
     }
   }
 
   void navigateToRecipes() {
     if (_currentRoute.value != AppRoutes.recipesScreen) {
       Get.offNamed(AppRoutes.recipesScreen);
-      _currentRoute.value = AppRoutes.recipesScreen;
-      update();
+      // Route will be updated by BaseScreenLayout
     }
   }
 
   void navigateToAddRecipes() {
     if (_currentRoute.value != AppRoutes.addRecipeScreen) {
       Get.offNamed(AppRoutes.addRecipeScreen);
-      _currentRoute.value = AppRoutes.addRecipeScreen;
-      update();
+      // Route will be updated by BaseScreenLayout
     }
   }
 
   void navigateToAddIngredient() {
     if (_currentRoute.value != AppRoutes.addIngredientScreen) {
       Get.offNamed(AppRoutes.addIngredientScreen);
-      _currentRoute.value = AppRoutes.addIngredientScreen;
-      update();
+      // Route will be updated by BaseScreenLayout
     }
   }
 
   void navigateToOptimization() {
     if (_currentRoute.value != AppRoutes.optimizationScreen) {
       Get.offNamed(AppRoutes.optimizationScreen);
-      _currentRoute.value = AppRoutes.optimizationScreen;
-      update();
+      // Route will be updated by BaseScreenLayout
     }
   }
 
   void navigateToCoursesCorrection() {
     if (_currentRoute.value != AppRoutes.courseCorrectionScreen) {
       Get.offNamed(AppRoutes.courseCorrectionScreen);
-      _currentRoute.value = AppRoutes.courseCorrectionScreen;
-      update();
+      // Route will be updated by BaseScreenLayout
     }
   }
 
   void navigateToPreferences() {
     if (_currentRoute.value != AppRoutes.preferenceOnboardingScreen) {
       Get.offNamed(AppRoutes.preferenceOnboardingScreen);
-      _currentRoute.value = AppRoutes.preferenceOnboardingScreen;
-      update();
+      // Route will be updated by BaseScreenLayout
     }
   }
 
   void navigateToMealPlan() {
     if (_currentRoute.value != AppRoutes.mealPlanScreen) {
       Get.offNamed(AppRoutes.mealPlanScreen);
-      _currentRoute.value = AppRoutes.mealPlanScreen;
-      update();
+      // Route will be updated by BaseScreenLayout
     }
   }
 
   void navigateToWeightLogManager() {
     if (_currentRoute.value != AppRoutes.weightLogManagerScreen) {
       Get.offNamed(AppRoutes.weightLogManagerScreen);
-      _currentRoute.value = AppRoutes.weightLogManagerScreen;
-      update();
+      // Route will be updated by BaseScreenLayout
     }
   }
 
   void navigateToFatLogManager() {
     if (_currentRoute.value != AppRoutes.fatLogManagerScreen) {
       Get.offNamed(AppRoutes.fatLogManagerScreen);
-      _currentRoute.value = AppRoutes.fatLogManagerScreen;
-      update();
+      // Route will be updated by BaseScreenLayout
     }
   }
 
   void navigateToPhysicalActivity() {
     if (_currentRoute.value != AppRoutes.physicalActivityScreen) {
       Get.offNamed(AppRoutes.physicalActivityScreen);
-      _currentRoute.value = AppRoutes.physicalActivityScreen;
-      update();
+      // Route will be updated by BaseScreenLayout
     }
   }
 
   void navigateToPhysicalActivityPlanner() {
     if (_currentRoute.value != AppRoutes.physicalActivityPlannerScreen) {
       Get.offNamed(AppRoutes.physicalActivityPlannerScreen);
-      _currentRoute.value = AppRoutes.physicalActivityPlannerScreen;
-      update();
+      // Route will be updated by BaseScreenLayout
     }
   }
 
   void navigateToIntegrations() {
     if (_currentRoute.value != AppRoutes.integrationsScreen) {
       Get.offNamed(AppRoutes.integrationsScreen);
-      _currentRoute.value = AppRoutes.integrationsScreen;
-      update();
+      // Route will be updated by BaseScreenLayout
     }
   }
 
   void navigateToDietRecall() {
     if (_currentRoute.value != AppRoutes.dietRecallScreen) {
       Get.offNamed(AppRoutes.dietRecallScreen);
-      _currentRoute.value = AppRoutes.dietRecallScreen;
-      update();
+      // Route will be updated by BaseScreenLayout
     }
   }
 
@@ -147,6 +170,8 @@ class NavigationController extends GetxController {
         return 'Dashboard';
       case AppRoutes.planScreen:
         return 'Plan';
+      case AppRoutes.generatePlanScreen:
+        return 'Generate Plan';
       case AppRoutes.recipesScreen:
         return 'Recipes';
       case AppRoutes.optimizationScreen:

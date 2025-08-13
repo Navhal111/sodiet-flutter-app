@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:sodiet/controller/plan/planController.dart';
 import 'package:sodiet/model/plan_model.dart';
 import 'package:sodiet/route/app_routes.dart';
-import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/home/data_summary_widget.dart';
 import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 import 'package:sodiet/view/widgets/plan/plan_status_widget.dart';
@@ -26,7 +25,120 @@ class _PlanScreenState extends State<PlanScreen> {
   }
 
   _loadDashboardData() async {
-    await planController.getDashboardSummary();
+    await planController.getActivePlanDetails();
+  }
+
+  // Method to show reset plan confirmation dialog
+  void _showResetPlanConfirmationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Reset Plan',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.red,
+            ),
+          ),
+          content: const Text(
+            'Are you sure you want to reset your current plan? This action cannot be undone and will deactivate your current plan.',
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            // Cancel button
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+            // Reset button
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(context).pop(); // Close dialog first
+                await _resetPlan();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text(
+                'Reset',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Method to handle plan reset
+  Future<void> _resetPlan() async {
+    if (planController.planId.value.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No active plan found to reset'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Resetting plan...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      // Call delete plan API
+      final result =
+          await planController.deletePlan(planController.planId.value);
+
+      if (result['success']) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message']),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+
+        // Refresh the screen data
+        setState(() {});
+      } else {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message']),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      // Handle unexpected errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unexpected error: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   // Method to build KPI widgets from dashboard summary data
@@ -128,8 +240,8 @@ class _PlanScreenState extends State<PlanScreen> {
         day: int.tryParse(dailyData.day) ?? 0,
         date: dailyData.date,
         weight: dailyData.loggedWeight ?? dailyData.projectedWeight,
-        intake: dailyData.actualIntake,
-        expenditure: dailyData.actualExpenditure,
+        intake: dailyData.targetIntake,
+        expenditure: dailyData.targetExpenditure,
       );
     }).toList();
   }
@@ -159,13 +271,7 @@ class _PlanScreenState extends State<PlanScreen> {
                       const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
                   child: PlanStatusWidget(
                     onResetTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: RegularText(
-                              'Reset plan functionality will be implemented soon'),
-                          backgroundColor: Theme.of(context).primaryColor,
-                        ),
-                      );
+                      _showResetPlanConfirmationDialog();
                     },
                   )),
               const SizedBox(height: 14),

@@ -173,10 +173,11 @@ class RecipeController extends GetxController implements GetxService {
 
   // Method to search recipes via API
   searchRecipesAPI(String searchTerm, {bool loadMore = false}) async {
-    if (searchTerm.isEmpty) {
-      clearSearchResults();
-      return;
-    }
+    // Allow empty search term for filtering only
+    // if (searchTerm.isEmpty) {
+    //   clearSearchResults();
+    //   return;
+    // }
 
     if (loadMore) {
       if (isLoadingSearchMore.value || !hasMoreSearchData.value) return;
@@ -191,12 +192,22 @@ class RecipeController extends GetxController implements GetxService {
     }
 
     print(
-        "Starting to search recipes... Search term: $searchTerm, Page: $searchCurrentPage");
+        "Starting to search recipes... Search term: '$searchTerm', Page: $searchCurrentPage");
 
     try {
       String apiUrl = AppConstants.GET_RECIPES_SEARCH;
-      apiUrl +=
-          '?search_term=$searchTerm&page=$searchCurrentPage&page_size=$pageSize';
+
+      // Build query parameters
+      List<String> queryParams = [];
+      queryParams.add('page=$searchCurrentPage');
+      queryParams.add('page_size=$pageSize');
+
+      // Add search term only if it's not empty
+      if (searchTerm.isNotEmpty) {
+        queryParams.add('search_term=$searchTerm');
+      }
+
+      apiUrl += '?' + queryParams.join('&');
 
       // Add category filter if selected
       if (selectedCategoryCode.value.isNotEmpty) {
@@ -276,12 +287,32 @@ class RecipeController extends GetxController implements GetxService {
 
   // Method to get current display list (search results or all recipes)
   List<Recipe> getCurrentDisplayList() {
-    if (selectedCategoryCode.value.isNotEmpty ||
-        selectedSubcategoryCode.value.isNotEmpty ||
-        selectedSortBy.value != 'Name (A-Z)') {
+    print("🎯 getCurrentDisplayList called:");
+    print("   - Search term: '${currentSearchTerm.value}'");
+    print("   - Category filter: '${selectedCategoryCode.value}'");
+    print("   - Subcategory filter: '${selectedSubcategoryCode.value}'");
+    print("   - Sort: '${selectedSortBy.value}'");
+
+    // Check if any filters are active (category or subcategory)
+    bool hasFilters = selectedCategoryCode.value.isNotEmpty ||
+        selectedSubcategoryCode.value.isNotEmpty;
+
+    // If there's an active search term OR filters are active, use search results
+    // (because both scenarios use searchRecipesAPI)
+    if (currentSearchTerm.value.isNotEmpty || hasFilters) {
+      print("   -> 🔍 Returning searchResultsList (search/filter mode)");
+      return searchResultsList;
+    }
+
+    // If only sorting is applied (no search, no category/subcategory filters), use filtered list
+    if (selectedSortBy.value != 'Name (A-Z)') {
+      print("   -> 🔄 Returning filteredRecipeList (sort only)");
       return filteredRecipeList;
     }
-    return currentSearchTerm.value.isEmpty ? recipeList : searchResultsList;
+
+    // Default case: normal browsing with no search, no filters, default sorting
+    print("   -> 📋 Returning recipeList (normal browsing)");
+    return recipeList;
   }
 
   // Method to check if currently searching
@@ -686,18 +717,44 @@ class RecipeController extends GetxController implements GetxService {
     selectedSubcategoryCode.value = subcategoryCode ?? '';
     selectedSortBy.value = sortBy;
 
+    print("Applying filters and sort:");
+    print("- Category: ${selectedCategoryCode.value}");
+    print("- Subcategory: ${selectedSubcategoryCode.value}");
+    print("- Sort: ${selectedSortBy.value}");
+    print("- Current search term: '${currentSearchTerm.value}'");
+
     // If category or subcategory filter changed, refresh the data from API
     if (previousCategoryCode != selectedCategoryCode.value ||
         previousSubcategoryCode != selectedSubcategoryCode.value) {
-      if (currentSearchTerm.value.isNotEmpty) {
-        // Re-search with new filters
-        searchRecipesAPI(currentSearchTerm.value);
+      // Check if any filters are active
+
+      bool hasFilters = selectedCategoryCode.value.isNotEmpty ||
+          selectedSubcategoryCode.value.isNotEmpty;
+
+      if (hasFilters) {
+        // Use searchRecipesAPI for filtering (with or without search term)
+        String searchTerm =
+            currentSearchTerm.value.isNotEmpty ? currentSearchTerm.value : "";
+        print(
+            "🔍 Using searchRecipesAPI with filters. Search term: '$searchTerm'");
+        searchRecipesAPI(searchTerm);
       } else {
-        // Refresh main recipe list with new filters
-        getRecipes();
+        // No filters active, use getRecipes for normal browsing
+        if (currentSearchTerm.value.isNotEmpty) {
+          // User was searching but removed filters, continue with search
+          print(
+              "🔍 Using searchRecipesAPI for search without filters: ${currentSearchTerm.value}");
+          searchRecipesAPI(currentSearchTerm.value);
+        } else {
+          // No search, no filters - use normal list
+          print(
+              "📋 Using getRecipes for normal browsing (no filters, no search)");
+          getRecipes();
+        }
       }
     } else {
       // Just update filtered list for sorting changes
+      print("🔄 Only sorting changed, updating filtered list locally");
       _updateFilteredList();
     }
   }
@@ -710,25 +767,54 @@ class RecipeController extends GetxController implements GetxService {
     selectedSubcategoryCode.value = '';
     selectedSortBy.value = 'Name (A-Z)';
 
+    print("Clearing filters:");
+    print("- Had category filter: $hadCategoryFilter");
+    print("- Had subcategory filter: $hadSubcategoryFilter");
+    print("- Current search term: '${currentSearchTerm.value}'");
+
     // If any filter was active, refresh the data from API
     if (hadCategoryFilter || hadSubcategoryFilter) {
-      if (currentSearchTerm.value.isNotEmpty) {
-        // Re-search without filters
-        searchRecipesAPI(currentSearchTerm.value);
-      } else {
-        // Refresh main recipe list without filters
-        getRecipes();
-      }
+      // Always use searchRecipesAPI when clearing filters if we had filters before
+      // This ensures we get fresh data from the search endpoint
+      String searchTerm =
+          currentSearchTerm.value.isNotEmpty ? currentSearchTerm.value : "";
+      print(
+          "🔍 Using searchRecipesAPI after clearing filters. Search term: '$searchTerm'");
+      searchRecipesAPI(searchTerm);
     } else {
-      // Just update filtered list for sorting changes
-      _updateFilteredList();
+      // No filters were active, just update filtered list for sorting changes
+      if (currentSearchTerm.value.isNotEmpty) {
+        // User is still searching, keep using search results
+        print("� Continuing with search results (no filters were active)");
+        _updateFilteredList();
+      } else {
+        // No search, no filters - use normal list
+        print("� Using normal list (no filters were active, no search)");
+        _updateFilteredList();
+      }
     }
   }
 
   // Private method to update filtered list
   void _updateFilteredList() {
-    List<Recipe> baseList =
-        currentSearchTerm.value.isEmpty ? recipeList : searchResultsList;
+    print("🔄 _updateFilteredList called");
+
+    // Check if any filters are active
+    bool hasFilters = selectedCategoryCode.value.isNotEmpty ||
+        selectedSubcategoryCode.value.isNotEmpty;
+
+    // Determine base list based on search term or filters
+    List<Recipe> baseList;
+    if (currentSearchTerm.value.isNotEmpty || hasFilters) {
+      // Use search results when searching or filtering (both use searchRecipesAPI)
+      baseList = searchResultsList;
+      print("   - Using searchResultsList as base (search/filter mode)");
+    } else {
+      // Use main recipe list for normal browsing
+      baseList = recipeList;
+      print("   - Using recipeList as base (normal browsing)");
+    }
+
     List<Recipe> filtered = List.from(baseList);
 
     // Note: Category filtering is now handled via API, so we only apply sorting here

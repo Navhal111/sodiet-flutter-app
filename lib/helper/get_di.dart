@@ -40,7 +40,7 @@ init() async {
   Get.lazyPut(() => FatLogController(authRepo: Get.find()), fenix: true);
 
   // Navigation
-  Get.lazyPut(() => NavigationController(), fenix: true);
+  Get.put(NavigationController(), permanent: true);
 
   // Repositories
   Get.lazyPut(

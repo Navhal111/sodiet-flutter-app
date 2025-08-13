@@ -14,165 +14,175 @@ class HomeDrawer extends StatefulWidget {
 
 class _HomeDrawerState extends State<HomeDrawer> {
   bool isRecipesExpanded = false;
+  late final NavigationController navigationController;
+
+  @override
+  void initState() {
+    super.initState();
+    navigationController = Get.find<NavigationController>();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<NavigationController>(
-      builder: (navigationController) {
-        return Drawer(
-          backgroundColor: Colors.white,
-          child: Column(
-            children: [
-              const SizedBox(
-                height: 56,
+    return Obx(() {
+      print(
+          '===========================Check the values chnages in drawer ${navigationController.currentRoute}');
+      return Drawer(
+        backgroundColor: Colors.white,
+        child: Column(
+          children: [
+            const SizedBox(
+              height: 56,
+            ),
+            // Header with app logo and close button
+            Center(
+              child: Image.asset(
+                MyImages.splashLogo,
+                height: 50,
+                fit: BoxFit.contain,
               ),
-              // Header with app logo and close button
-              Center(
-                child: Image.asset(
-                  MyImages.splashLogo,
-                  height: 50,
-                  fit: BoxFit.contain,
-                ),
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-              // Dashboard item (highlighted based on current route)
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            // Dashboard item (highlighted based on current route)
 
-              // Menu items
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: [
-                    _buildDrawerItem(
+            // Menu items
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
+                  _buildDrawerItem(
+                    context,
+                    Icons.assignment_outlined,
+                    'Dashboard',
+                    isSelected: navigationController.currentRoute ==
+                        AppRoutes.homeScreen,
+                    onTap: () => {
+                      navigationController.navigateToHome(),
+                      setState(() {})
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    Icons.assignment_outlined,
+                    'Plan',
+                    isSelected: navigationController.currentRoute ==
+                        AppRoutes.planScreen,
+                    onTap: () => {
+                      navigationController.navigateToPlan(),
+                      setState(() {})
+                    },
+                  ),
+                  // Recipes with submenu
+                  _buildDrawerItem(
+                    context,
+                    Icons.restaurant_menu_outlined,
+                    'Recipes',
+                    hasDropdown: true,
+                    isSelected: navigationController.currentRoute ==
+                        AppRoutes.recipesScreen,
+                    onTap: () {
+                      setState(() {
+                        isRecipesExpanded = !isRecipesExpanded;
+                      });
+                    },
+                    isExpanded: isRecipesExpanded,
+                  ),
+                  // Recipes submenu
+                  if (isRecipesExpanded) ...[
+                    _buildSubMenuItem(
                       context,
-                      Icons.assignment_outlined,
-                      'Dashboard',
-                      // isSelected:
-                      //     navigationController.isRouteActive(AppRoutes.homeScreen),
-                      onTap: () => navigationController.navigateToHome(),
+                      'All Recipes',
+                      onTap: () => navigationController.navigateToRecipes(),
                     ),
-                    _buildDrawerItem(
+                    _buildSubMenuItem(
                       context,
-                      Icons.assignment_outlined,
-                      'Plan',
-                      isSelected: navigationController
-                          .isRouteActive(AppRoutes.planScreen),
-                      onTap: () => navigationController.navigateToPlan(),
+                      'Custom Recipes',
+                      onTap: () => navigationController.navigateToRecipes(),
                     ),
-                    // Recipes with submenu
-                    _buildDrawerItem(
+                    _buildSubMenuItem(
                       context,
-                      Icons.restaurant_menu_outlined,
-                      'Recipes',
-                      hasDropdown: true,
-                      isSelected: navigationController
-                          .isRouteActive(AppRoutes.recipesScreen),
-                      onTap: () {
-                        setState(() {
-                          isRecipesExpanded = !isRecipesExpanded;
-                        });
-                      },
-                      isExpanded: isRecipesExpanded,
+                      'New Recipes',
+                      onTap: () => navigationController.navigateToAddRecipes(),
                     ),
-                    // Recipes submenu
-                    if (isRecipesExpanded) ...[
-                      _buildSubMenuItem(
-                        context,
-                        'All Recipes',
-                        onTap: () => navigationController.navigateToRecipes(),
-                      ),
-                      _buildSubMenuItem(
-                        context,
-                        'Custom Recipes',
-                        onTap: () => navigationController.navigateToRecipes(),
-                      ),
-                      _buildSubMenuItem(
-                        context,
-                        'New Recipes',
-                        onTap: () =>
-                            navigationController.navigateToAddRecipes(),
-                      ),
-                      _buildSubMenuItem(
-                        context,
-                        'New Ingredient',
-                        onTap: () =>
-                            navigationController.navigateToAddIngredient(),
-                      ),
-                    ],
-                    _buildDrawerItem(
+                    _buildSubMenuItem(
                       context,
-                      Icons.tune_outlined,
-                      'Diet Optimization',
-                      isSelected: navigationController
-                          .isRouteActive(AppRoutes.optimizationScreen),
+                      'New Ingredient',
                       onTap: () =>
-                          navigationController.navigateToOptimization(),
+                          navigationController.navigateToAddIngredient(),
                     ),
-                    _buildDrawerItem(
-                        context, Icons.history_outlined, 'Diet Recall',
-                        isSelected: navigationController
-                            .isRouteActive(AppRoutes.dietRecallScreen),
-                        onTap: () =>
-                            navigationController.navigateToDietRecall()),
-                    _buildDrawerItem(context, Icons.trending_up_outlined,
-                        'Weight Log Manager',
-                        isSelected: navigationController
-                            .isRouteActive(AppRoutes.weightLogManagerScreen),
-                        onTap: () =>
-                            navigationController.navigateToWeightLogManager()),
-                    _buildDrawerItem(
-                        context, Icons.trending_up_outlined, 'Fat Log Manager',
-                        isSelected: navigationController
-                            .isRouteActive(AppRoutes.fatLogManagerScreen),
-                        onTap: () =>
-                            navigationController.navigateToFatLogManager()),
-                    _buildDrawerItem(context, Icons.directions_run_outlined,
-                        'Physical Activity',
-                        isSelected: navigationController
-                            .isRouteActive(AppRoutes.physicalActivityScreen),
-                        onTap: () =>
-                            navigationController.navigateToPhysicalActivity()),
-                    _buildDrawerItem(context, Icons.event_note_outlined,
-                        'Physical Activity Planner',
-                        isSelected: navigationController.isRouteActive(
-                            AppRoutes.physicalActivityPlannerScreen),
-                        onTap: () => navigationController
-                            .navigateToPhysicalActivityPlanner()),
-                    _buildDrawerItem(
-                      context,
-                      Icons.auto_fix_high_outlined,
-                      'Course Correction',
-                      isSelected: navigationController
-                          .isRouteActive(AppRoutes.courseCorrectionScreen),
-                      onTap: () =>
-                          navigationController.navigateToCoursesCorrection(),
-                    ),
-                    _buildDrawerItem(
-                        context, Icons.calendar_today_outlined, 'Calendar'),
-                    _buildDrawerItem(
-                      context,
-                      Icons.settings_outlined,
-                      'Preferences',
-                      isSelected: navigationController
-                          .isRouteActive(AppRoutes.preferenceOnboardingScreen),
-                      onTap: () => navigationController.navigateToPreferences(),
-                    ),
-                    _buildDrawerItem(
-                        context, Icons.extension_outlined, 'Integrations',
-                        isSelected: navigationController
-                            .isRouteActive(AppRoutes.integrationsScreen),
-                        onTap: () =>
-                            navigationController.navigateToIntegrations()),
-                    // _buildDrawerItem(context, Icons.help_outline, 'Help Desk'),
                   ],
-                ),
+                  _buildDrawerItem(
+                    context,
+                    Icons.tune_outlined,
+                    'Diet Optimization',
+                    isSelected: navigationController.currentRoute ==
+                        AppRoutes.optimizationScreen,
+                    onTap: () => navigationController.navigateToOptimization(),
+                  ),
+                  _buildDrawerItem(
+                      context, Icons.history_outlined, 'Diet Recall',
+                      isSelected: navigationController.currentRoute ==
+                          AppRoutes.dietRecallScreen,
+                      onTap: () => navigationController.navigateToDietRecall()),
+                  _buildDrawerItem(
+                      context, Icons.trending_up_outlined, 'Weight Log Manager',
+                      isSelected: navigationController.currentRoute ==
+                          AppRoutes.weightLogManagerScreen,
+                      onTap: () =>
+                          navigationController.navigateToWeightLogManager()),
+                  _buildDrawerItem(
+                      context, Icons.trending_up_outlined, 'Fat Log Manager',
+                      isSelected: navigationController.currentRoute ==
+                          AppRoutes.fatLogManagerScreen,
+                      onTap: () =>
+                          navigationController.navigateToFatLogManager()),
+                  _buildDrawerItem(context, Icons.directions_run_outlined,
+                      'Physical Activity',
+                      isSelected: navigationController.currentRoute ==
+                          AppRoutes.physicalActivityScreen,
+                      onTap: () =>
+                          navigationController.navigateToPhysicalActivity()),
+                  _buildDrawerItem(context, Icons.event_note_outlined,
+                      'Physical Activity Planner',
+                      isSelected: navigationController.currentRoute ==
+                          AppRoutes.physicalActivityPlannerScreen,
+                      onTap: () => navigationController
+                          .navigateToPhysicalActivityPlanner()),
+                  _buildDrawerItem(
+                    context,
+                    Icons.auto_fix_high_outlined,
+                    'Course Correction',
+                    isSelected: navigationController.currentRoute ==
+                        AppRoutes.courseCorrectionScreen,
+                    onTap: () =>
+                        navigationController.navigateToCoursesCorrection(),
+                  ),
+                  _buildDrawerItem(
+                      context, Icons.calendar_today_outlined, 'Calendar'),
+                  _buildDrawerItem(
+                    context,
+                    Icons.settings_outlined,
+                    'Preferences',
+                    isSelected: navigationController.currentRoute ==
+                        AppRoutes.preferenceOnboardingScreen,
+                    onTap: () => navigationController.navigateToPreferences(),
+                  ),
+                  _buildDrawerItem(
+                      context, Icons.extension_outlined, 'Integrations',
+                      isSelected: navigationController.currentRoute ==
+                          AppRoutes.integrationsScreen,
+                      onTap: () =>
+                          navigationController.navigateToIntegrations()),
+                  // _buildDrawerItem(context, Icons.help_outline, 'Help Desk'),
+                ],
               ),
-            ],
-          ),
-        );
-      },
-    );
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildDrawerItem(

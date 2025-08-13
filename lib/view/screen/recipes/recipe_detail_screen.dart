@@ -20,6 +20,7 @@ class RecipeDetailScreen extends StatefulWidget {
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   bool _isNutrientsSelected = true;
   bool _isExpanded = false;
+  int _servingMultiplier = 1; // Default multiplier for ingredients
 
   late RecipeController recipeController = Get.find<RecipeController>();
 
@@ -47,51 +48,59 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).cardColor,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            // Header with back button and title
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.arrow_back_ios,
-                            size: 16,
-                            color: Color(0xFF091242),
+            // Main content
+            Column(
+              children: [
+                // Header with back button and title
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.arrow_back_ios,
+                                size: 16,
+                                color: Color(0xFF091242),
+                              ),
+                              const SizedBox(width: 4),
+                              SemiBoldText(
+                                'Back',
+                                fontSize: 16,
+                                textColor: const Color(0xFF091242),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 4),
-                          SemiBoldText(
-                            'Back',
-                            fontSize: 16,
-                            textColor: const Color(0xFF091242),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
+                      const Spacer(),
+                      SemiBoldText(
+                        'Recipe Detail',
+                        fontSize: 18,
+                        textColor: const Color(0xFF091242),
+                      ),
+                      const Spacer(),
+                      const SizedBox(width: 60), // Balance the back button
+                    ],
                   ),
-                  const Spacer(),
-                  SemiBoldText(
-                    'Recipe Detail',
-                    fontSize: 18,
-                    textColor: const Color(0xFF091242),
-                  ),
-                  const Spacer(),
-                  const SizedBox(width: 60), // Balance the back button
-                ],
-              ),
-            ),
+                ),
 
-            // Content
-            Expanded(
-              child: SingleChildScrollView(
+                // Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    // Add bottom padding when ingredients tab is selected to avoid overlap with bottom widget
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        bottom: !_isNutrientsSelected ? 100 : 0, // Space for bottom widget
+                      ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -412,11 +421,38 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Header with title only
                               SemiBoldText(
                                 'Ingredients (${ingredients.length})',
                                 fontSize: 18,
                                 textColor: const Color(0xFF091242),
                               ),
+                              const SizedBox(height: 8),
+                              // Serving info label
+                              if (_servingMultiplier > 1)
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: const Color(
+                                          0xFFFFF4E6), // Light orange background
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: const Color(
+                                            0xFFFF9500), // Orange border
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: RegularText(
+                                      'Showing quantities for $_servingMultiplier ${_servingMultiplier == 1 ? 'serving' : 'servings'}',
+                                      fontSize: 12,
+                                      textColor: const Color(
+                                          0xFFFF9500), // Orange text
+                                    ),
+                                  ),
+                                ),
                               const SizedBox(height: 16),
 
                               // Ingredients Table
@@ -703,8 +739,106 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     const SizedBox(height: 40),
                   ],
                 ),
-              ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
+            
+            // Bottom quantity selector - only show when ingredients tab is selected
+            if (!_isNutrientsSelected)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.2),
+                        spreadRadius: 1,
+                        blurRadius: 5,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF4E6), // Light orange background
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Minus button - Circular orange
+                          GestureDetector(
+                            onTap: () {
+                              if (_servingMultiplier > 1) {
+                                setState(() {
+                                  _servingMultiplier--;
+                                });
+                              }
+                            },
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: _servingMultiplier > 1
+                                    ? const Color(0xFFFF9500) // Orange color
+                                    : Colors.grey.shade300,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.remove,
+                                size: 20,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+
+                          // Quantity display
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: SemiBoldText(
+                              '$_servingMultiplier',
+                              fontSize: 24,
+                              textColor: const Color(0xFFFF9500), // Orange text
+                            ),
+                          ),
+
+                          // Plus button - Circular orange
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _servingMultiplier++;
+                              });
+                            },
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFFF9500), // Orange color
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.add,
+                                size: 20,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -713,6 +847,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   Widget _buildIngredientItem(Ingredient ingredient, int index) {
     final isEvenRow = index % 2 == 0;
+
+    // Calculate multiplied values
+    final multipliedQty = ingredient.qty * _servingMultiplier;
+    final multipliedWeight = ingredient.ingRawAmountsG * _servingMultiplier;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -760,11 +898,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
           ),
 
-          // Quantity
+          // Quantity (multiplied)
           Expanded(
             flex: 2,
             child: MediumText(
-              ingredient.qty.toStringAsFixed(2),
+              multipliedQty.toStringAsFixed(2),
               fontSize: 14,
               textColor: const Color(0xffA2A2A2),
               textAlign: TextAlign.center,
@@ -782,11 +920,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
           ),
 
-          // Weight (gram)
+          // Weight (gram) (multiplied)
           Expanded(
             flex: 2,
             child: MediumText(
-              '${ingredient.ingRawAmountsG.toStringAsFixed(2)}gm',
+              '${multipliedWeight.toStringAsFixed(2)}gm',
               fontSize: 14,
               textColor: const Color(0xffA2A2A2),
               textAlign: TextAlign.center,

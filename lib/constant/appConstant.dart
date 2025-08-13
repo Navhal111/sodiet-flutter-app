@@ -41,7 +41,9 @@ class AppConstants {
       '${GET_RECIPES}/$recipeCode/nutrition';
 
   static const String GET_PLAN_ACTIVE = '${BASE_URL}bwp/active-plan-id';
+  static const String DELETE_PLAN_ACTIVE = '${BASE_URL}bwp/plan';
   static const String GET_PLAN_DETAILS = '${BASE_URL}bwp/plan-details';
+  static const String GENERATE_PLAN = '${BASE_URL}bwp/generate-plan';
   static const String GET_DASHBOARD_SUMMARY = '${BASE_URL}dashboard/summary';
   static const String GET_NUTRIENT_WEEKLY_SUMMARY =
       '${BASE_URL}dashboard/nutrient-weekly-summary';

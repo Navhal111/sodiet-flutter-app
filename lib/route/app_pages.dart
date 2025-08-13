@@ -5,6 +5,7 @@ import 'package:sodiet/view/screen/course_correction/course_correction_screen.da
 import 'package:sodiet/view/screen/fat_log/fat_log_manager_screen.dart';
 import 'package:sodiet/view/screen/home/home_screen.dart';
 import 'package:sodiet/view/screen/ingredients/add_ingredient_screen.dart';
+import 'package:sodiet/view/screen/plan/generate_plan_screen.dart';
 import 'package:sodiet/view/screen/plan/plan_screen.dart';
 import 'package:sodiet/view/screen/recipes/add_recipe_screen.dart';
 import 'package:sodiet/view/screen/recipes/recipes_screen.dart';
@@ -99,6 +100,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.addIngredientScreen,
       page: () => const AddIngredientScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.generatePlanScreen,
+      page: () => const GeneratePlanScreen(),
     ),
   ];
 }

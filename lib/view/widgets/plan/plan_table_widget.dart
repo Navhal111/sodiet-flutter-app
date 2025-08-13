@@ -82,7 +82,7 @@ class PlanTableWidget extends StatelessWidget {
                 Expanded(
                   flex: 2,
                   child: SemiBoldText(
-                    'Intake',
+                    'Intake (Kcal)',
                     fontSize: 14,
                     textColor: Color(0xffA2A2A2),
                     textAlign: TextAlign.center,
@@ -144,7 +144,7 @@ class PlanTableWidget extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: MediumText(
-                        '${data.weight.toStringAsFixed(2)} kg',
+                        '${data.weight.toStringAsFixed(2)}',
                         fontSize: 14,
                         textColor: const Color(0xffA2A2A2),
                         textAlign: TextAlign.center,
@@ -153,7 +153,7 @@ class PlanTableWidget extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: MediumText(
-                        '${data.intake.toStringAsFixed(2)} Kcal',
+                        '${data.intake.toStringAsFixed(2)}',
                         fontSize: 14,
                         textColor: const Color(0xffA2A2A2),
                         textAlign: TextAlign.center,
@@ -162,7 +162,7 @@ class PlanTableWidget extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: MediumText(
-                        '${data.expenditure.toStringAsFixed(2)} Kcal',
+                        '${data.expenditure.toStringAsFixed(2)}',
                         fontSize: 14,
                         textColor: const Color(0xffA2A2A2),
                         textAlign: TextAlign.center,
