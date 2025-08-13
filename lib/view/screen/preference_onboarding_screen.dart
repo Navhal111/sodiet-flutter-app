@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sodiet/controller/preference/preference_onboarding_controller.dart';
 import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 import 'package:sodiet/view/widgets/common/title_section_widget.dart';
 import 'package:sodiet/view/widgets/preference/meal_type_tabs_widget.dart';
@@ -16,126 +17,157 @@ class PreferenceOnboardingScreen extends StatefulWidget {
 
 class _PreferenceOnboardingScreenState
     extends State<PreferenceOnboardingScreen> {
-  String selectedMealType = 'Breakfast';
-  String selectedFood = 'Biryani';
-  String quantity = '';
-  List<Map<String, String>> combinations = [];
+  late PreferenceOnboardingController controller;
 
-  void _onMealTypeChanged(String mealType) {
-    setState(() {
-      selectedMealType = mealType;
-    });
-  }
-
-  void _onFoodChanged(String? food) {
-    setState(() {
-      selectedFood = food ?? 'Biryani';
-    });
-  }
-
-  void _onQuantityChanged(String qty) {
-    setState(() {
-      quantity = qty;
-    });
-  }
-
-  void _onAddCombination() {
-    if (selectedFood.isNotEmpty && quantity.isNotEmpty) {
-      setState(() {
-        combinations.add({
-          'mealType': selectedMealType,
-          'food': selectedFood,
-          'quantity': quantity,
-        });
-        quantity = ''; // Reset quantity after adding
-      });
-    }
-  }
-
-  void _onDeleteCombination(int index) {
-    setState(() {
-      // Find the actual index in the main combinations list
-      final filteredCombinations = _filteredCombinations;
-      final combinationToRemove = filteredCombinations[index];
-
-      // Find and remove from the main list
-      final actualIndex = combinations.indexWhere((combination) =>
-          combination['mealType'] == combinationToRemove['mealType'] &&
-          combination['food'] == combinationToRemove['food'] &&
-          combination['quantity'] == combinationToRemove['quantity']);
-
-      if (actualIndex != -1) {
-        combinations.removeAt(actualIndex);
-      }
-    });
-  }
-
-  List<Map<String, String>> get _filteredCombinations {
-    return combinations
-        .where((combination) => combination['mealType'] == selectedMealType)
-        .toList();
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<PreferenceOnboardingController>();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BaseScreenLayout(
-      currentRoute: AppRoutes.preferenceOnboardingScreen,
-      title: 'Preferences',
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TitleSectionWidget(
-              imagePath: 'assets/images/plan.png',
-              title: 'Preference Onboarding',
-              description:
-                  'Add your preferred food combinations for different meals of the day',
+    return GetBuilder<PreferenceOnboardingController>(
+      builder: (controller) {
+        return BaseScreenLayout(
+          currentRoute: AppRoutes.preferenceOnboardingScreen,
+          title: 'Preferences',
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TitleSectionWidget(
+                  imagePath: 'assets/images/plan.png',
+                  title: 'Preference Onboarding',
+                  description:
+                      'Add your preferred food combinations for different meals of the day',
+                ),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      // Meal Type Tabs
+                      Obx(() => MealTypeTabsWidget(
+                            selectedMealType: controller.selectedMealType.value,
+                            onMealTypeSelected: controller.onMealTypeChanged,
+                          )),
+                      const SizedBox(height: 16),
+
+                      // API Combinations - Each as its own CombinationFormWidget
+                      Obx(() {
+                        if (controller.isLoading.value) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+
+                        // Filter API combinations for current meal type
+                        final relevantCombinations = controller.apiCombinations
+                            .where((combination) => combination.foods.any(
+                                (food) =>
+                                    food.time.toLowerCase() ==
+                                    controller.selectedMealType.value
+                                        .toLowerCase()))
+                            .toList();
+
+                        // If no API data found, show message
+                        if (relevantCombinations.isEmpty) {
+                          return Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  size: 48,
+                                  color: Colors.grey.shade400,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'No data found',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'No combinations available for ${controller.selectedMealType.value}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        // Show API combinations - Each combination as one CombinationFormWidget
+                        return Column(
+                          children:
+                              relevantCombinations.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final combination = entry.value;
+
+                            // Filter foods for current meal type
+                            final relevantFoods = combination.foods
+                                .where((food) =>
+                                    food.time.toLowerCase() ==
+                                    controller.selectedMealType.value
+                                        .toLowerCase())
+                                .toList();
+
+                            if (relevantFoods.isEmpty)
+                              return const SizedBox.shrink();
+
+                            // Create combinations map for all foods in this combination
+                            final apiCombinationsList = relevantFoods
+                                .map((food) => {
+                                      'mealType':
+                                          controller.selectedMealType.value,
+                                      'food': food.foodName,
+                                      'quantity':
+                                          '${food.foodQty}g - ${food.description}',
+                                    })
+                                .toList();
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 16),
+                              child: CombinationFormWidget(
+                                selectedFood: '',
+                                quantity: '',
+                                onFoodChanged: (_) {},
+                                onQuantityChanged: (_) {},
+                                onAddCombination: () {},
+                                combinations: apiCombinationsList,
+                                onDeleteCombination: (_) {},
+                                availableFoods: controller.recipeList
+                                    .map((recipe) => recipe.recipeName)
+                                    .toList(),
+                                isApiCombination: false,
+                                combinationTitle: 'Combination ${index + 1}',
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      }),
+                    ],
+                  ),
+                )
+              ],
             ),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  const SizedBox(height: 16),
-                  // Meal Type Tabs
-                  MealTypeTabsWidget(
-                    selectedMealType: selectedMealType,
-                    onMealTypeSelected: _onMealTypeChanged,
-                  ),
-                  const SizedBox(height: 16),
-                  // Food Combination Form
-                  CombinationFormWidget(
-                    selectedFood: selectedFood,
-                    quantity: quantity,
-                    onFoodChanged: _onFoodChanged,
-                    onQuantityChanged: _onQuantityChanged,
-                    onAddCombination: _onAddCombination,
-                    combinations: _filteredCombinations,
-                    onDeleteCombination: _onDeleteCombination,
-                  ),
-                ],
-              ),
-            )
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
-  }
-
-  void _savePreferences() {
-    // Here you would typically save the preferences to your data store
-    // For now, we'll just show a success message and go back
-    Get.snackbar(
-      'Success',
-      'Your preferences have been saved!',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFF4CAF50),
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 8,
-    );
-
-    // You might want to navigate to a different screen or go back
-    Get.back();
   }
 }

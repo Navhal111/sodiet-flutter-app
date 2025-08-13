@@ -48,6 +48,10 @@ class AppConstants {
   static const String GET_NUTRIENT_WEEKLY_SUMMARY =
       '${BASE_URL}dashboard/nutrient-weekly-summary';
 
+  // Preference endpoints
+  static const String GET_PREFERENCES =
+      '${BASE_URL}personalization/preferences';
+
   // Weight Log endpoints
   static const String GET_WEIGHT_LOGS = '${BASE_URL}log/weight-log';
   static const String ADD_WEIGHT_LOG = '${BASE_URL}log/weight-log';
