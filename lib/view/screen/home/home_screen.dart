@@ -107,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
       Container(
         margin: const EdgeInsets.only(right: 8),
         child: DataSummaryWidget(
-          title: 'Start Date',
+          title: 'Target Progress',
           startValue: kpiData.planStartDate,
           endValue: '',
           onClick: () {

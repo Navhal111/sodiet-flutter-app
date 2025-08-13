@@ -25,23 +25,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
   @override
   bool get wantKeepAlive => true;
 
-  // Method to preserve scroll position during state updates
-  void _preserveScrollAndSetState(VoidCallback fn) {
-    final scrollPosition =
-        _mainScrollController.hasClients ? _mainScrollController.offset : 0.0;
-
+  // Simple setState method without scroll preservation to avoid UI issues
+  void _updateState(VoidCallback fn) {
     setState(fn);
-
-    // Restore scroll position after rebuild
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_mainScrollController.hasClients) {
-        _mainScrollController.animateTo(
-          scrollPosition,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeOut,
-        );
-      }
-    });
   }
 
   // Form controllers
@@ -56,12 +42,27 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
   // Dropdown values
   String? _selectedCategory;
   String? _selectedSubcategory;
+  String? _selectedDescription = 'select';
+
+  // Description dropdown options for Additional Details
+  final List<String> _descriptionOptions = [
+    'select',
+    'cup',
+    'number',
+    'tablespoon',
+    'glass',
+    'teaspoon',
+    'scoop',
+    'slice',
+    'bowl',
+  ];
 
   // Ingredients form
   String? _selectedIngredient;
   String? _selectedUnit;
   final TextEditingController _ingredientQuantityController =
       TextEditingController();
+
   List<Map<String, dynamic>> _addedIngredients = [];
 
   // Recipe Attributes
@@ -404,7 +405,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
                     items: categories.map((e) => e.category).toList(),
                     onChanged: (value) async {
                       if (value != _selectedCategory) {
-                        _preserveScrollAndSetState(() {
+                        _updateState(() {
                           _selectedCategory = value;
                           _selectedSubcategory = null; // Reset subcategory
                         });
@@ -438,7 +439,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
                         : [],
                     onChanged: (value) {
                       if (value != _selectedSubcategory) {
-                        _preserveScrollAndSetState(() {
+                        _updateState(() {
                           _selectedSubcategory = value;
                         });
                       }
@@ -458,11 +459,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
 
               const SizedBox(height: 16),
 
-              // Quantity Field
-              _buildInputField(
-                controller: _quantityController,
-                hintText: 'Quantity',
-                keyboardType: TextInputType.number,
+              // Description Field
+              _buildDropdownField(
+                value: _selectedDescription,
+                hint: 'Description',
+                items: _descriptionOptions,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedDescription = value;
+                  });
+                },
+                searchHint: 'Select description...',
               ),
 
               const SizedBox(height: 16),
@@ -480,9 +487,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
         const SizedBox(height: 24),
 
         // Recipe Attributes Section
-        RepaintBoundary(
-          child: _buildRecipeAttributesSection(),
-        ),
+        _buildRecipeAttributesSection(),
 
         const SizedBox(height: 24),
 
@@ -710,6 +715,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
         description: _tagsController.text.trim().isNotEmpty
             ? _tagsController.text.trim()
             : 'Recipe description',
+        additionalDescription: _selectedDescription,
         categoryCode: selectedCat.code,
         subcategoryCode: selectedSubcat.code,
         portion: portion,
@@ -787,7 +793,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
 
   Widget _buildRecipeAttributesSection() {
     return Container(
-      key: const ValueKey('recipe_attributes'),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -859,77 +864,75 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
     required List<String> options,
     required List<String> selectedItems,
   }) {
-    return Container(
-      key: key != null ? ValueKey(key) : null,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SemiBoldText(
-            title,
-            fontSize: 14,
-            textColor: Color(0xFF091242),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: options.map((option) {
-              final isSelected = selectedItems.contains(option);
-              return GestureDetector(
-                onTap: () {
-                  // Use the scroll-preserving setState method
-                  _preserveScrollAndSetState(() {
-                    if (isSelected) {
-                      selectedItems.remove(option);
-                    } else {
-                      selectedItems.add(option);
-                    }
-                  });
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SemiBoldText(
+          title,
+          fontSize: 14,
+          textColor: Color(0xFF091242),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: options.map((option) {
+            final isSelected = selectedItems.contains(option);
+            return GestureDetector(
+              onTap: () {
+                // Use the simple update state method
+                _updateState(() {
+                  if (isSelected) {
+                    selectedItems.remove(option);
+                  } else {
+                    selectedItems.add(option);
+                  }
+                });
+              },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFF4CAF50)
+                      : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
                     color: isSelected
                         ? const Color(0xFF4CAF50)
-                        : Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isSelected
-                          ? const Color(0xFF4CAF50)
-                          : Colors.grey.shade300,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isSelected
-                            ? Icons.check_box
-                            : Icons.check_box_outline_blank,
-                        size: 16,
-                        color: isSelected ? Colors.white : Colors.grey.shade600,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        option,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color:
-                              isSelected ? Colors.white : Colors.grey.shade700,
-                          fontWeight:
-                              isSelected ? FontWeight.w500 : FontWeight.normal,
-                        ),
-                      ),
-                    ],
+                        : Colors.grey.shade300,
                   ),
                 ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isSelected
+                          ? Icons.check_box
+                          : Icons.check_box_outline_blank,
+                      size: 16,
+                      color: isSelected ? Colors.white : Colors.grey.shade600,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      option,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color:
+                            isSelected ? Colors.white : Colors.grey.shade700,
+                        fontWeight:
+                            isSelected ? FontWeight.w500 : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
+  }
   }
 
   Widget _buildIngredientsFormSection() {
