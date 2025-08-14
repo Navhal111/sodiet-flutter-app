@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sodiet/controller/home/homeController.dart';
-import 'package:sodiet/model/weight_data.dart';
 import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/chart/weight_progress_chart.dart';
@@ -239,32 +238,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }).toList();
   }
 
-  // Sample data for nutrient progress
-
-  // Sample data for the weight progress chart - matching the design screenshot
-  List<WeightData> sampleWeightData = [
-    // Logged weight data (purple line) with some fluctuation
-    WeightData(day: 1, loggedWeight: 1.0, plannedWeight: 100.0),
-    WeightData(day: 3, loggedWeight: 0.79, plannedWeight: 99.5),
-    WeightData(day: 5, loggedWeight: 0.5, plannedWeight: 99.0),
-    WeightData(day: 6, loggedWeight: 0.77, plannedWeight: 98.5),
-    WeightData(day: 7, loggedWeight: 0.6, plannedWeight: 98.0),
-    WeightData(day: 8, loggedWeight: 0.9, plannedWeight: 97.5),
-
-    // Planned weight data with steady decline (pink line)
-    WeightData(day: 10, loggedWeight: -1, plannedWeight: 97.3),
-    WeightData(day: 12, loggedWeight: -1, plannedWeight: 97.0),
-    WeightData(day: 14, loggedWeight: -1, plannedWeight: 96.8),
-    WeightData(day: 16, loggedWeight: -1, plannedWeight: 96.5),
-    WeightData(day: 18, loggedWeight: -1, plannedWeight: 96.3),
-    WeightData(day: 20, loggedWeight: -1, plannedWeight: 97.0),
-    WeightData(day: 22, loggedWeight: -1, plannedWeight: 96.8),
-    WeightData(day: 24, loggedWeight: -1, plannedWeight: 96.5),
-    WeightData(day: 26, loggedWeight: -1, plannedWeight: 96.3),
-    WeightData(day: 28, loggedWeight: -1, plannedWeight: 96.1),
-    WeightData(day: 30, loggedWeight: -1, plannedWeight: 96.0),
-  ];
-
   // Sample data for the intake overview chart - matching the design screenshot
   List<IntakeData> sampleIntakeData = [
     IntakeData(
@@ -331,22 +304,44 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 10),
-                child: WeightProgressChart(
-                  weightDataList: sampleWeightData,
-                  title: 'Plan Progress',
-                  titleColor:
-                      const Color(0xFF091242), // Dark blue from the design
-                  titleFontSize: 22,
-                  loggedWeightColor:
-                      const Color.fromRGBO(48, 0, 129, 1), // Deep purple
-                  plannedWeightColor:
-                      const Color.fromRGBO(255, 99, 132, 1), // Pink
-                  showRightAxisLabels: true,
-                  minKcal: 0.0,
-                  maxKcal: 1.0, // KCal scale 0.0-1.0
-                  minWeight: 96.0,
-                  maxWeight: 100.0, // Weight scale 96.0-100.0 kg
-                ),
+                child: Obx(() {
+                  if (homeController.isLoadingDashboardSummary.value) {
+                    return Container(
+                      height: 300,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  }
+
+                  final chartData = homeController.getChartWeightData();
+                  final dataRanges = homeController.getChartDataRanges();
+
+                  return WeightProgressChart(
+                    weightDataList: chartData,
+                    title: 'Plan Progress',
+                    titleColor: const Color(0xFF091242),
+                    titleFontSize: 22,
+                    showRightAxisLabels: true,
+                    minIntake: dataRanges['minIntake']!,
+                    maxIntake: dataRanges['maxIntake']!,
+                    minWeight: dataRanges['minWeight']!,
+                    maxWeight: dataRanges['maxWeight']!,
+                  );
+                }),
               ),
               const SizedBox(height: 10),
 

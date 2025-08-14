@@ -8,13 +8,11 @@ class WeightProgressChart extends StatelessWidget {
   final String title;
   final Color titleColor;
   final double titleFontSize;
-  final Color loggedWeightColor;
-  final Color plannedWeightColor;
   final bool showRightAxisLabels;
 
   // Y-axis ranges
-  final double minKcal;
-  final double maxKcal;
+  final double minIntake;
+  final double maxIntake;
   final double minWeight;
   final double maxWeight;
 
@@ -24,18 +22,19 @@ class WeightProgressChart extends StatelessWidget {
     this.title = 'Plan Progress',
     this.titleColor = Colors.black87,
     this.titleFontSize = 20,
-    this.loggedWeightColor = const Color.fromRGBO(51, 0, 153, 1), // Deep purple
-    this.plannedWeightColor =
-        const Color.fromRGBO(255, 102, 153, 1), // Pink rgba(255, 102, 153, 1)
     this.showRightAxisLabels = true,
-    this.minKcal = 0.0,
-    this.maxKcal = 1.0,
-    this.minWeight = 96.0,
-    this.maxWeight = 100.0,
+    this.minIntake = 0.0,
+    this.maxIntake = 5000.0,
+    this.minWeight = 70.0,
+    this.maxWeight = 80.0,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Calculate chart width based on data points for horizontal scrolling
+    final chartWidth =
+        (weightDataList.length * 25.0).clamp(300.0, double.infinity);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -60,26 +59,44 @@ class WeightProgressChart extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           SizedBox(
-            height: 300,
-            child: LineChart(
-              _createChartData(context),
-            ),
+            height: 400, // Increased from 300 to 400 for better readability
+            child: weightDataList.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No chart data available',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  )
+                : SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: chartWidth,
+                      child: LineChart(
+                        _createChartData(context),
+                      ),
+                    ),
+                  ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          const SizedBox(height: 20),
+          // Professional Legend Design
+          Wrap(
+            spacing: 12,
+            runSpacing: 10,
             children: [
+              _buildLegendItem(context, 'Weight', const Color(0xFFFF6B9D)),
               _buildLegendItem(
-                context,
-                'Logged KCal',
-                loggedWeightColor,
-              ),
-              const SizedBox(width: 10),
+                  context, 'Logged Weight', const Color(0xFF1E3A8A)),
               _buildLegendItem(
-                context,
-                'Planned weight',
-                plannedWeightColor,
-              ),
+                  context, 'Target Intake', const Color(0xFF06B6D4)),
+              _buildLegendItem(
+                  context, 'Target Expenditure', const Color(0xFF10B981)),
+              _buildLegendItem(
+                  context, 'Actual Intake', const Color(0xFF8B5CF6)),
+              _buildLegendItem(
+                  context, 'Actual Expenditure', const Color(0xFFF97316)),
+              _buildLegendItem(context, 'CC Intake', const Color(0xFF1E40AF)),
+              _buildLegendItem(
+                  context, 'CC Expenditure', const Color(0xFF059669)),
             ],
           ),
         ],
@@ -89,31 +106,34 @@ class WeightProgressChart extends StatelessWidget {
 
   Widget _buildLegendItem(BuildContext context, String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: color,
-            width: 2,
-          )),
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
       child: Row(
+        mainAxisSize: MainAxisSize.min, // This makes the width fit the content
         children: [
           Container(
-            width: 16,
-            height: 16,
+            width: 12,
+            height: 12,
             decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Theme.of(context).canvasColor,
-                  width: 2,
-                )),
+              color: color,
+              shape: BoxShape.circle,
+            ),
           ),
           const SizedBox(width: 8),
-          MediumText(
+          Text(
             label,
-            fontSize: 12,
-            textColor: color,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: color.computeLuminance() > 0.5 ? Colors.black87 : color,
+            ),
           ),
         ],
       ),
@@ -121,23 +141,34 @@ class WeightProgressChart extends StatelessWidget {
   }
 
   LineChartData _createChartData(BuildContext context) {
+    // Find the max day for x-axis
+    final maxDay = weightDataList.isNotEmpty
+        ? weightDataList
+            .map((e) => e.day)
+            .reduce((a, b) => a > b ? a : b)
+            .toDouble()
+        : 30.0;
+
     return LineChartData(
       gridData: FlGridData(
         show: true,
         drawHorizontalLine: true,
         drawVerticalLine: true,
-        horizontalInterval: 0.1, // For KCal 0.0-1.0 range with 0.1 increments
-        verticalInterval: 2, // Every 2 days, more grid lines like in the design
+        horizontalInterval: (maxIntake - minIntake) /
+            3, // Reduced to 3 horizontal grid lines for cleaner look
+        verticalInterval: maxDay > 20
+            ? 10
+            : 5, // Fewer vertical lines for better mobile experience
         getDrawingHorizontalLine: (value) {
           return FlLine(
-            color: Colors.grey.shade300,
-            strokeWidth: 1,
+            color: Colors.grey.shade200, // Lighter grid lines
+            strokeWidth: 0.5, // Thinner grid lines
           );
         },
         getDrawingVerticalLine: (value) {
           return FlLine(
-            color: Colors.grey.shade300,
-            strokeWidth: 1,
+            color: Colors.grey.shade200, // Lighter grid lines
+            strokeWidth: 0.5, // Thinner grid lines
           );
         },
       ),
@@ -145,40 +176,34 @@ class WeightProgressChart extends StatelessWidget {
         rightTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: showRightAxisLabels,
-            reservedSize: 40,
-            interval: 0.25, // Show fewer weight labels for clarity
+            reservedSize: 60,
+            interval: (maxIntake - minIntake) / 5, // Use intake intervals
             getTitlesWidget: (value, meta) {
-              // Convert normalized y-value back to weight value (96-100 range)
-              double weightValue = ((value - minKcal) / (maxKcal - minKcal)) *
-                      (maxWeight - minWeight) +
-                  minWeight;
-
-              // Round to nearest whole number for cleaner display
-              int weightInt = weightValue.round();
+              // Map intake position to weight position
+              double position = (value - minIntake) / (maxIntake - minIntake);
+              double weightValue =
+                  minWeight + (position * (maxWeight - minWeight));
 
               return SideTitleWidget(
                 axisSide: meta.axisSide,
-                space: 5,
+                space: 4,
                 child: Text(
-                  '$weightInt', // Show as integer (96, 97, 98, 99, 100)
+                  '${weightValue.toStringAsFixed(0)}kg', // Whole numbers for cleaner look
                   style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w400,
+                    fontSize: 10,
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               );
             },
           ),
-          axisNameWidget: Transform.rotate(
-            angle: 0, // 90 degrees in radians
-            child: const Text(
-              'Weight',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
+          axisNameWidget: const Text(
+            'Weight (kg)',
+            style: TextStyle(
+              color: Colors.black87,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -189,26 +214,24 @@ class WeightProgressChart extends StatelessWidget {
           axisNameWidget: const Text(
             'Day',
             style: TextStyle(
-              color: Colors.grey,
-              fontSize: 12,
+              color: Colors.black87, // Changed from grey to black87
+              fontSize: 11,
+              fontWeight: FontWeight.w600, // Added for consistency
             ),
           ),
           sideTitles: SideTitles(
             showTitles: true,
             reservedSize: 30,
+            interval: maxDay > 15 ? 5 : 2,
             getTitlesWidget: (value, meta) {
-              // Show more day markers to match design
-              if (value % 2 != 0 && value != 1 && value != 30) {
-                return const SizedBox();
-              }
               return SideTitleWidget(
                 axisSide: meta.axisSide,
                 child: Text(
                   '${value.toInt()}',
                   style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w400,
+                    fontSize: 10,
+                    color: Colors.black87, // Changed from grey to black87
+                    fontWeight: FontWeight.w500, // Changed from w400 to w500
                   ),
                 ),
               );
@@ -216,40 +239,33 @@ class WeightProgressChart extends StatelessWidget {
           ),
         ),
         leftTitles: AxisTitles(
-          axisNameWidget: Transform.rotate(
-            angle: 0, // 90 degrees in radians
-            child: const Text(
-              'KCal',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
+          axisNameWidget: const Text(
+            'Intake (kcal)',
+            style: TextStyle(
+              color: Colors.black87, // Changed from grey to black87
+              fontSize: 11,
+              fontWeight: FontWeight.w600, // Changed from w500 to w600
             ),
           ),
           sideTitles: SideTitles(
             showTitles: true,
-            reservedSize: 40,
+            reservedSize: 60,
+            interval: (maxIntake - minIntake) /
+                5, // Show exactly 5 intervals = 6 labels
             getTitlesWidget: (value, meta) {
-              // Only show certain values for better readability
-              if ((value * 10).round() % 2 != 0 &&
-                  value != 0.0 &&
-                  value != 1.0) {
-                return const SizedBox();
-              }
               return SideTitleWidget(
                 axisSide: meta.axisSide,
+                space: 4,
                 child: Text(
-                  value.toStringAsFixed(1),
+                  '${(value / 1000).toStringAsFixed(1)}k', // Show as 1.5k format
                   style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w400,
+                    fontSize: 10,
+                    color: Colors.black87, // Changed from grey to black87
+                    fontWeight: FontWeight.w500, // Changed from w400 to w500
                   ),
                 ),
               );
             },
-            interval: 0.1, // 0.1 increments for KCal
           ),
         ),
       ),
@@ -263,9 +279,9 @@ class WeightProgressChart extends StatelessWidget {
         ),
       ),
       minX: 1,
-      maxX: 30, // Full month view
-      minY: minKcal,
-      maxY: maxKcal, // KCal range (left Y-axis)
+      maxX: maxDay,
+      minY: minIntake,
+      maxY: maxIntake,
       lineTouchData: LineTouchData(
         touchTooltipData: LineTouchTooltipData(
           tooltipBgColor: Colors.black.withOpacity(0.8),
@@ -273,64 +289,131 @@ class WeightProgressChart extends StatelessWidget {
           getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
             return touchedBarSpots.map((barSpot) {
               final flSpot = barSpot;
-              // Determine data type and text color based on bar index
-              String dataType = flSpot.barIndex == 0 ? 'KCal' : 'Weight';
-              Color textColor =
-                  flSpot.barIndex == 0 ? loggedWeightColor : plannedWeightColor;
-
-              // Get the original data for this point
               int day = flSpot.x.toInt();
-              WeightData? originalData = weightDataList.firstWhere(
-                  (data) => data.day == day,
-                  orElse: () =>
-                      WeightData(day: day, loggedWeight: -1, plannedWeight: 0));
 
-              // Use original weight value for planned weight (not the normalized displayed value)
-              String yValue = flSpot.barIndex == 0
-                  ? flSpot.y
-                      .toStringAsFixed(1) // KCal format - decimal precision
-                  : originalData.plannedWeight.toStringAsFixed(
-                      1); // Original weight value with decimal precision
+              // Find the original data for this day
+              WeightData? originalData =
+                  weightDataList.firstWhere((data) => data.day == day,
+                      orElse: () => WeightData(
+                            day: day,
+                            projectedWeightKg: 0,
+                            targetIntakeKcal: 0,
+                            targetExpenditureKcal: 0,
+                            actualIntakeKcal: 0,
+                            actualExpenditureKcal: 0,
+                            ccIntakeKcal: 0,
+                            ccExpenditureKcal: 0,
+                          ));
+
+              String tooltipText = '';
+
+              // Determine which line was touched based on barIndex
+              switch (flSpot.barIndex) {
+                case 0:
+                  tooltipText =
+                      'Projected Weight: ${originalData.projectedWeightKg.toStringAsFixed(1)} kg\nDay: $day';
+                  break;
+                case 1:
+                  if (originalData.loggedWeightKg != null) {
+                    tooltipText =
+                        'Logged Weight: ${originalData.loggedWeightKg!.toStringAsFixed(1)} kg\nDay: $day';
+                  }
+                  break;
+                case 2:
+                  tooltipText =
+                      'Target Intake: ${originalData.targetIntakeKcal.toStringAsFixed(0)} kcal\nDay: $day';
+                  break;
+                case 3:
+                  tooltipText =
+                      'Target Expenditure: ${originalData.targetExpenditureKcal.toStringAsFixed(0)} kcal\nDay: $day';
+                  break;
+                case 4:
+                  tooltipText =
+                      'Actual Intake: ${originalData.actualIntakeKcal.toStringAsFixed(0)} kcal\nDay: $day';
+                  break;
+                case 5:
+                  tooltipText =
+                      'Actual Expenditure: ${originalData.actualExpenditureKcal.toStringAsFixed(0)} kcal\nDay: $day';
+                  break;
+                case 6:
+                  tooltipText =
+                      'CC Intake: ${originalData.ccIntakeKcal.toStringAsFixed(0)} kcal\nDay: $day';
+                  break;
+                case 7:
+                  tooltipText =
+                      'CC Expenditure: ${originalData.ccExpenditureKcal.toStringAsFixed(0)} kcal\nDay: $day';
+                  break;
+                default:
+                  tooltipText = 'Day: $day';
+              }
 
               return LineTooltipItem(
-                '${dataType}: $yValue\nDay: ${flSpot.x.toInt()}',
-                TextStyle(
+                tooltipText,
+                const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),
-                children: [
-                  TextSpan(
-                    text: '\n${flSpot.barIndex == 0 ? 'Logged' : 'Planned'}',
-                    style: TextStyle(
-                      color: textColor,
-                      fontWeight: FontWeight.normal,
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
               );
             }).toList();
           },
         ),
-        touchCallback: (FlTouchEvent event, LineTouchResponse? touchResponse) {
-          // Custom touch callback can be implemented here
-        },
       ),
       lineBarsData: [
-        // Logged Weight Line
+        // 1. Projected Weight (Pink)
         LineChartBarData(
-          spots: _getLoggedWeightSpots(),
+          spots: _getProjectedWeightSpots(),
           isCurved: true,
-          color: loggedWeightColor,
-          barWidth: 3,
+          color: const Color(0xFFFF6B9D), // Pink
+          barWidth: 3, // Increased from 2 to 3 for better visibility
           isStrokeCapRound: true,
           dotData: FlDotData(
             show: true,
             getDotPainter: (spot, percent, barData, index) {
               return FlDotCirclePainter(
-                radius: 4,
-                color: loggedWeightColor,
+                radius: 4, // Increased from 3 to 4 for weight line
+                color: const Color(0xFFFF6B9D),
+                strokeWidth: 2,
+                strokeColor: Colors.white,
+              );
+            },
+          ),
+          belowBarData: BarAreaData(show: false),
+        ),
+        // 2. Logged Weight (Dark Blue) - only show if data exists
+        if (_getLoggedWeightSpots().isNotEmpty)
+          LineChartBarData(
+            spots: _getLoggedWeightSpots(),
+            isCurved: true,
+            color: const Color(0xFF1E3A8A), // Dark blue
+            barWidth: 3, // Increased from 2 to 3 for better visibility
+            isStrokeCapRound: true,
+            dotData: FlDotData(
+              show: true,
+              getDotPainter: (spot, percent, barData, index) {
+                return FlDotCirclePainter(
+                  radius: 4, // Increased from 3 to 4 for weight line
+                  color: const Color(0xFF1E3A8A),
+                  strokeWidth: 2,
+                  strokeColor: Colors.white,
+                );
+              },
+            ),
+            belowBarData: BarAreaData(show: false),
+          ),
+        // 3. Target Intake (Light Blue)
+        LineChartBarData(
+          spots: _getTargetIntakeSpots(),
+          isCurved: true,
+          color: const Color(0xFF06B6D4), // Light blue
+          barWidth: 2,
+          isStrokeCapRound: true,
+          dotData: FlDotData(
+            show: true,
+            getDotPainter: (spot, percent, barData, index) {
+              return FlDotCirclePainter(
+                radius: 2,
+                color: const Color(0xFF06B6D4),
                 strokeWidth: 1,
                 strokeColor: Colors.white,
               );
@@ -338,19 +421,99 @@ class WeightProgressChart extends StatelessWidget {
           ),
           belowBarData: BarAreaData(show: false),
         ),
-        // Planned Weight Line
+        // 4. Target Expenditure (Teal)
         LineChartBarData(
-          spots: _getPlannedWeightSpots(),
+          spots: _getTargetExpenditureSpots(),
           isCurved: true,
-          color: plannedWeightColor,
-          barWidth: 3,
+          color: const Color(0xFF10B981), // Teal
+          barWidth: 2,
           isStrokeCapRound: true,
           dotData: FlDotData(
             show: true,
             getDotPainter: (spot, percent, barData, index) {
               return FlDotCirclePainter(
-                radius: 4,
-                color: plannedWeightColor,
+                radius: 2,
+                color: const Color(0xFF10B981),
+                strokeWidth: 1,
+                strokeColor: Colors.white,
+              );
+            },
+          ),
+          belowBarData: BarAreaData(show: false),
+        ),
+        // 5. Actual Intake (Purple)
+        LineChartBarData(
+          spots: _getActualIntakeSpots(),
+          isCurved: true,
+          color: const Color(0xFF8B5CF6), // Purple
+          barWidth: 2,
+          isStrokeCapRound: true,
+          dotData: FlDotData(
+            show: true,
+            getDotPainter: (spot, percent, barData, index) {
+              return FlDotCirclePainter(
+                radius: 2,
+                color: const Color(0xFF8B5CF6),
+                strokeWidth: 1,
+                strokeColor: Colors.white,
+              );
+            },
+          ),
+          belowBarData: BarAreaData(show: false),
+        ),
+        // 6. Actual Expenditure (Orange)
+        LineChartBarData(
+          spots: _getActualExpenditureSpots(),
+          isCurved: true,
+          color: const Color(0xFFF97316), // Orange
+          barWidth: 2,
+          isStrokeCapRound: true,
+          dotData: FlDotData(
+            show: true,
+            getDotPainter: (spot, percent, barData, index) {
+              return FlDotCirclePainter(
+                radius: 2,
+                color: const Color(0xFFF97316),
+                strokeWidth: 1,
+                strokeColor: Colors.white,
+              );
+            },
+          ),
+          belowBarData: BarAreaData(show: false),
+        ),
+        // 7. CC Intake (Dark Blue)
+        LineChartBarData(
+          spots: _getCCIntakeSpots(),
+          isCurved: true,
+          color: const Color(0xFF1E40AF), // Dark blue
+          barWidth: 2,
+          isStrokeCapRound: true,
+          dotData: FlDotData(
+            show: true,
+            getDotPainter: (spot, percent, barData, index) {
+              return FlDotCirclePainter(
+                radius: 2,
+                color: const Color(0xFF1E40AF),
+                strokeWidth: 1,
+                strokeColor: Colors.white,
+              );
+            },
+          ),
+          belowBarData: BarAreaData(show: false),
+        ),
+        // 8. CC Expenditure (Green)
+        LineChartBarData(
+          spots: _getCCExpenditureSpots(),
+          isCurved: true,
+          color: const Color(0xFF059669), // Green
+          barWidth: 2,
+          isStrokeCapRound: true,
+          dotData: FlDotData(
+            show: true,
+            getDotPainter: (spot, percent, barData, index) {
+              return FlDotCirclePainter(
+                radius: 2,
+                color: const Color(0xFF059669),
                 strokeWidth: 1,
                 strokeColor: Colors.white,
               );
@@ -360,14 +523,14 @@ class WeightProgressChart extends StatelessWidget {
         ),
       ],
     );
-  } // KCal values are already in the correct scale (0.0-1.0)
+  }
 
-  List<FlSpot> _getLoggedWeightSpots() {
+  List<FlSpot> _getActualIntakeSpots() {
     List<FlSpot> spots = [];
     for (var data in weightDataList) {
-      // Only add spots for days that have logged weight data
-      if (data.loggedWeight >= 0) {
-        spots.add(FlSpot(data.day.toDouble(), data.loggedWeight));
+      // Only add spots for days that have actual intake data > 0
+      if (data.actualIntakeKcal > 0) {
+        spots.add(FlSpot(data.day.toDouble(), data.actualIntakeKcal));
       }
     }
 
@@ -376,17 +539,85 @@ class WeightProgressChart extends StatelessWidget {
     return spots;
   }
 
-  // Normalize weight values (96.0-100.0) to KCal scale (0.0-1.0) for display
-  List<FlSpot> _getPlannedWeightSpots() {
-    // Get all valid planned weight spots and sort them
+  // Normalize weight values to intake scale for display on same chart
+  List<FlSpot> _getProjectedWeightSpots() {
     List<FlSpot> spots = weightDataList.map((data) {
-      // Normalize the weight to the KCal scale for visualization
+      // Normalize the weight to the intake scale for visualization
       double normalizedWeight =
-          ((data.plannedWeight - minWeight) / (maxWeight - minWeight)) *
-                  (maxKcal - minKcal) +
-              minKcal;
+          ((data.projectedWeightKg - minWeight) / (maxWeight - minWeight)) *
+                  (maxIntake - minIntake) +
+              minIntake;
 
       return FlSpot(data.day.toDouble(), normalizedWeight);
+    }).toList();
+
+    // Sort spots by x value to ensure the line is drawn correctly
+    spots.sort((a, b) => a.x.compareTo(b.x));
+    return spots;
+  }
+
+  List<FlSpot> _getLoggedWeightSpots() {
+    List<FlSpot> spots = [];
+    for (var data in weightDataList) {
+      // Only add spots for days that have logged weight data
+      if (data.loggedWeightKg != null) {
+        // Normalize the weight to the intake scale for visualization
+        double normalizedWeight =
+            ((data.loggedWeightKg! - minWeight) / (maxWeight - minWeight)) *
+                    (maxIntake - minIntake) +
+                minIntake;
+        spots.add(FlSpot(data.day.toDouble(), normalizedWeight));
+      }
+    }
+
+    // Sort spots by x value to ensure the line is drawn correctly
+    spots.sort((a, b) => a.x.compareTo(b.x));
+    return spots;
+  }
+
+  List<FlSpot> _getTargetIntakeSpots() {
+    List<FlSpot> spots = weightDataList.map((data) {
+      return FlSpot(data.day.toDouble(), data.targetIntakeKcal);
+    }).toList();
+
+    // Sort spots by x value to ensure the line is drawn correctly
+    spots.sort((a, b) => a.x.compareTo(b.x));
+    return spots;
+  }
+
+  List<FlSpot> _getTargetExpenditureSpots() {
+    List<FlSpot> spots = weightDataList.map((data) {
+      return FlSpot(data.day.toDouble(), data.targetExpenditureKcal);
+    }).toList();
+
+    // Sort spots by x value to ensure the line is drawn correctly
+    spots.sort((a, b) => a.x.compareTo(b.x));
+    return spots;
+  }
+
+  List<FlSpot> _getActualExpenditureSpots() {
+    List<FlSpot> spots = weightDataList.map((data) {
+      return FlSpot(data.day.toDouble(), data.actualExpenditureKcal);
+    }).toList();
+
+    // Sort spots by x value to ensure the line is drawn correctly
+    spots.sort((a, b) => a.x.compareTo(b.x));
+    return spots;
+  }
+
+  List<FlSpot> _getCCIntakeSpots() {
+    List<FlSpot> spots = weightDataList.map((data) {
+      return FlSpot(data.day.toDouble(), data.ccIntakeKcal);
+    }).toList();
+
+    // Sort spots by x value to ensure the line is drawn correctly
+    spots.sort((a, b) => a.x.compareTo(b.x));
+    return spots;
+  }
+
+  List<FlSpot> _getCCExpenditureSpots() {
+    List<FlSpot> spots = weightDataList.map((data) {
+      return FlSpot(data.day.toDouble(), data.ccExpenditureKcal);
     }).toList();
 
     // Sort spots by x value to ensure the line is drawn correctly

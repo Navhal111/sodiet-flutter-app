@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../constant/appConstant.dart';
 import '../../model/plan_model.dart';
+import '../../model/weight_data.dart';
 import '../../repo/authRepo.dart';
 
 class HomeController extends GetxController implements GetxService {
@@ -166,5 +167,145 @@ class HomeController extends GetxController implements GetxService {
     dashboardSummaryResponse.value = null;
     nutrientWeeklySummaryResponse.value = null;
     update();
+  }
+
+  // Method to convert legacy format data to WeightData list for chart
+  List<WeightData> getChartWeightData() {
+    if (!hasDashboardSummary || legacyFormat == null) {
+      return [];
+    }
+
+    final legacy = legacyFormat!;
+    final datasets = legacy.dataSets;
+
+    List<WeightData> weightDataList = [];
+
+    // Process each day's data
+    for (int i = 0; i < legacy.labels.length; i++) {
+      final day = int.tryParse(legacy.labels[i]) ?? (i + 1);
+
+      // Get projected weight (kg)
+      double projectedWeightKg = 75.0; // default fallback
+      if (i < datasets.projectedWeight.length) {
+        projectedWeightKg = datasets.projectedWeight[i];
+      }
+
+      // Get logged weight (kg) - use null if not available or invalid
+      double? loggedWeightKg;
+      if (i < datasets.loggedWeight.length &&
+          datasets.loggedWeight[i] != null) {
+        final logged = datasets.loggedWeight[i]!;
+        // Only use reasonable weight values (30-200 kg range)
+        if (logged >= 30 && logged <= 200) {
+          loggedWeightKg = logged;
+        }
+      }
+
+      // Get all the kcal data
+      double targetIntakeKcal =
+          i < datasets.targetIntake.length ? datasets.targetIntake[i] : 0.0;
+      double targetExpenditureKcal = i < datasets.targetExpenditure.length
+          ? datasets.targetExpenditure[i]
+          : 0.0;
+      double actualIntakeKcal =
+          i < datasets.actualIntake.length ? datasets.actualIntake[i] : 0.0;
+      double actualExpenditureKcal = i < datasets.actualExpenditure.length
+          ? datasets.actualExpenditure[i]
+          : 0.0;
+      double ccIntakeKcal =
+          i < datasets.ccIntake.length ? datasets.ccIntake[i] : 0.0;
+      double ccExpenditureKcal =
+          i < datasets.ccExpenditure.length ? datasets.ccExpenditure[i] : 0.0;
+
+      weightDataList.add(WeightData(
+        day: day,
+        projectedWeightKg: projectedWeightKg,
+        loggedWeightKg: loggedWeightKg,
+        targetIntakeKcal: targetIntakeKcal,
+        targetExpenditureKcal: targetExpenditureKcal,
+        actualIntakeKcal: actualIntakeKcal,
+        actualExpenditureKcal: actualExpenditureKcal,
+        ccIntakeKcal: ccIntakeKcal,
+        ccExpenditureKcal: ccExpenditureKcal,
+      ));
+    }
+
+    return weightDataList;
+  }
+
+  // Method to get chart data ranges
+  Map<String, double> getChartDataRanges() {
+    final chartData = getChartWeightData();
+
+    if (chartData.isEmpty) {
+      return {
+        'minIntake': 0.0,
+        'maxIntake': 5000.0,
+        'minWeight': 70.0,
+        'maxWeight': 80.0,
+      };
+    }
+
+    // Collect all kcal values for range calculation
+    List<double> allKcalValues = [];
+
+    for (var data in chartData) {
+      allKcalValues.addAll([
+        data.targetIntakeKcal,
+        data.targetExpenditureKcal,
+        data.actualIntakeKcal,
+        data.actualExpenditureKcal,
+        data.ccIntakeKcal,
+        data.ccExpenditureKcal,
+      ]);
+    }
+
+    // Filter out zero/negative values for better range calculation
+    allKcalValues = allKcalValues.where((value) => value > 0).toList();
+
+    double minIntake = allKcalValues.isNotEmpty
+        ? allKcalValues.reduce((a, b) => a < b ? a : b)
+        : 0.0;
+    double maxIntake = allKcalValues.isNotEmpty
+        ? allKcalValues.reduce((a, b) => a > b ? a : b)
+        : 5000.0;
+
+    // Add some padding to the intake range (10%)
+    final intakeRange = maxIntake - minIntake;
+    minIntake = (minIntake - intakeRange * 0.1).clamp(0.0, double.infinity);
+    maxIntake = maxIntake + intakeRange * 0.1;
+
+    // Get weight range (projected and logged weights)
+    List<double> weightValues =
+        chartData.map((data) => data.projectedWeightKg).toList();
+
+    // Add logged weight values if they exist
+    for (var data in chartData) {
+      if (data.loggedWeightKg != null) {
+        weightValues.add(data.loggedWeightKg!);
+      }
+    }
+
+    double minWeight = weightValues.reduce((a, b) => a < b ? a : b);
+    double maxWeight = weightValues.reduce((a, b) => a > b ? a : b);
+
+    // Ensure minimum range of 10kg for meaningful display
+    final weightRange = (maxWeight - minWeight).clamp(10.0, double.infinity);
+    final center = (minWeight + maxWeight) / 2;
+
+    // Create a nice rounded range
+    minWeight = (center - weightRange / 2);
+    maxWeight = (center + weightRange / 2);
+
+    // Round to nearest 5kg for cleaner display
+    minWeight = (minWeight / 5).floor() * 5.0;
+    maxWeight = (maxWeight / 5).ceil() * 5.0;
+
+    return {
+      'minIntake': minIntake,
+      'maxIntake': maxIntake,
+      'minWeight': minWeight,
+      'maxWeight': maxWeight,
+    };
   }
 }
