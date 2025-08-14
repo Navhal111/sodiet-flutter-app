@@ -51,6 +51,10 @@ class AppConstants {
   // Preference endpoints
   static const String GET_PREFERENCES =
       '${BASE_URL}personalization/preferences';
+  static String getAddFoodToCombinationUrl(int combinationId) =>
+      '${BASE_URL}personalization/preferences/combinations/$combinationId';
+  static String getDeleteFoodFromPreferencesUrl(int pkey) =>
+      '${BASE_URL}personalization/preferences/items/$pkey';
 
   // Weight Log endpoints
   static const String GET_WEIGHT_LOGS = '${BASE_URL}log/weight-log';

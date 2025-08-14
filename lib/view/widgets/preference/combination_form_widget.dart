@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/common/searchable_bottom_sheet.dart';
+import 'package:sodiet/controller/preference/preference_onboarding_controller.dart';
 
 class CombinationFormWidget extends StatefulWidget {
   final String selectedFood;
@@ -13,6 +15,8 @@ class CombinationFormWidget extends StatefulWidget {
   final List<String>? availableFoods;
   final bool isApiCombination;
   final String? combinationTitle;
+  final int? combinationId;
+  final PreferenceOnboardingController? controller;
 
   const CombinationFormWidget({
     Key? key,
@@ -26,6 +30,8 @@ class CombinationFormWidget extends StatefulWidget {
     this.availableFoods,
     this.isApiCombination = false,
     this.combinationTitle,
+    this.combinationId,
+    this.controller,
   }) : super(key: key);
 
   @override
@@ -36,6 +42,7 @@ class _CombinationFormWidgetState extends State<CombinationFormWidget> {
   late TextEditingController _quantityController;
   String _selectedFood = '';
   List<Map<String, String>> _userAddedFoods = [];
+  bool _isAddingFood = false;
 
   List<String> get foodOptions {
     return widget.availableFoods ?? [];
@@ -150,6 +157,7 @@ class _CombinationFormWidgetState extends State<CombinationFormWidget> {
               child: TextField(
                 controller: _quantityController,
                 onChanged: widget.onQuantityChanged,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
                   hintText: 'Quantity',
                   border: InputBorder.none,
@@ -169,22 +177,68 @@ class _CombinationFormWidgetState extends State<CombinationFormWidget> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  if (_selectedFood.isNotEmpty &&
-                      _quantityController.text.isNotEmpty) {
-                    setState(() {
-                      _userAddedFoods.add({
-                        'mealType':
-                            'Current', // You can get this from parent if needed
-                        'food': _selectedFood,
-                        'quantity': _quantityController.text,
-                      });
-                      _selectedFood = '';
-                      _quantityController.clear();
-                    });
-                    widget.onAddCombination(); // Call parent callback if needed
-                  }
-                },
+                onPressed: _isAddingFood
+                    ? null
+                    : () async {
+                        if (_selectedFood.isNotEmpty &&
+                            _quantityController.text.isNotEmpty &&
+                            widget.combinationId != null &&
+                            widget.controller != null) {
+                          setState(() {
+                            _isAddingFood = true;
+                          });
+
+                          // Find the selected recipe details
+                          final selectedRecipe = widget.controller!.recipeList
+                              .firstWhereOrNull((recipe) =>
+                                  recipe.recipeName == _selectedFood);
+
+                          if (selectedRecipe != null) {
+                            // Call API to add food to combination
+                            final success = await widget.controller!
+                                .addFoodToCombinationAPI(
+                              combinationId: widget.combinationId!,
+                              foodName: selectedRecipe
+                                  .recipeName, // Use recipe name as Food_Name
+                              foodQty:
+                                  double.tryParse(_quantityController.text) ??
+                                      0.0,
+                              time: widget.controller!.selectedMealType.value
+                                  .toLowerCase(),
+                              description: selectedRecipe
+                                  .recipeDescription, // Use recipe description
+                            );
+
+                            if (success) {
+                              // Clear form on success
+                              setState(() {
+                                _selectedFood = '';
+                                _quantityController.clear();
+                              });
+                            }
+                          } else {
+                            // Fallback: add to local list if recipe not found
+                            setState(() {
+                              _userAddedFoods.add({
+                                'mealType':
+                                    widget.controller?.selectedMealType.value ??
+                                        'Current',
+                                'food': _selectedFood,
+                                'quantity': _quantityController.text,
+                              });
+                              _selectedFood = '';
+                              _quantityController.clear();
+                            });
+                          }
+
+                          setState(() {
+                            _isAddingFood = false;
+                          });
+
+                          widget
+                              .onAddCombination(); // Call parent callback if needed
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFF9800),
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -192,11 +246,32 @@ class _CombinationFormWidgetState extends State<CombinationFormWidget> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: SemiBoldText(
-                  'Add Food',
-                  fontSize: 16,
-                  textColor: Colors.white,
-                ),
+                child: _isAddingFood
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          SemiBoldText(
+                            'Adding...',
+                            fontSize: 16,
+                            textColor: Colors.white,
+                          ),
+                        ],
+                      )
+                    : SemiBoldText(
+                        'Add Food',
+                        fontSize: 16,
+                        textColor: Colors.white,
+                      ),
               ),
             ),
           ],
@@ -288,16 +363,41 @@ class _CombinationFormWidgetState extends State<CombinationFormWidget> {
                   onTap: () {
                     if (isUserAdded) {
                       // Delete from local user-added foods
-                      setState(() {
-                        final userIndex = index - widget.combinations.length;
-                        if (userIndex >= 0 &&
-                            userIndex < _userAddedFoods.length) {
-                          _userAddedFoods.removeAt(userIndex);
-                        }
-                      });
+                      _showDeleteConfirmation(
+                        combination['pkey']?.toString() ?? '',
+                        combination['food'] ?? 'Unknown Food',
+                        () {
+                          setState(() {
+                            final userIndex =
+                                index - widget.combinations.length;
+                            if (userIndex >= 0 &&
+                                userIndex < _userAddedFoods.length) {
+                              _userAddedFoods.removeAt(userIndex);
+                            }
+                          });
+                        },
+                      );
                     } else {
-                      // Call parent callback for API combinations
-                      widget.onDeleteCombination(index);
+                      // Delete API food with confirmation
+                      final pkey = combination['pkey'];
+                      if (pkey != null && widget.controller != null) {
+                        _showDeleteConfirmation(
+                          pkey.toString(),
+                          combination['food'] ?? 'Unknown Food',
+                          () async {
+                            final success = await widget.controller!
+                                .deleteFoodFromPreferencesAPI(
+                                    int.tryParse(pkey.toString()) ?? 0);
+                            if (!success) {
+                              // Fallback to parent callback if API fails
+                              widget.onDeleteCombination(index);
+                            }
+                          },
+                        );
+                      } else {
+                        // Fallback to parent callback for API combinations without pkey
+                        widget.onDeleteCombination(index);
+                      }
                     }
                   },
                   child: Container(
@@ -320,6 +420,38 @@ class _CombinationFormWidgetState extends State<CombinationFormWidget> {
             margin: const EdgeInsets.symmetric(horizontal: 4),
           ),
       ],
+    );
+  }
+
+  void _showDeleteConfirmation(String pkey, String name,
+      [VoidCallback? onConfirm]) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Delete Food'),
+        content: Text(
+            'Are you sure you want to remove $name from your preferences?'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              if (onConfirm != null) {
+                onConfirm();
+              } else {
+                widget.controller
+                    ?.deleteFoodFromPreferencesAPI(int.tryParse(pkey) ?? 0);
+              }
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

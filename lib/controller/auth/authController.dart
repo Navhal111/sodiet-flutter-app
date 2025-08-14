@@ -40,4 +40,17 @@ class AuthController extends GetxController implements GetxService {
     }
     isLoading.value = false;
   }
+
+  logout(BuildContext context) {
+    // Clear all user data from shared preferences
+    authRepo.sharedPreferences.remove(AppConstants.userData);
+    authRepo.sharedPreferences.remove(AppConstants.TOKEN);
+    authRepo.sharedPreferences.remove(AppConstants.SaveAccessKey);
+
+    // Navigate to login screen
+    Get.offAllNamed(AppRoutes.loginScreen);
+
+    // Show logout confirmation
+    showCustomSnackBar("You have been logged out successfully", context);
+  }
 }

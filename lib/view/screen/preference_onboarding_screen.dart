@@ -137,6 +137,8 @@ class _PreferenceOnboardingScreenState
                                       'food': food.foodName,
                                       'quantity':
                                           '${food.foodQty}g - ${food.description}',
+                                      'pkey': food.pkey
+                                          .toString(), // Add Pkey for deletion
                                     })
                                 .toList();
 
@@ -155,6 +157,8 @@ class _PreferenceOnboardingScreenState
                                     .toList(),
                                 isApiCombination: false,
                                 combinationTitle: 'Combination ${index + 1}',
+                                combinationId: combination.combinationId,
+                                controller: controller,
                               ),
                             );
                           }).toList(),

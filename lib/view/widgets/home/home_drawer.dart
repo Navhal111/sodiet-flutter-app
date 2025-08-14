@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sodiet/controller/auth/authController.dart';
 import 'package:sodiet/controller/navigation/navigation_controller.dart';
 import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/utils/images.dart';
@@ -176,6 +177,13 @@ class _HomeDrawerState extends State<HomeDrawer> {
                       onTap: () =>
                           navigationController.navigateToIntegrations()),
                   // _buildDrawerItem(context, Icons.help_outline, 'Help Desk'),
+                  const SizedBox(height: 20),
+                  _buildDrawerItem(
+                    context,
+                    Icons.logout_outlined,
+                    'Logout',
+                    onTap: () => _showLogoutConfirmation(context),
+                  ),
                 ],
               ),
             ),
@@ -183,6 +191,49 @@ class _HomeDrawerState extends State<HomeDrawer> {
         ),
       );
     });
+  }
+
+  void _showLogoutConfirmation(BuildContext context) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout from the app?'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back(); // Close dialog first
+              final authController = Get.find<AuthController>();
+              authController.logout(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF44336),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Logout',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildDrawerItem(

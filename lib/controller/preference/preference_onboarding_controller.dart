@@ -75,8 +75,6 @@ class PreferenceOnboardingController extends GetxController
 
         print('Loaded ${apiCombinations.length} combinations'); // Debug log
         print('API Message: ${apiMessage.value}'); // Debug log
-
-        CustomToast.showSuccess('Preferences loaded successfully');
       } else {
         print('API Error: Status ${response.statusCode}'); // Debug log
         CustomToast.showError('Failed to load preferences');
@@ -155,6 +153,88 @@ class PreferenceOnboardingController extends GetxController
         foodIndex < userCombinationsByIndex[combinationIndex]!.length) {
       userCombinationsByIndex[combinationIndex]!.removeAt(foodIndex);
       CustomToast.showSuccess('Food removed from combination');
+    }
+  }
+
+  // Add food to combination via API
+  Future<bool> addFoodToCombinationAPI({
+    required int combinationId,
+    required String foodName,
+    required double foodQty,
+    required String time,
+    required String description,
+  }) async {
+    try {
+      CustomToast.showLoading('Adding food to combination...');
+
+      final url = AppConstants.getAddFoodToCombinationUrl(combinationId);
+
+      final payload = {
+        "add_foods": [
+          {
+            "Food_Name": foodName,
+            "Food_Qty": foodQty,
+            "Time": time,
+            "Description": description,
+            "Recipe_weight": 0, // Static as requested
+          }
+        ],
+      };
+
+      print('Adding food to combination API URL: $url'); // Debug log
+      print('Payload: $payload'); // Debug log
+
+      Response response = await authRepo.putDataSet(
+        sendData: payload,
+        apiName: url,
+      );
+
+      print('Add food response status: ${response.statusCode}'); // Debug log
+      print('Add food response body: ${response.body}'); // Debug log
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomToast.showSuccess('Food added to combination successfully');
+        // Refresh preferences to get updated data
+        await getPreferences();
+        return true;
+      } else {
+        CustomToast.showError('Failed to add food to combination');
+        return false;
+      }
+    } catch (e) {
+      print('Exception in addFoodToCombinationAPI: $e'); // Debug log
+      CustomToast.showError('Error adding food to combination: $e');
+      return false;
+    }
+  }
+
+  // Delete food from preferences via API
+  Future<bool> deleteFoodFromPreferencesAPI(int pkey) async {
+    try {
+      CustomToast.showLoading('Deleting food from preferences...');
+
+      final url = AppConstants.getDeleteFoodFromPreferencesUrl(pkey);
+
+      print('Deleting food from preferences API URL: $url'); // Debug log
+
+      Response response = await authRepo.deleteDataSet(apiName: url);
+
+      print('Delete food response status: ${response.statusCode}'); // Debug log
+      print('Delete food response body: ${response.body}'); // Debug log
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        CustomToast.showSuccess('Food deleted from preferences successfully');
+        // Refresh preferences to get updated data
+        await getPreferences();
+        return true;
+      } else {
+        CustomToast.showError('Failed to delete food from preferences');
+        return false;
+      }
+    } catch (e) {
+      print('Exception in deleteFoodFromPreferencesAPI: $e'); // Debug log
+      CustomToast.showError('Error deleting food from preferences: $e');
+      return false;
     }
   }
 

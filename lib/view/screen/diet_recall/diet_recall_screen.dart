@@ -41,7 +41,7 @@ class _DietRecallScreenState extends State<DietRecallScreen>
   // Use ValueNotifiers to prevent full rebuilds
   final ValueNotifier<String> selectedTimingNotifier =
       ValueNotifier('Breakfast');
-  final ValueNotifier<String> selectedUnitNotifier = ValueNotifier('Cup');
+  final ValueNotifier<String> selectedUnitNotifier = ValueNotifier('Grams');
   final ValueNotifier<String?> selectedRecipeKeyNotifier = ValueNotifier(null);
   final ValueNotifier<String?> selectedRecipeValueNotifier =
       ValueNotifier(null);
@@ -61,14 +61,33 @@ class _DietRecallScreenState extends State<DietRecallScreen>
     {'label': 'Dinner', 'icon': 'assets/icons/dinner.png'},
     {'label': 'Snacks', 'icon': 'assets/icons/snaks.png'},
   ];
-  final List<Map<String, dynamic>> unitOptions = [
-    {'label': 'Cup', 'icon': 'assets/units/cup.png'},
-    {'label': 'Bowl', 'icon': 'assets/units/bowl.png'},
-    {'label': 'Tsp', 'icon': 'assets/units/Moon.png'}, // Using Moon.png for Tsp
-    {'label': 'Tbsp', 'icon': 'assets/units/tbsp.png'},
-    {'label': 'Glass', 'icon': 'assets/units/glass.png'},
-    {'label': 'Pieces', 'icon': 'assets/units/piece.png'},
-  ];
+
+  // Dynamic unit options based on selected recipe
+  List<Map<String, dynamic>> get unitOptions {
+    List<Map<String, dynamic>> units = [
+      {'label': 'Grams', 'icon': 'assets/units/piece.png'}, // Static option
+    ];
+
+    // Add dynamic unit from selected recipe's Recipe_Description
+    if (selectedRecipeKey != null) {
+      final selectedRecipe = dietController.recipeList
+          .firstWhereOrNull((recipe) => recipe.recipeCode == selectedRecipeKey);
+      if (selectedRecipe != null &&
+          selectedRecipe.recipeDescription.isNotEmpty) {
+        String dynamicUnit = selectedRecipe.recipeDescription;
+        // Capitalize first letter
+        dynamicUnit = dynamicUnit[0].toUpperCase() +
+            dynamicUnit.substring(1).toLowerCase();
+
+        units.insert(0, {
+          'label': dynamicUnit,
+          'icon': 'assets/units/cup.png', // You can change this icon as needed
+        });
+      }
+    }
+
+    return units;
+  }
 
   @override
   void initState() {
@@ -414,6 +433,17 @@ class _DietRecallScreenState extends State<DietRecallScreen>
                   final selectedRecipe = recipeList.firstWhereOrNull(
                       (recipe) => recipe.recipeName == selectedValue);
                   selectedRecipeKeyNotifier.value = selectedRecipe?.recipeCode;
+
+                  // Reset unit selection and set default based on new recipe
+                  if (selectedRecipe != null &&
+                      selectedRecipe.recipeDescription.isNotEmpty) {
+                    String dynamicUnit = selectedRecipe.recipeDescription;
+                    dynamicUnit = dynamicUnit[0].toUpperCase() +
+                        dynamicUnit.substring(1).toLowerCase();
+                    selectedUnitNotifier.value = dynamicUnit;
+                  } else {
+                    selectedUnitNotifier.value = 'Grams';
+                  }
                 },
                 searchHint: 'Search recipes...',
               ),
@@ -456,65 +486,85 @@ class _DietRecallScreenState extends State<DietRecallScreen>
     return ValueListenableBuilder<String>(
       valueListenable: selectedUnitNotifier,
       builder: (context, selectedUnit, child) {
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: unitOptions.map((unit) {
-            final isSelected = selectedUnit == unit['label'];
+        // Also listen to recipe changes to rebuild units
+        return ValueListenableBuilder<String?>(
+          valueListenable: selectedRecipeKeyNotifier,
+          builder: (context, selectedRecipeKey, child) {
+            final currentUnitOptions = unitOptions; // Get dynamic options
 
-            return GestureDetector(
-              onTap: () {
-                selectedUnitNotifier.value = unit['label'];
-              },
-              child: Container(
-                width: (MediaQuery.of(context).size.width - 110) / 3,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? Theme.of(context).primaryColorDark.withOpacity(0.1)
-                      : Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                  border: isSelected
-                      ? Border.all(
-                          color: Theme.of(context).primaryColorDark, width: 2)
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Unit Icon
-                    Container(
-                      width: 20,
-                      height: 20,
-                      child: Image.asset(
-                        unit['icon'],
-                        width: 20,
-                        height: 20,
-                        color: Theme.of(context).primaryColorDark,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(
-                            Icons.restaurant,
-                            color: Theme.of(context).primaryColorDark,
-                            size: 20,
-                          );
-                        },
-                      ),
+            // Ensure selected unit is valid for current options
+            if (!currentUnitOptions
+                .any((unit) => unit['label'] == selectedUnit)) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (currentUnitOptions.isNotEmpty) {
+                  selectedUnitNotifier.value =
+                      currentUnitOptions.first['label'];
+                }
+              });
+            }
+
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: currentUnitOptions.map((unit) {
+                final isSelected = selectedUnit == unit['label'];
+
+                return GestureDetector(
+                  onTap: () {
+                    selectedUnitNotifier.value = unit['label'];
+                  },
+                  child: Container(
+                    width: (MediaQuery.of(context).size.width - 110) / 3,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                      border: isSelected
+                          ? Border.all(
+                              color: Theme.of(context).primaryColorDark,
+                              width: 2)
+                          : null,
                     ),
-                    const SizedBox(width: 8),
-                    // Unit Label
-                    Expanded(
-                      child: RegularText(
-                        unit['label'],
-                        fontSize: 12,
-                        textColor: Colors.black87,
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 16,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Image.asset(
+                            unit['icon'],
+                            width: 16,
+                            height: 16,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                Icons.category,
+                                size: 16,
+                                color: Colors.grey,
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: RegularText(
+                            unit['label'],
+                            fontSize: 10,
+                            textColor: Colors.black87,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              }).toList(),
             );
-          }).toList(),
+          },
         );
       },
     );
@@ -846,7 +896,16 @@ class _DietRecallScreenState extends State<DietRecallScreen>
         TextEditingController(text: entry.foodQty.toString());
     _editTimingNotifier =
         ValueNotifier(entry.timeOfDay.capitalize ?? 'Breakfast');
-    _editUnitNotifier = ValueNotifier(entry.unit.capitalize ?? 'Cup');
+
+    // Properly initialize unit with capitalized value
+    String currentUnit = entry.unit;
+    if (currentUnit.isNotEmpty) {
+      currentUnit =
+          currentUnit[0].toUpperCase() + currentUnit.substring(1).toLowerCase();
+    }
+    _editUnitNotifier =
+        ValueNotifier(currentUnit.isNotEmpty ? currentUnit : 'Grams');
+
     _editRecipeKeyNotifier = ValueNotifier(entry.foodName);
 
     // Find the recipe name for display
@@ -1176,6 +1235,17 @@ class _DietRecallScreenState extends State<DietRecallScreen>
                   final selectedRecipe = recipeList.firstWhereOrNull(
                       (recipe) => recipe.recipeName == selectedValue);
                   _editRecipeKeyNotifier.value = selectedRecipe?.recipeCode;
+
+                  // Reset unit selection and set default based on new recipe
+                  if (selectedRecipe != null &&
+                      selectedRecipe.recipeDescription.isNotEmpty) {
+                    String dynamicUnit = selectedRecipe.recipeDescription;
+                    dynamicUnit = dynamicUnit[0].toUpperCase() +
+                        dynamicUnit.substring(1).toLowerCase();
+                    _editUnitNotifier.value = dynamicUnit;
+                  } else {
+                    _editUnitNotifier.value = 'Grams';
+                  }
                 },
                 searchHint: 'Search recipes...',
               ),
@@ -1214,66 +1284,112 @@ class _DietRecallScreenState extends State<DietRecallScreen>
     );
   }
 
+  // Dynamic unit options based on selected recipe for edit dialog
+  List<Map<String, dynamic>> getEditUnitOptions() {
+    List<Map<String, dynamic>> units = [
+      {'label': 'Grams', 'icon': 'assets/units/piece.png'}, // Static option
+    ];
+
+    // Add dynamic unit from selected recipe's Recipe_Description
+    if (_editRecipeKeyNotifier.value != null) {
+      final selectedRecipe = dietController.recipeList.firstWhereOrNull(
+          (recipe) => recipe.recipeCode == _editRecipeKeyNotifier.value);
+      if (selectedRecipe != null &&
+          selectedRecipe.recipeDescription.isNotEmpty) {
+        String dynamicUnit = selectedRecipe.recipeDescription;
+        // Capitalize first letter
+        dynamicUnit = dynamicUnit[0].toUpperCase() +
+            dynamicUnit.substring(1).toLowerCase();
+
+        units.insert(0, {
+          'label': dynamicUnit,
+          'icon': 'assets/units/cup.png', // You can change this icon as needed
+        });
+      }
+    }
+
+    return units;
+  }
+
   Widget _buildEditUnitsSelection() {
     return ValueListenableBuilder<String>(
       valueListenable: _editUnitNotifier,
       builder: (context, selectedUnit, child) {
-        return Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: unitOptions.map((unit) {
-            final isSelected = selectedUnit == unit['label'];
+        // Also listen to recipe changes to rebuild units in edit dialog
+        return ValueListenableBuilder<String?>(
+          valueListenable: _editRecipeKeyNotifier,
+          builder: (context, selectedRecipeKey, child) {
+            final currentUnitOptions =
+                getEditUnitOptions(); // Get dynamic options
 
-            return GestureDetector(
-              onTap: () {
-                _editUnitNotifier.value = unit['label'];
-              },
-              child: Container(
-                width: (MediaQuery.of(context).size.width - 120) / 3,
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? Theme.of(context).primaryColorDark.withOpacity(0.1)
-                      : Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                  border: isSelected
-                      ? Border.all(
-                          color: Theme.of(context).primaryColorDark, width: 2)
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 16,
-                      height: 16,
-                      child: Image.asset(
-                        unit['icon'],
-                        width: 16,
-                        height: 16,
-                        color: Theme.of(context).primaryColorDark,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(
-                            Icons.restaurant,
+            // Ensure selected unit is valid for current options
+            if (!currentUnitOptions
+                .any((unit) => unit['label'] == selectedUnit)) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (currentUnitOptions.isNotEmpty) {
+                  _editUnitNotifier.value = currentUnitOptions.first['label'];
+                }
+              });
+            }
+
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: currentUnitOptions.map((unit) {
+                final isSelected = selectedUnit == unit['label'];
+
+                return GestureDetector(
+                  onTap: () {
+                    _editUnitNotifier.value = unit['label'];
+                  },
+                  child: Container(
+                    width: (MediaQuery.of(context).size.width - 120) / 3,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                      border: isSelected
+                          ? Border.all(
+                              color: Theme.of(context).primaryColorDark,
+                              width: 2)
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 16,
+                          height: 16,
+                          child: Image.asset(
+                            unit['icon'],
+                            width: 16,
+                            height: 16,
                             color: Theme.of(context).primaryColorDark,
-                            size: 16,
-                          );
-                        },
-                      ),
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                Icons.restaurant,
+                                color: Theme.of(context).primaryColorDark,
+                                size: 16,
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: RegularText(
+                            unit['label'],
+                            fontSize: 10,
+                            textColor: Colors.black87,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: RegularText(
-                        unit['label'],
-                        fontSize: 10,
-                        textColor: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              }).toList(),
             );
-          }).toList(),
+          },
         );
       },
     );
