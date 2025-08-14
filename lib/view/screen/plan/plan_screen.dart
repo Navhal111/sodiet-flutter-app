@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sodiet/controller/plan/planController.dart';
 import 'package:sodiet/model/plan_model.dart';
+import 'package:sodiet/model/weight_data.dart';
 import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/widgets/home/data_summary_widget.dart';
 import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 import 'package:sodiet/view/widgets/plan/plan_status_widget.dart';
 import 'package:sodiet/view/widgets/plan/plan_table_widget.dart' as table;
+import 'package:sodiet/view/widgets/chart/weight_progress_chart.dart';
+import 'package:sodiet/view/widgets/common/shimmer_loading.dart';
 
 class PlanScreen extends StatefulWidget {
   const PlanScreen({Key? key}) : super(key: key);
@@ -255,6 +258,80 @@ class _PlanScreenState extends State<PlanScreen> {
     return [];
   }
 
+  // Method to get chart weight data (copied from home controller logic)
+  List<WeightData> _getChartWeightData() {
+    if (!planController.hasDashboardSummary ||
+        planController.dailyDataList.isEmpty) {
+      return [];
+    }
+
+    return planController.dailyDataList.map((dailyData) {
+      return WeightData(
+        day: int.tryParse(dailyData.day) ?? 0,
+        projectedWeightKg: dailyData.projectedWeight,
+        loggedWeightKg: dailyData.loggedWeight,
+        targetIntakeKcal: dailyData.targetIntake,
+        targetExpenditureKcal: dailyData.targetExpenditure,
+        actualIntakeKcal: dailyData.actualIntake,
+        actualExpenditureKcal: dailyData.actualExpenditure,
+        ccIntakeKcal: dailyData.ccIntake,
+        ccExpenditureKcal: dailyData.ccExpenditure,
+      );
+    }).toList();
+  }
+
+  // Method to get chart data ranges (copied from home controller logic)
+  Map<String, double> _getChartDataRanges() {
+    if (!planController.hasDashboardSummary ||
+        planController.dailyDataList.isEmpty) {
+      return {
+        'minIntake': 1500.0,
+        'maxIntake': 2500.0,
+        'minWeight': 60.0,
+        'maxWeight': 80.0,
+      };
+    }
+
+    final intakeValues = planController.dailyDataList
+        .where((data) => data.targetIntake > 0)
+        .map((data) => data.targetIntake)
+        .toList();
+
+    final weightValues = <double>[];
+    for (var data in planController.dailyDataList) {
+      if (data.loggedWeight != null && data.loggedWeight! > 0) {
+        weightValues.add(data.loggedWeight!);
+      }
+      if (data.projectedWeight > 0) {
+        weightValues.add(data.projectedWeight);
+      }
+    }
+
+    double minIntake = intakeValues.isNotEmpty
+        ? intakeValues.reduce((a, b) => a < b ? a : b)
+        : 1500.0;
+    double maxIntake = intakeValues.isNotEmpty
+        ? intakeValues.reduce((a, b) => a > b ? a : b)
+        : 2500.0;
+    double minWeight = weightValues.isNotEmpty
+        ? weightValues.reduce((a, b) => a < b ? a : b)
+        : 60.0;
+    double maxWeight = weightValues.isNotEmpty
+        ? weightValues.reduce((a, b) => a > b ? a : b)
+        : 80.0;
+
+    // Add some padding to the ranges
+    double intakeRange = maxIntake - minIntake;
+    double weightRange = maxWeight - minWeight;
+
+    return {
+      'minIntake': minIntake - (intakeRange * 0.1),
+      'maxIntake': maxIntake + (intakeRange * 0.1),
+      'minWeight': minWeight - (weightRange * 0.1),
+      'maxWeight': maxWeight + (weightRange * 0.1),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     return BaseScreenLayout(
@@ -281,8 +358,19 @@ class _PlanScreenState extends State<PlanScreen> {
                   height: 80,
                   child: Obx(() {
                     if (planController.isLoadingDashboardSummary.value) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
+                      return ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: 4,
+                        itemBuilder: (context, index) {
+                          return Container(
+                            margin: const EdgeInsets.only(right: 8),
+                            child: ShimmerLoading(
+                              width: 120,
+                              height: 80,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          );
+                        },
                       );
                     }
 
@@ -297,6 +385,35 @@ class _PlanScreenState extends State<PlanScreen> {
                     );
                   }),
                 ),
+              ),
+              const SizedBox(height: 10),
+              // Weight Progress Chart
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 10),
+                child: Obx(() {
+                  if (planController.isLoadingDashboardSummary.value) {
+                    return ShimmerChart(
+                      width: double.infinity,
+                      height: 300,
+                      title: 'Plan Progress',
+                    );
+                  }
+
+                  final chartData = _getChartWeightData();
+                  final dataRanges = _getChartDataRanges();
+
+                  return WeightProgressChart(
+                    weightDataList: chartData,
+                    title: 'Plan Progress',
+                    titleColor: const Color(0xFF091242),
+                    titleFontSize: 22,
+                    showRightAxisLabels: true,
+                    minIntake: dataRanges['minIntake']!,
+                    maxIntake: dataRanges['maxIntake']!,
+                    minWeight: dataRanges['minWeight']!,
+                    maxWeight: dataRanges['maxWeight']!,
+                  );
+                }),
               ),
               const SizedBox(height: 10),
               // Plan Table Widget

@@ -12,6 +12,7 @@ import 'package:sodiet/view/widgets/home/data_summary_widget.dart';
 import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 import 'package:sodiet/view/widgets/custom_text_field.dart';
 import 'package:sodiet/view/widgets/custom_button.dart';
+import 'package:sodiet/view/widgets/common/shimmer_loading.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -203,8 +204,20 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Widget> _buildNutrientWidgets() {
     if (!homeController.hasNutrientWeeklySummary) {
       return [
-        const Center(
-          child: CircularProgressIndicator(),
+        Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: List.generate(
+              3,
+              (index) => Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ShimmerListItem(
+                  width: double.infinity,
+                  height: 60,
+                ),
+              ),
+            ),
+          ),
         ),
       ];
     }
@@ -400,8 +413,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 80,
                 child: Obx(() {
                   if (homeController.isLoadingDashboardSummary.value) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
+                    return ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 4,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          child: ShimmerLoading(
+                            width: 120,
+                            height: 80,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        );
+                      },
                     );
                   }
 
@@ -420,24 +444,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 margin: const EdgeInsets.symmetric(vertical: 10),
                 child: Obx(() {
                   if (homeController.isLoadingDashboardSummary.value) {
-                    return Container(
+                    return ShimmerChart(
+                      width: double.infinity,
                       height: 300,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
-                            spreadRadius: 1,
-                            blurRadius: 5,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
+                      title: 'Plan Progress',
                     );
                   }
 
@@ -488,11 +498,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Nutrient Progress List
                     Obx(() {
                       if (homeController.isLoadingNutrientWeeklySummary.value) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(20.0),
-                            child: CircularProgressIndicator(),
-                          ),
+                        return Column(
+                          children: [
+                            _buildWeekTabs(),
+                            const SizedBox(height: 16),
+                            ...List.generate(
+                              4,
+                              (index) => Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                child: ShimmerListItem(
+                                  width: double.infinity,
+                                  height: 60,
+                                ),
+                              ),
+                            ),
+                          ],
                         );
                       }
 
@@ -509,24 +529,10 @@ class _HomeScreenState extends State<HomeScreen> {
               // Intake Overview Chart
               Obx(() {
                 if (homeController.isLoadingIntakeOverview.value) {
-                  return Container(
+                  return ShimmerChart(
+                    width: double.infinity,
                     height: 300,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          spreadRadius: 1,
-                          blurRadius: 5,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: CircularProgressIndicator(),
-                    ),
+                    title: 'Intake Overview',
                   );
                 }
 
@@ -541,24 +547,10 @@ class _HomeScreenState extends State<HomeScreen> {
               // Activity Overview Chart
               Obx(() {
                 if (homeController.isLoadingActivityOverview.value) {
-                  return Container(
+                  return ShimmerChart(
+                    width: double.infinity,
                     height: 300,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          spreadRadius: 1,
-                          blurRadius: 5,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: CircularProgressIndicator(),
-                    ),
+                    title: 'Activity Overview',
                   );
                 }
 
