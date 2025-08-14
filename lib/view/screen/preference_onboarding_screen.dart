@@ -5,6 +5,7 @@ import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 import 'package:sodiet/view/widgets/common/title_section_widget.dart';
 import 'package:sodiet/view/widgets/preference/meal_type_tabs_widget.dart';
 import 'package:sodiet/view/widgets/preference/combination_form_widget.dart';
+import 'package:sodiet/view/widgets/common/shimmer_loading.dart';
 import 'package:sodiet/route/app_routes.dart';
 
 class PreferenceOnboardingScreen extends StatefulWidget {
@@ -58,8 +59,17 @@ class _PreferenceOnboardingScreenState
                       // API Combinations - Each as its own CombinationFormWidget
                       Obx(() {
                         if (controller.isLoading.value) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
+                          return Column(
+                            children: List.generate(3, (index) {
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 16),
+                                child: ShimmerCombinationForm(
+                                  width: double.infinity,
+                                  height: 160,
+                                  title: 'Loading Combination ${index + 1}...',
+                                ),
+                              );
+                            }),
                           );
                         }
 

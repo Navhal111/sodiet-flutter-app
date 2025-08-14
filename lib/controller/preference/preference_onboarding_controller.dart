@@ -103,9 +103,6 @@ class PreferenceOnboardingController extends GetxController
       if (response.statusCode == 200) {
         final recipeResponse = RecipeResponse.fromJson(response.body);
         recipeList.value = recipeResponse.recipes;
-
-        print('Loaded ${recipeList.length} recipes'); // Debug log
-        CustomToast.showSuccess('Recipes loaded successfully');
       } else {
         print('API Error: Status ${response.statusCode}'); // Debug log
         CustomToast.showError('Failed to load recipes');

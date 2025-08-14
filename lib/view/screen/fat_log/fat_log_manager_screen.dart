@@ -6,6 +6,8 @@ import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/custom_text_field.dart';
 import 'package:sodiet/view/widgets/custom_button.dart';
+import 'package:sodiet/view/widgets/chart/fat_log_chart.dart';
+import 'package:sodiet/view/widgets/common/shimmer_loading.dart';
 import 'package:sodiet/route/app_routes.dart';
 
 class FatLogManagerScreen extends StatefulWidget {
@@ -248,406 +250,306 @@ class _FatLogManagerScreenState extends State<FatLogManagerScreen> {
 
                 const SizedBox(height: 10),
 
-                // Fat Entry Form
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Date Field
-                      GestureDetector(
-                        onTap: _selectDate,
-                        child: AbsorbPointer(
-                          child: CustomTextField(
-                            controller: controller.dateController,
-                            hintText: 'Select Date',
-                            labelText: 'Date',
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.calendar_today,
-                                  color: Colors.grey),
-                              onPressed: _selectDate,
-                            ),
+                // Main Content - Wrapped in single Obx for reactive updates
+                Obx(() => Column(
+                      children: [
+                        // Fat Entry Form
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                spreadRadius: 1,
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Date Field
+                              GestureDetector(
+                                onTap: _selectDate,
+                                child: AbsorbPointer(
+                                  child: CustomTextField(
+                                    controller: controller.dateController,
+                                    hintText: 'Select Date',
+                                    labelText: 'Date',
+                                    suffixIcon: IconButton(
+                                      icon: const Icon(Icons.calendar_today,
+                                          color: Colors.grey),
+                                      onPressed: _selectDate,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 10),
+
+                              // Fat Field
+                              CustomTextField(
+                                controller: controller.fatController,
+                                hintText: 'Enter body fat percentage',
+                                labelText: 'Body Fat (%)',
+                                textInputType: TextInputType.numberWithOptions(
+                                    decimal: true),
+                              ),
+
+                              const SizedBox(height: 10),
+
+                              // Add Fat Log Button
+                              SizedBox(
+                                height: 40,
+                                width: double.infinity,
+                                child: CustomButton(
+                                  text: controller.isSubmitting.value
+                                      ? 'Adding...'
+                                      : 'Add Fat Log',
+                                  onPressed: controller.isSubmitting.value
+                                      ? null
+                                      : controller.submitFatLog,
+                                  backgroundColor: const Color(0xFFFF9800),
+                                  textColor: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
 
-                      const SizedBox(height: 10),
+                        const SizedBox(height: 10),
 
-                      // Fat Field
-                      CustomTextField(
-                        controller: controller.fatController,
-                        hintText: 'Enter body fat percentage',
-                        labelText: 'Body Fat (%)',
-                        textInputType:
-                            TextInputType.numberWithOptions(decimal: true),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      // Add Fat Log Button
-                      SizedBox(
-                        height: 40,
-                        width: double.infinity,
-                        child: Obx(() => CustomButton(
-                              text: controller.isSubmitting.value
-                                  ? 'Adding...'
-                                  : 'Add Fat Log',
-                              onPressed: controller.isSubmitting.value
-                                  ? null
-                                  : controller.submitFatLog,
-                              backgroundColor: const Color(0xFFFF9800),
-                              textColor: Colors.white,
-                            )),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // Fat Trend Chart Section
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SemiBoldText(
-                        'Body Fat Trend',
-                        fontSize: 18,
-                        textColor: Colors.black87,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Chart Container (simplified grid)
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16),
-                        height: 200,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(8),
+                        // Fat Trend Chart Section
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          child: controller.isLoading.value &&
+                                  controller.fatLogs.isEmpty
+                              ? ShimmerChart(
+                                  width: double.infinity,
+                                  height: 250,
+                                  title: 'Body Fat Trend',
+                                )
+                              : FatLogChart(
+                                  fatLogs: controller.fatLogs,
+                                ),
                         ),
-                        child: Stack(
-                          children: [
-                            // Grid lines
-                            Positioned.fill(
-                              child: CustomPaint(
-                                painter: GridPainter(),
+
+                        const SizedBox(height: 10),
+
+                        // Fat Log Entries Section
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                spreadRadius: 1,
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
                               ),
-                            ),
-                            // Chart content
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                children: [
-                                  Expanded(
-                                    child: Row(
-                                      children: [
-                                        // Y-axis labels
-                                        SizedBox(
-                                          width: 30,
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children:
-                                                List.generate(10, (index) {
-                                              return RegularText(
-                                                '${40 - (index * 4)}',
-                                                fontSize: 10,
-                                                textColor: Colors.grey.shade600,
-                                              );
-                                            }),
-                                          ),
-                                        ),
-                                        // Chart area
-                                        Expanded(
-                                          child: Container(),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  // X-axis labels
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    children: List.generate(13, (index) {
-                                      return RegularText(
-                                        '${16 + index}',
-                                        fontSize: 10,
-                                        textColor: Colors.grey.shade600,
-                                      );
-                                    }),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // Fat Log Entries Section
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SemiBoldText(
-                        'Fat Log Entries',
-                        fontSize: 18,
-                        textColor: Colors.black87,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Table Header
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: SemiBoldText(
-                                'Date',
-                                fontSize: 14,
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SemiBoldText(
+                                'Fat Log Entries',
+                                fontSize: 18,
                                 textColor: Colors.black87,
                               ),
-                            ),
-                            Expanded(
-                              flex: 2,
-                              child: SemiBoldText(
-                                'Body Fat %',
-                                fontSize: 14,
-                                textColor: Colors.black87,
-                              ),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: SemiBoldText(
-                                'Actions',
-                                fontSize: 14,
-                                textColor: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                              const SizedBox(height: 16),
 
-                      const SizedBox(height: 8),
-
-                      // Table Rows
-                      Obx(() {
-                        if (controller.isLoading.value &&
-                            controller.fatLogs.isEmpty) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 20),
-                            child: Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          );
-                        }
-
-                        if (controller.fatLogs.isEmpty) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 20),
-                            child: Center(
-                              child: RegularText(
-                                'No fat entries found',
-                                fontSize: 14,
-                                textColor: Colors.grey.shade600,
-                              ),
-                            ),
-                          );
-                        }
-
-                        return Column(
-                          children: [
-                            ...List.generate(controller.fatLogs.length,
-                                (index) {
-                              final log = controller.fatLogs[index];
-
-                              return Container(
+                              // Table Header
+                              Container(
                                 padding: const EdgeInsets.symmetric(
                                     vertical: 12, horizontal: 8),
-                                margin: const EdgeInsets.only(bottom: 4),
                                 decoration: BoxDecoration(
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: Colors.grey.shade200,
-                                      width: 1,
-                                    ),
-                                  ),
+                                  color: Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Row(
                                   children: [
                                     Expanded(
                                       flex: 2,
-                                      child: RegularText(
-                                        controller
-                                            .formatDisplayDate(log.logDate),
+                                      child: SemiBoldText(
+                                        'Date',
                                         fontSize: 14,
                                         textColor: Colors.black87,
                                       ),
                                     ),
                                     Expanded(
                                       flex: 2,
-                                      child: RegularText(
-                                        '${log.bodyFatPct.toStringAsFixed(1)}%',
+                                      child: SemiBoldText(
+                                        'Body Fat %',
                                         fontSize: 14,
                                         textColor: Colors.black87,
                                       ),
                                     ),
                                     Expanded(
                                       flex: 1,
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        children: [
-                                          InkWell(
-                                            onTap: () =>
-                                                _showEditFatLogDialog(log),
-                                            borderRadius:
-                                                BorderRadius.circular(16),
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(4),
-                                              child: Icon(
-                                                Icons.edit_outlined,
-                                                color: Colors.blue,
-                                                size: 16,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          InkWell(
-                                            onTap: () =>
-                                                _showDeleteConfirmation(
-                                                    log.logId),
-                                            borderRadius:
-                                                BorderRadius.circular(16),
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(4),
-                                              child: Icon(
-                                                Icons.delete_outline,
-                                                color: Colors.red,
-                                                size: 16,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                      child: SemiBoldText(
+                                        'Actions',
+                                        fontSize: 14,
+                                        textColor: Colors.black87,
                                       ),
                                     ),
                                   ],
                                 ),
-                              );
-                            }),
-
-                            // Loading more indicator
-                            if (controller.isLoadingMore.value)
-                              const Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Center(
-                                  child: CircularProgressIndicator(),
-                                ),
                               ),
 
-                            // Load more data info
-                            if (!controller.hasMoreData.value &&
-                                controller.fatLogs.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Center(
-                                  child: RegularText(
-                                    'All ${controller.totalCount.value} entries loaded',
-                                    fontSize: 12,
-                                    textColor: Colors.grey.shade600,
+                              const SizedBox(height: 8),
+
+                              // Table Rows
+                              if (controller.isLoading.value &&
+                                  controller.fatLogs.isEmpty)
+                                Column(
+                                  children: List.generate(5, (index) {
+                                    return ShimmerListItem(
+                                      width: double.infinity,
+                                      height: 60,
+                                    );
+                                  }),
+                                )
+                              else if (controller.fatLogs.isEmpty)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 20),
+                                  child: Center(
+                                    child: RegularText(
+                                      'No fat entries found',
+                                      fontSize: 14,
+                                      textColor: Colors.grey.shade600,
+                                    ),
                                   ),
+                                )
+                              else
+                                Column(
+                                  children: [
+                                    ...List.generate(controller.fatLogs.length,
+                                        (index) {
+                                      final log = controller.fatLogs[index];
+
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 12, horizontal: 8),
+                                        margin:
+                                            const EdgeInsets.only(bottom: 4),
+                                        decoration: BoxDecoration(
+                                          border: Border(
+                                            bottom: BorderSide(
+                                              color: Colors.grey.shade200,
+                                              width: 1,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              flex: 2,
+                                              child: RegularText(
+                                                controller.formatDisplayDate(
+                                                    log.logDate),
+                                                fontSize: 14,
+                                                textColor: Colors.black87,
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 2,
+                                              child: RegularText(
+                                                '${log.bodyFatPct.toStringAsFixed(1)}%',
+                                                fontSize: 14,
+                                                textColor: Colors.black87,
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 1,
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.end,
+                                                children: [
+                                                  InkWell(
+                                                    onTap: () =>
+                                                        _showEditFatLogDialog(
+                                                            log),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            16),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              4),
+                                                      child: Icon(
+                                                        Icons.edit_outlined,
+                                                        color: Colors.blue,
+                                                        size: 16,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  InkWell(
+                                                    onTap: () =>
+                                                        _showDeleteConfirmation(
+                                                            log.logId),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            16),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              4),
+                                                      child: Icon(
+                                                        Icons.delete_outline,
+                                                        color: Colors.red,
+                                                        size: 16,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }),
+
+                                    // Loading more indicator
+                                    if (controller.isLoadingMore.value)
+                                      const Padding(
+                                        padding: EdgeInsets.all(16),
+                                        child: Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                      ),
+
+                                    // Load more data info
+                                    if (!controller.hasMoreData.value &&
+                                        controller.fatLogs.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.all(16),
+                                        child: Center(
+                                          child: RegularText(
+                                            'All ${controller.totalCount.value} entries loaded',
+                                            fontSize: 12,
+                                            textColor: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
-                              ),
-                          ],
-                        );
-                      }),
-                    ],
-                  ),
-                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )),
               ],
             ), // closing SingleChildScrollView
           ), // closing RefreshIndicator
         )); // closing BaseScreenLayout
   }
-}
-
-class GridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.grey.shade300
-      ..strokeWidth = 0.5;
-
-    // Draw horizontal lines
-    for (int i = 0; i <= 8; i++) {
-      final y = (size.height / 8) * i;
-      canvas.drawLine(
-        Offset(30, y),
-        Offset(size.width, y),
-        paint,
-      );
-    }
-
-    // Draw vertical lines
-    for (int i = 0; i <= 12; i++) {
-      final x = 30 + ((size.width - 30) / 12) * i;
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x, size.height),
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

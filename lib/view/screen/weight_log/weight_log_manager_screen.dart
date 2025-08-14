@@ -6,6 +6,8 @@ import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/custom_text_field.dart';
 import 'package:sodiet/view/widgets/custom_button.dart';
+import 'package:sodiet/view/widgets/chart/weight_log_chart.dart';
+import 'package:sodiet/view/widgets/common/shimmer_loading.dart';
 import 'package:sodiet/route/app_routes.dart';
 
 class WeightLogManagerScreen extends StatefulWidget {
@@ -96,83 +98,84 @@ class _WeightLogManagerScreenState extends State<WeightLogManagerScreen> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Dialog Title
-              Row(
+          child: Obx(() => Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: SemiBoldText(
-                      'Edit Weight Log',
-                      fontSize: 20,
-                      textColor: Colors.black87,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      controller.cancelEdit();
-                      Get.back();
-                    },
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // Date Field
-              GestureDetector(
-                onTap: _selectDate,
-                child: AbsorbPointer(
-                  child: CustomTextField(
-                    controller: controller.dateController,
-                    hintText: 'Select Date',
-                    labelText: 'Date',
-                    suffixIcon: IconButton(
-                      icon:
-                          const Icon(Icons.calendar_today, color: Colors.grey),
-                      onPressed: _selectDate,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Weight Field
-              CustomTextField(
-                controller: controller.weightController,
-                hintText: 'Enter weight in kg',
-                labelText: 'Weight (kg)',
-                textInputType: TextInputType.numberWithOptions(decimal: true),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Action Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 45,
-                      child: CustomButton(
-                        text: 'Cancel',
+                  // Dialog Title
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SemiBoldText(
+                          'Edit Weight Log',
+                          fontSize: 20,
+                          textColor: Colors.black87,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
                         onPressed: () {
                           controller.cancelEdit();
                           Get.back();
                         },
-                        backgroundColor: Colors.grey.shade400,
-                        textColor: Colors.white,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Date Field
+                  GestureDetector(
+                    onTap: _selectDate,
+                    child: AbsorbPointer(
+                      child: CustomTextField(
+                        controller: controller.dateController,
+                        hintText: 'Select Date',
+                        labelText: 'Date',
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.calendar_today,
+                              color: Colors.grey),
+                          onPressed: _selectDate,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SizedBox(
-                      height: 45,
-                      child: Obx(() => CustomButton(
+
+                  const SizedBox(height: 16),
+
+                  // Weight Field
+                  CustomTextField(
+                    controller: controller.weightController,
+                    hintText: 'Enter weight in kg',
+                    labelText: 'Weight (kg)',
+                    textInputType:
+                        TextInputType.numberWithOptions(decimal: true),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Action Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 45,
+                          child: CustomButton(
+                            text: 'Cancel',
+                            onPressed: () {
+                              controller.cancelEdit();
+                              Get.back();
+                            },
+                            backgroundColor: Colors.grey.shade400,
+                            textColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SizedBox(
+                          height: 45,
+                          child: CustomButton(
                             text: controller.isSubmitting.value
                                 ? 'Updating...'
                                 : 'Update',
@@ -188,13 +191,13 @@ class _WeightLogManagerScreenState extends State<WeightLogManagerScreen> {
                                   },
                             backgroundColor: const Color(0xFFFF9800),
                             textColor: Colors.white,
-                          )),
-                    ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
-              ),
-            ],
-          ),
+              )),
         ),
       ),
       barrierDismissible: false,
@@ -249,407 +252,307 @@ class _WeightLogManagerScreenState extends State<WeightLogManagerScreen> {
 
                 const SizedBox(height: 10),
 
-                // Weight Entry Form
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
+                // Reactive section wrapped in single Obx
+                Obx(() {
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Date Field
-                      GestureDetector(
-                        onTap: _selectDate,
-                        child: AbsorbPointer(
-                          child: CustomTextField(
-                            controller: controller.dateController,
-                            hintText: 'Select Date',
-                            labelText: 'Date',
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.calendar_today,
-                                  color: Colors.grey),
-                              onPressed: _selectDate,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      // Weight Field
-                      CustomTextField(
-                        controller: controller.weightController,
-                        hintText: 'Enter weight in kg',
-                        labelText: 'Weight',
-                        textInputType:
-                            TextInputType.numberWithOptions(decimal: true),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      // Add Weight Log Button
-                      SizedBox(
-                        height: 40,
-                        width: double.infinity,
-                        child: Obx(() => CustomButton(
-                              text: controller.isSubmitting.value
-                                  ? 'Adding...'
-                                  : 'Add Weight Log',
-                              onPressed: controller.isSubmitting.value
-                                  ? null
-                                  : controller.submitWeightLog,
-                              backgroundColor: const Color(0xFFFF9800),
-                              textColor: Colors.white,
-                            )),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // Weight Trend Chart Section
-                // Weight Entry Form
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SemiBoldText(
-                        'Weight Trend',
-                        fontSize: 18,
-                        textColor: Colors.black87,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Chart Container (simplified grid)
+                      // Weight Entry Form with reactive button
                       Container(
                         margin: const EdgeInsets.symmetric(horizontal: 16),
-                        height: 200,
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              spreadRadius: 1,
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                        child: Stack(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Grid lines
-                            Positioned.fill(
-                              child: CustomPaint(
-                                painter: GridPainter(),
+                            // Date Field
+                            GestureDetector(
+                              onTap: _selectDate,
+                              child: AbsorbPointer(
+                                child: CustomTextField(
+                                  controller: controller.dateController,
+                                  hintText: 'Select Date',
+                                  labelText: 'Date',
+                                  suffixIcon: IconButton(
+                                    icon: const Icon(Icons.calendar_today,
+                                        color: Colors.grey),
+                                    onPressed: _selectDate,
+                                  ),
+                                ),
                               ),
                             ),
-                            // Chart content
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
+
+                            const SizedBox(height: 10),
+
+                            // Weight Field
+                            CustomTextField(
+                              controller: controller.weightController,
+                              hintText: 'Enter weight in kg',
+                              labelText: 'Weight',
+                              textInputType: TextInputType.numberWithOptions(
+                                  decimal: true),
+                            ),
+
+                            const SizedBox(height: 10),
+
+                            // Add Weight Log Button
+                            SizedBox(
+                              height: 40,
+                              width: double.infinity,
+                              child: CustomButton(
+                                text: controller.isSubmitting.value
+                                    ? 'Adding...'
+                                    : 'Add Weight Log',
+                                onPressed: controller.isSubmitting.value
+                                    ? null
+                                    : controller.submitWeightLog,
+                                backgroundColor: const Color(0xFFFF9800),
+                                textColor: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Weight Trend Chart Section
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        child: controller.isLoading.value &&
+                                controller.weightLogs.isEmpty
+                            ? ShimmerChart(
+                                width: double.infinity,
+                                height: 250,
+                                title: 'Weight Trend',
+                              )
+                            : WeightLogChart(
+                                weightLogs: controller.weightLogs,
+                                title: 'Weight Trend',
+                                titleColor: Colors.black87,
+                                titleFontSize: 18,
+                              ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Weight Log Entries Section
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              spreadRadius: 1,
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SemiBoldText(
+                              'Weight Log Entries',
+                              fontSize: 18,
+                              textColor: Colors.black87,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Table Header
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
                                 children: [
                                   Expanded(
-                                    child: Row(
-                                      children: [
-                                        // Y-axis labels
-                                        SizedBox(
-                                          width: 30,
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children:
-                                                List.generate(10, (index) {
-                                              return RegularText(
-                                                '${25 - (index * 2)}',
-                                                fontSize: 10,
-                                                textColor: Colors.grey.shade600,
-                                              );
-                                            }),
-                                          ),
-                                        ),
-                                        // Chart area
-                                        Expanded(
-                                          child: Container(),
-                                        ),
-                                      ],
+                                    flex: 2,
+                                    child: SemiBoldText(
+                                      'Date',
+                                      fontSize: 14,
+                                      textColor: Colors.black87,
                                     ),
                                   ),
-                                  // X-axis labels
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    children: List.generate(13, (index) {
-                                      return RegularText(
-                                        '${16 + index}',
-                                        fontSize: 10,
-                                        textColor: Colors.grey.shade600,
-                                      );
-                                    }),
+                                  Expanded(
+                                    flex: 2,
+                                    child: SemiBoldText(
+                                      'Weight',
+                                      fontSize: 14,
+                                      textColor: Colors.black87,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 1,
+                                    child: SemiBoldText(
+                                      'Actions',
+                                      fontSize: 14,
+                                      textColor: Colors.black87,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
 
-                const SizedBox(height: 10),
+                            const SizedBox(height: 8),
 
-                // Weight Log Entries Section
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SemiBoldText(
-                        'Weight Log Entries',
-                        fontSize: 18,
-                        textColor: Colors.black87,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Table Header
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: SemiBoldText(
-                                'Date',
-                                fontSize: 14,
-                                textColor: Colors.black87,
-                              ),
-                            ),
-                            Expanded(
-                              flex: 2,
-                              child: SemiBoldText(
-                                'Weight',
-                                fontSize: 14,
-                                textColor: Colors.black87,
-                              ),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: SemiBoldText(
-                                'Actions',
-                                fontSize: 14,
-                                textColor: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      // Table Rows
-                      Obx(() {
-                        if (controller.isLoading.value &&
-                            controller.weightLogs.isEmpty) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 20),
-                            child: Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          );
-                        }
-
-                        if (controller.weightLogs.isEmpty) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 20),
-                            child: Center(
-                              child: RegularText(
-                                'No weight entries found',
-                                fontSize: 14,
-                                textColor: Colors.grey.shade600,
-                              ),
-                            ),
-                          );
-                        }
-
-                        return Column(
-                          children: [
-                            ...List.generate(controller.weightLogs.length,
-                                (index) {
-                              final log = controller.weightLogs[index];
-
-                              return Container(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 12, horizontal: 8),
-                                margin: const EdgeInsets.only(bottom: 4),
-                                decoration: BoxDecoration(
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: Colors.grey.shade200,
-                                      width: 1,
-                                    ),
+                            // Table Rows
+                            if (controller.isLoading.value &&
+                                controller.weightLogs.isEmpty)
+                              Column(
+                                children: List.generate(5, (index) {
+                                  return ShimmerListItem(
+                                    width: double.infinity,
+                                    height: 60,
+                                  );
+                                }),
+                              )
+                            else if (controller.weightLogs.isEmpty)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 20),
+                                child: Center(
+                                  child: RegularText(
+                                    'No weight entries found',
+                                    fontSize: 14,
+                                    textColor: Colors.grey.shade600,
                                   ),
                                 ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 2,
-                                      child: RegularText(
-                                        controller
-                                            .formatDisplayDate(log.logDate),
-                                        fontSize: 14,
-                                        textColor: Colors.black87,
+                              )
+                            else
+                              Column(
+                                children: [
+                                  ...List.generate(controller.weightLogs.length,
+                                      (index) {
+                                    final log = controller.weightLogs[index];
+
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12, horizontal: 8),
+                                      margin: const EdgeInsets.only(bottom: 4),
+                                      decoration: BoxDecoration(
+                                        border: Border(
+                                          bottom: BorderSide(
+                                            color: Colors.grey.shade200,
+                                            width: 1,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: RegularText(
-                                        '${log.weightKg.toStringAsFixed(1)} kg',
-                                        fontSize: 14,
-                                        textColor: Colors.black87,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 1,
                                       child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
                                         children: [
-                                          InkWell(
-                                            onTap: () =>
-                                                _showEditWeightLogDialog(log),
-                                            borderRadius:
-                                                BorderRadius.circular(16),
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(4),
-                                              child: Icon(
-                                                Icons.edit_outlined,
-                                                color: Colors.blue,
-                                                size: 16,
-                                              ),
+                                          Expanded(
+                                            flex: 2,
+                                            child: RegularText(
+                                              controller.formatDisplayDate(
+                                                  log.logDate),
+                                              fontSize: 14,
+                                              textColor: Colors.black87,
                                             ),
                                           ),
-                                          const SizedBox(width: 4),
-                                          InkWell(
-                                            onTap: () =>
-                                                _showDeleteConfirmation(
-                                                    log.logId),
-                                            borderRadius:
-                                                BorderRadius.circular(16),
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(4),
-                                              child: Icon(
-                                                Icons.delete_outline,
-                                                color: Colors.red,
-                                                size: 16,
-                                              ),
+                                          Expanded(
+                                            flex: 2,
+                                            child: RegularText(
+                                              '${log.weightKg.toStringAsFixed(1)} kg',
+                                              fontSize: 14,
+                                              textColor: Colors.black87,
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 1,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                InkWell(
+                                                  onTap: () =>
+                                                      _showEditWeightLogDialog(
+                                                          log),
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(4),
+                                                    child: Icon(
+                                                      Icons.edit_outlined,
+                                                      color: Colors.blue,
+                                                      size: 16,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                InkWell(
+                                                  onTap: () =>
+                                                      _showDeleteConfirmation(
+                                                          log.logId),
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(4),
+                                                    child: Icon(
+                                                      Icons.delete_outline,
+                                                      color: Colors.red,
+                                                      size: 16,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ],
                                       ),
+                                    );
+                                  }),
+
+                                  // Loading more indicator
+                                  if (controller.isLoadingMore.value)
+                                    const Padding(
+                                      padding: EdgeInsets.all(16),
+                                      child: Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
                                     ),
-                                  ],
-                                ),
-                              );
-                            }),
 
-                            // Loading more indicator
-                            if (controller.isLoadingMore.value)
-                              const Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              ),
-
-                            // Load more data info
-                            if (!controller.hasMoreData.value &&
-                                controller.weightLogs.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Center(
-                                  child: RegularText(
-                                    'All ${controller.totalCount.value} entries loaded',
-                                    fontSize: 12,
-                                    textColor: Colors.grey.shade600,
-                                  ),
-                                ),
+                                  // Load more data info
+                                  if (!controller.hasMoreData.value &&
+                                      controller.weightLogs.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Center(
+                                        child: RegularText(
+                                          'All ${controller.totalCount.value} entries loaded',
+                                          fontSize: 12,
+                                          textColor: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                           ],
-                        );
-                      }),
+                        ),
+                      ),
                     ],
-                  ),
-                ),
+                  );
+                }),
               ],
             ), // closing SingleChildScrollView
           ), // closing RefreshIndicator
         )); // closing BaseScreenLayout
   }
-}
-
-class GridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.grey.shade300
-      ..strokeWidth = 0.5;
-
-    // Draw horizontal lines
-    for (int i = 0; i <= 8; i++) {
-      final y = (size.height / 8) * i;
-      canvas.drawLine(
-        Offset(30, y),
-        Offset(size.width, y),
-        paint,
-      );
-    }
-
-    // Draw vertical lines
-    for (int i = 0; i <= 12; i++) {
-      final x = 30 + ((size.width - 30) / 12) * i;
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x, size.height),
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
