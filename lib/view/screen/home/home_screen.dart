@@ -10,6 +10,8 @@ import 'package:sodiet/view/widgets/home/nutrient_progress_widget.dart';
 import 'package:sodiet/view/widgets/home/welcome_title_widget.dart';
 import 'package:sodiet/view/widgets/home/data_summary_widget.dart';
 import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
+import 'package:sodiet/view/widgets/custom_text_field.dart';
+import 'package:sodiet/view/widgets/custom_button.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -241,6 +243,145 @@ class _HomeScreenState extends State<HomeScreen> {
     }).toList();
   }
 
+  // Weight Log Methods
+  Future<void> _selectDateForWeightLog() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Theme.of(context).primaryColor,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      homeController.weightLogDateController.text =
+          homeController.formatDate(picked);
+    }
+  }
+
+  void _showAddWeightLogDialog() {
+    // Initialize the form
+    homeController.initializeWeightLogForm();
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Dialog Title
+              Row(
+                children: [
+                  Expanded(
+                    child: SemiBoldText(
+                      'Add Weight Log',
+                      fontSize: 20,
+                      textColor: Colors.black87,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      Get.back();
+                    },
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // Date Field
+              GestureDetector(
+                onTap: _selectDateForWeightLog,
+                child: AbsorbPointer(
+                  child: CustomTextField(
+                    controller: homeController.weightLogDateController,
+                    hintText: 'Select Date',
+                    labelText: 'Date',
+                    suffixIcon: IconButton(
+                      icon:
+                          const Icon(Icons.calendar_today, color: Colors.grey),
+                      onPressed: _selectDateForWeightLog,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Weight Field
+              CustomTextField(
+                controller: homeController.weightLogWeightController,
+                hintText: 'Enter weight in kg',
+                labelText: 'Weight (kg)',
+                textInputType:
+                    const TextInputType.numberWithOptions(decimal: true),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 45,
+                      child: CustomButton(
+                        text: 'Cancel',
+                        onPressed: () {
+                          Get.back();
+                        },
+                        backgroundColor: Colors.grey.shade400,
+                        textColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 45,
+                      child: Obx(() => CustomButton(
+                            text: homeController.isSubmittingWeightLog.value
+                                ? 'Adding...'
+                                : 'Add Weight',
+                            onPressed: homeController
+                                    .isSubmittingWeightLog.value
+                                ? null
+                                : () async {
+                                    await homeController.addWeightLogFromHome();
+                                  },
+                            backgroundColor: const Color(0xFFFF9800),
+                            textColor: Colors.white,
+                          )),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BaseScreenLayout(
@@ -252,7 +393,8 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               WelcomeTitleWidget(
-                  userName: 'Testlight User', onLogWeightTap: () {}),
+                  userName: 'Testlight User',
+                  onLogWeightTap: _showAddWeightLogDialog),
               const SizedBox(height: 14),
               SizedBox(
                 height: 80,

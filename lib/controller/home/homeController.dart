@@ -1,9 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../constant/appConstant.dart';
 import '../../model/plan_model.dart';
 import '../../model/weight_data.dart';
 import '../../repo/authRepo.dart';
+import '../../view/widgets/common/custom_toast.dart';
 
 class HomeController extends GetxController implements GetxService {
   final AuthRepo authRepo;
@@ -33,6 +35,12 @@ class HomeController extends GetxController implements GetxService {
   RxBool isLoadingActivityOverview = false.obs;
   Rx<ActivityOverviewResponse?> activityOverviewResponse =
       Rx<ActivityOverviewResponse?>(null);
+
+  // Weight log variables for quick add functionality
+  var isSubmittingWeightLog = false.obs;
+  final TextEditingController weightLogDateController = TextEditingController();
+  final TextEditingController weightLogWeightController =
+      TextEditingController();
 
   getDashboardSummary() async {
     isLoadingDashboardSummary.value = true;
@@ -271,6 +279,71 @@ class HomeController extends GetxController implements GetxService {
   // Method to refresh activity overview
   void refreshActivityOverview() {
     getActivityOverview();
+  }
+
+  // Weight Log Methods
+  String formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  void initializeWeightLogForm() {
+    weightLogDateController.text = formatDate(DateTime.now());
+    weightLogWeightController.clear();
+  }
+
+  Future<void> addWeightLogFromHome() async {
+    if (weightLogDateController.text.trim().isEmpty ||
+        weightLogWeightController.text.trim().isEmpty) {
+      CustomToast.showError('Please fill in all fields');
+      return;
+    }
+
+    final weight = double.tryParse(weightLogWeightController.text.trim());
+    if (weight == null || weight <= 0) {
+      CustomToast.showError('Please enter a valid weight');
+      return;
+    }
+
+    try {
+      isSubmittingWeightLog.value = true;
+
+      final data = {
+        'log_date': weightLogDateController.text.trim(),
+        'weight_kg': weight,
+      };
+
+      Response response = await authRepo.postDataSet(
+        apiName: AppConstants.ADD_WEIGHT_LOG,
+        sendData: data,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomToast.showSuccess('Weight log added successfully');
+        weightLogWeightController.clear();
+        Get.back(); // Close the dialog first
+
+        // Then refresh dashboard data in background
+        Future.delayed(const Duration(milliseconds: 100), () {
+          getDashboardSummary();
+          getNutrientWeeklySummary();
+          getIntakeOverview();
+          getActivityOverview();
+        });
+      } else {
+        CustomToast.showError('Failed to add weight log');
+      }
+    } catch (e) {
+      CustomToast.showError('Error adding weight log: $e');
+    } finally {
+      isSubmittingWeightLog.value = false;
+    }
+  }
+
+  @override
+  void onClose() {
+    weightLogDateController.dispose();
+    weightLogWeightController.dispose();
+    super.onClose();
   }
 
   // Method to refresh all data
