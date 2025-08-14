@@ -24,6 +24,16 @@ class HomeController extends GetxController implements GetxService {
   Rx<NutrientWeeklySummaryResponse?> nutrientWeeklySummaryResponse =
       Rx<NutrientWeeklySummaryResponse?>(null);
 
+  // Observable variables to store intake overview data
+  RxBool isLoadingIntakeOverview = false.obs;
+  Rx<IntakeOverviewResponse?> intakeOverviewResponse =
+      Rx<IntakeOverviewResponse?>(null);
+
+  // Observable variables to store activity overview data
+  RxBool isLoadingActivityOverview = false.obs;
+  Rx<ActivityOverviewResponse?> activityOverviewResponse =
+      Rx<ActivityOverviewResponse?>(null);
+
   getDashboardSummary() async {
     isLoadingDashboardSummary.value = true;
     try {
@@ -102,6 +112,79 @@ class HomeController extends GetxController implements GetxService {
     }
   }
 
+  getIntakeOverview() async {
+    isLoadingIntakeOverview.value = true;
+    try {
+      Response response =
+          await authRepo.getDataSet(apiName: AppConstants.GET_INTAKE_OVERVIEW);
+      print("Intake Overview API Response Status: ${response.statusCode}");
+      print("Intake Overview API Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        intakeOverviewResponse.value =
+            IntakeOverviewResponse.fromJson(response.body);
+
+        print('Intake Overview loaded successfully');
+        return {
+          'success': true,
+          'message': 'Intake overview loaded successfully!'
+        };
+      } else {
+        print('Error loading intake overview: ${response.statusCode}');
+        intakeOverviewResponse.value = null;
+        return {'success': false, 'message': 'Failed to load intake overview'};
+      }
+    } catch (e) {
+      print('Exception in getIntakeOverview: $e');
+      intakeOverviewResponse.value = null;
+      return {
+        'success': false,
+        'message': 'Network error. Please check your connection.'
+      };
+    } finally {
+      isLoadingIntakeOverview.value = false;
+      update();
+    }
+  }
+
+  getActivityOverview() async {
+    isLoadingActivityOverview.value = true;
+    try {
+      Response response = await authRepo.getDataSet(
+          apiName: AppConstants.GET_ACTIVITY_OVERVIEW);
+      print("Activity Overview API Response Status: ${response.statusCode}");
+      print("Activity Overview API Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        activityOverviewResponse.value =
+            ActivityOverviewResponse.fromJson(response.body);
+
+        print('Activity Overview loaded successfully');
+        return {
+          'success': true,
+          'message': 'Activity overview loaded successfully!'
+        };
+      } else {
+        print('Error loading activity overview: ${response.statusCode}');
+        activityOverviewResponse.value = null;
+        return {
+          'success': false,
+          'message': 'Failed to load activity overview'
+        };
+      }
+    } catch (e) {
+      print('Exception in getActivityOverview: $e');
+      activityOverviewResponse.value = null;
+      return {
+        'success': false,
+        'message': 'Network error. Please check your connection.'
+      };
+    } finally {
+      isLoadingActivityOverview.value = false;
+      update();
+    }
+  }
+
   // Dashboard Summary Helper Methods
   bool get hasDashboardSummary => dashboardSummaryResponse.value != null;
 
@@ -156,10 +239,46 @@ class HomeController extends GetxController implements GetxService {
     getNutrientWeeklySummary();
   }
 
+  // Intake Overview Helper Methods
+  bool get hasIntakeOverview => intakeOverviewResponse.value != null;
+
+  IntakeOverviewChart? get intakeOverviewChart =>
+      intakeOverviewResponse.value?.intakeOverviewChart;
+
+  List<String> get intakeDates =>
+      intakeOverviewResponse.value?.intakeOverviewChart.dates ?? [];
+
+  List<IntakeSeriesData> get intakeSeries =>
+      intakeOverviewResponse.value?.intakeOverviewChart.series ?? [];
+
+  // Method to refresh intake overview
+  void refreshIntakeOverview() {
+    getIntakeOverview();
+  }
+
+  // Activity Overview Helper Methods
+  bool get hasActivityOverview => activityOverviewResponse.value != null;
+
+  ActivityOverviewChart? get activityOverviewChart =>
+      activityOverviewResponse.value?.activityOverviewChart;
+
+  List<String> get activityDates =>
+      activityOverviewResponse.value?.activityOverviewChart.dates ?? [];
+
+  List<ActivitySeriesData> get activitySeries =>
+      activityOverviewResponse.value?.activityOverviewChart.series ?? [];
+
+  // Method to refresh activity overview
+  void refreshActivityOverview() {
+    getActivityOverview();
+  }
+
   // Method to refresh all data
   void refreshAllData() {
     getDashboardSummary();
     getNutrientWeeklySummary();
+    getIntakeOverview();
+    getActivityOverview();
   }
 
   // Method to clear dashboard data

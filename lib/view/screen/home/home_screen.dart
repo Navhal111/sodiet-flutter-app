@@ -5,6 +5,7 @@ import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/chart/weight_progress_chart.dart';
 import 'package:sodiet/view/widgets/chart/intake_overview_chart.dart';
+import 'package:sodiet/view/widgets/chart/activity_overview_chart.dart';
 import 'package:sodiet/view/widgets/home/nutrient_progress_widget.dart';
 import 'package:sodiet/view/widgets/home/welcome_title_widget.dart';
 import 'package:sodiet/view/widgets/home/data_summary_widget.dart';
@@ -29,6 +30,8 @@ class _HomeScreenState extends State<HomeScreen> {
   _loadDashboardData() async {
     await homeController.getDashboardSummary();
     await homeController.getNutrientWeeklySummary();
+    await homeController.getIntakeOverview();
+    await homeController.getActivityOverview();
   }
 
   // Method to build KPI widgets from dashboard summary data
@@ -238,38 +241,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }).toList();
   }
 
-  // Sample data for the intake overview chart - matching the design screenshot
-  List<IntakeData> sampleIntakeData = [
-    IntakeData(
-      date: DateTime(2025, 1, 28),
-      breakfast: 200,
-      lunch: 0,
-      dinner: 0,
-      snacks: 150,
-    ),
-    IntakeData(
-      date: DateTime(2025, 1, 29),
-      breakfast: 850,
-      lunch: 200,
-      dinner: 350,
-      snacks: 100,
-    ),
-    IntakeData(
-      date: DateTime(2025, 1, 30),
-      breakfast: 500,
-      lunch: 0,
-      dinner: 0,
-      snacks: 0,
-    ),
-    IntakeData(
-      date: DateTime(2025, 2, 6),
-      breakfast: 0,
-      lunch: 0,
-      dinner: 0,
-      snacks: 0,
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return BaseScreenLayout(
@@ -280,7 +251,8 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              WelcomeTitleWidget(userName: 'Light User', onLogWeightTap: () {}),
+              WelcomeTitleWidget(
+                  userName: 'Testlight User', onLogWeightTap: () {}),
               const SizedBox(height: 14),
               SizedBox(
                 height: 80,
@@ -393,12 +365,68 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 10),
               // Intake Overview Chart
-              IntakeOverviewChart(
-                intakeDataList: sampleIntakeData,
-                title: 'Intake Overview',
-                titleColor: const Color(0xFF091242),
-                titleFontSize: 22,
-              ),
+              Obx(() {
+                if (homeController.isLoadingIntakeOverview.value) {
+                  return Container(
+                    height: 300,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          spreadRadius: 1,
+                          blurRadius: 5,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
+                return IntakeOverviewChart(
+                  intakeData: homeController.intakeOverviewChart,
+                  title: 'Intake Overview',
+                  titleColor: const Color(0xFF091242),
+                  titleFontSize: 22,
+                );
+              }),
+              const SizedBox(height: 10),
+              // Activity Overview Chart
+              Obx(() {
+                if (homeController.isLoadingActivityOverview.value) {
+                  return Container(
+                    height: 300,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          spreadRadius: 1,
+                          blurRadius: 5,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
+                return ActivityOverviewChart(
+                  activityData: homeController.activityOverviewChart,
+                  title: 'Activity Overview',
+                  titleColor: const Color(0xFF091242),
+                  titleFontSize: 22,
+                );
+              }),
             ],
           ),
         ),

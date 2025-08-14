@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:sodiet/model/plan_model.dart' as models;
 
-class IntakeOverviewChart extends StatelessWidget {
-  final models.IntakeOverviewChart? intakeData;
+class ActivityOverviewChart extends StatelessWidget {
+  final models.ActivityOverviewChart? activityData;
   final String title;
   final Color titleColor;
   final double titleFontSize;
 
-  const IntakeOverviewChart({
+  const ActivityOverviewChart({
     Key? key,
-    this.intakeData,
-    this.title = 'Intake Overview',
+    this.activityData,
+    this.title = 'Activity Overview',
     this.titleColor = const Color(0xFF091242),
     this.titleFontSize = 22,
   }) : super(key: key);
@@ -41,10 +41,10 @@ class IntakeOverviewChart extends StatelessWidget {
           const SizedBox(height: 20),
           SizedBox(
             height: 300,
-            child: intakeData == null || intakeData!.dates.isEmpty
+            child: activityData == null || activityData!.dates.isEmpty
                 ? const Center(
                     child: Text(
-                      'No intake data available',
+                      'No activity data available',
                       style: TextStyle(color: Colors.grey),
                     ),
                   )
@@ -85,17 +85,70 @@ class IntakeOverviewChart extends StatelessWidget {
   }
 
   Widget _buildLegend() {
+    // Filter only activities that have data (not all zeros)
+    List<String> activitiesWithData = _getActivitiesWithData();
+
     return Wrap(
       alignment: WrapAlignment.center,
-      spacing: 16,
+      spacing: 12,
       runSpacing: 8,
-      children: [
-        _buildLegendItem('Breakfast', const Color(0xFF5DADE2)),
-        _buildLegendItem('Lunch', const Color(0xFF58D68D)),
-        _buildLegendItem('Dinner', const Color(0xFFAB7FB0)),
-        _buildLegendItem('Snacks', const Color(0xFFF7DC6F)),
-      ],
+      children: activitiesWithData.map((activity) {
+        return _buildLegendItem(
+          _getDisplayName(activity),
+          _getActivityColor(activity),
+        );
+      }).toList(),
     );
+  }
+
+  List<String> _getActivitiesWithData() {
+    if (activityData == null) return [];
+
+    List<String> activitiesWithData = [];
+    for (var series in activityData!.series) {
+      // Check if this activity has any non-zero data
+      bool hasData = series.data.any((value) => value > 0);
+      if (hasData) {
+        activitiesWithData.add(series.name);
+      }
+    }
+    return activitiesWithData;
+  }
+
+  String _getDisplayName(String activityName) {
+    // Map internal names to display names based on the image
+    switch (activityName.toLowerCase()) {
+      case 'dancing':
+        return 'Aerobic dancing- low intensity';
+      case 'walking around/ strolling':
+        return 'Walking around/ strolling';
+      case 'walking/strolling':
+        return 'Walking around/ strolling';
+      case 'walking quickly':
+        return 'Walking quickly';
+      case 'walking slowly':
+        return 'Walking slowly';
+      default:
+        return activityName;
+    }
+  }
+
+  Color _getActivityColor(String activityName) {
+    // Colors based on the image shown
+    switch (activityName.toLowerCase()) {
+      case 'dancing':
+        return const Color(0xFFE57373); // Red
+      case 'walking around/ strolling':
+        return const Color(0xFF4FC3F7); // Light Blue
+      case 'walking/strolling':
+        return const Color(0xFF4FC3F7); // Light Blue
+      case 'walking quickly':
+        return const Color(0xFF2196F3); // Blue
+      case 'walking slowly':
+        return const Color(0xFF9C27B0); // Purple
+      default:
+        return Colors.grey.shade400;
+    }
   }
 
   Widget _buildLegendItem(String label, Color color) {
@@ -125,7 +178,7 @@ class IntakeOverviewChart extends StatelessWidget {
 
   Widget _buildScrollableChart() {
     // Calculate width based on number of data points
-    final dataLength = intakeData!.dates.length;
+    final dataLength = activityData!.dates.length;
     final minWidth = 350.0; // Minimum width for the chart
     final pointWidth = dataLength > 14 ? 40.0 : 50.0; // Responsive point width
     final chartWidth =
@@ -185,7 +238,7 @@ class IntakeOverviewChart extends StatelessWidget {
   }
 
   double _getOptimalInterval() {
-    final dataLength = intakeData!.dates.length;
+    final dataLength = activityData!.dates.length;
 
     // Calculate optimal interval to show 5-7 labels maximum
     if (dataLength <= 7) {
@@ -202,37 +255,28 @@ class IntakeOverviewChart extends StatelessWidget {
   }
 
   LineChartData _buildLineChartData() {
-    if (intakeData == null || intakeData!.dates.isEmpty) {
+    if (activityData == null || activityData!.dates.isEmpty) {
       return LineChartData();
-    }
-
-    // Get max value for Y-axis
-    double maxValue = 0;
-    for (var series in intakeData!.series) {
-      double seriesMax = series.data.isNotEmpty
-          ? series.data.reduce((a, b) => a > b ? a : b)
-          : 0;
-      if (seriesMax > maxValue) maxValue = seriesMax;
     }
 
     // Calculate stacked max (sum of all series at each point)
     double stackedMax = 0;
-    for (int i = 0; i < intakeData!.dates.length; i++) {
+    for (int i = 0; i < activityData!.dates.length; i++) {
       double stackSum = 0;
-      for (var series in intakeData!.series) {
-        if (i < series.data.length) {
+      for (var series in activityData!.series) {
+        if (i < series.data.length && series.data[i] > 0) {
           stackSum += series.data[i];
         }
       }
       if (stackSum > stackedMax) stackedMax = stackSum;
     }
 
-    // Use stacked max instead of individual series max
-    maxValue = stackedMax;
+    // Use stacked max
+    double maxValue = stackedMax;
 
-    // Round up to nearest 500 for clean scale
-    maxValue = ((maxValue / 500).ceil() * 500).toDouble();
-    if (maxValue < 2500) maxValue = 2500; // Minimum scale like in the image
+    // Round up to nearest 50 for clean scale (energy is typically lower than intake)
+    maxValue = ((maxValue / 50).ceil() * 50).toDouble();
+    if (maxValue < 300) maxValue = 300; // Minimum scale based on the image
 
     return LineChartData(
       gridData: FlGridData(
@@ -258,8 +302,8 @@ class IntakeOverviewChart extends StatelessWidget {
             interval: _getOptimalInterval(),
             getTitlesWidget: (value, meta) {
               if (value.toInt() >= 0 &&
-                  value.toInt() < intakeData!.dates.length) {
-                final dateStr = intakeData!.dates[value.toInt()];
+                  value.toInt() < activityData!.dates.length) {
+                final dateStr = activityData!.dates[value.toInt()];
                 // Parse date and format it nicely
                 try {
                   final date = DateTime.parse(dateStr);
@@ -340,7 +384,7 @@ class IntakeOverviewChart extends StatelessWidget {
         ),
       ),
       minX: 0,
-      maxX: (intakeData!.dates.length - 1).toDouble(),
+      maxX: (activityData!.dates.length - 1).toDouble(),
       minY: 0,
       maxY: maxValue,
       lineBarsData: _buildStackedAreaCharts(),
@@ -348,56 +392,51 @@ class IntakeOverviewChart extends StatelessWidget {
   }
 
   List<LineChartBarData> _buildStackedAreaCharts() {
-    if (intakeData == null || intakeData!.series.isEmpty) {
+    if (activityData == null || activityData!.series.isEmpty) {
       return [];
     }
 
-    // Get series data organized by meal type
+    // Get series data organized by activity type, only include activities with data
     Map<String, List<double>> seriesMap = {};
-    for (var series in intakeData!.series) {
-      seriesMap[series.name] = series.data;
+    List<String> activitiesWithData = [];
+
+    for (var series in activityData!.series) {
+      // Check if this activity has any non-zero data
+      bool hasData = series.data.any((value) => value > 0);
+      if (hasData) {
+        seriesMap[series.name] = series.data;
+        activitiesWithData.add(series.name);
+      }
     }
 
     List<LineChartBarData> charts = [];
 
-    // Colors for each meal type (matching legend)
-    Map<String, Color> colors = {
-      'Snacks': const Color(0xFFF7DC6F),
-      'Dinner': const Color(0xFFAB7FB0),
-      'Lunch': const Color(0xFF58D68D),
-      'Breakfast': const Color(0xFF5DADE2),
-    };
-
-    // Create stacked area charts
-    List<String> mealOrder = ['Snacks', 'Dinner', 'Lunch', 'Breakfast'];
-
-    for (int i = 0; i < mealOrder.length; i++) {
-      String mealType = mealOrder[i];
-      if (seriesMap.containsKey(mealType)) {
-        charts.add(_buildAreaChart(
-          _getStackedSpots(mealType, i, seriesMap),
-          colors[mealType] ?? Colors.grey,
-          0.8,
-        ));
-      }
+    // Create stacked area charts for activities with data
+    for (int i = 0; i < activitiesWithData.length; i++) {
+      String activityType = activitiesWithData[i];
+      charts.add(_buildAreaChart(
+        _getStackedSpots(activityType, i, seriesMap, activitiesWithData),
+        _getActivityColor(activityType),
+        0.8,
+      ));
     }
 
     return charts;
   }
 
-  List<FlSpot> _getStackedSpots(
-      String currentMeal, int stackLevel, Map<String, List<double>> seriesMap) {
-    List<String> mealOrder = ['Snacks', 'Dinner', 'Lunch', 'Breakfast'];
+  List<FlSpot> _getStackedSpots(String currentActivity, int stackLevel,
+      Map<String, List<double>> seriesMap, List<String> activitiesWithData) {
     List<FlSpot> spots = [];
 
-    for (int i = 0; i < intakeData!.dates.length; i++) {
+    for (int i = 0; i < activityData!.dates.length; i++) {
       double cumulativeValue = 0;
 
       // Add up all the values up to and including the current stack level
       for (int j = 0; j <= stackLevel; j++) {
-        String meal = mealOrder[j];
-        if (seriesMap.containsKey(meal) && i < seriesMap[meal]!.length) {
-          cumulativeValue += seriesMap[meal]![i];
+        String activity = activitiesWithData[j];
+        if (seriesMap.containsKey(activity) &&
+            i < seriesMap[activity]!.length) {
+          cumulativeValue += seriesMap[activity]![i];
         }
       }
 

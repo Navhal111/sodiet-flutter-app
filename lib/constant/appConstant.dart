@@ -47,6 +47,10 @@ class AppConstants {
   static const String GET_DASHBOARD_SUMMARY = '${BASE_URL}dashboard/summary';
   static const String GET_NUTRIENT_WEEKLY_SUMMARY =
       '${BASE_URL}dashboard/nutrient-weekly-summary';
+  static const String GET_INTAKE_OVERVIEW =
+      '${BASE_URL}dashboard/intake-overview';
+  static const String GET_ACTIVITY_OVERVIEW =
+      '${BASE_URL}dashboard/activity-overview';
 
   // Preference endpoints
   static const String GET_PREFERENCES =

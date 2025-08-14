@@ -427,3 +427,160 @@ class WeeklyNutrientData {
     };
   }
 }
+
+// Intake Overview Response Models
+class IntakeOverviewResponse {
+  final IntakeOverviewChart intakeOverviewChart;
+
+  IntakeOverviewResponse({
+    required this.intakeOverviewChart,
+  });
+
+  factory IntakeOverviewResponse.fromJson(Map<String, dynamic> json) {
+    return IntakeOverviewResponse(
+      intakeOverviewChart:
+          IntakeOverviewChart.fromJson(json['intake_overview_chart']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'intake_overview_chart': intakeOverviewChart.toJson(),
+    };
+  }
+}
+
+class IntakeOverviewChart {
+  final List<String> dates;
+  final List<IntakeSeriesData> series;
+
+  IntakeOverviewChart({
+    required this.dates,
+    required this.series,
+  });
+
+  factory IntakeOverviewChart.fromJson(Map<String, dynamic> json) {
+    return IntakeOverviewChart(
+      dates: List<String>.from(json['dates'] ?? []),
+      series: (json['series'] as List<dynamic>?)
+              ?.map((item) => IntakeSeriesData.fromJson(item))
+              .toList() ??
+          [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'dates': dates,
+      'series': series.map((item) => item.toJson()).toList(),
+    };
+  }
+}
+
+class IntakeSeriesData {
+  final String name;
+  final List<double> data;
+
+  IntakeSeriesData({
+    required this.name,
+    required this.data,
+  });
+
+  factory IntakeSeriesData.fromJson(Map<String, dynamic> json) {
+    return IntakeSeriesData(
+      name: json['name'] ?? '',
+      data: (json['data'] as List<dynamic>?)
+              ?.map((item) => (item ?? 0).toDouble())
+              .toList()
+              .cast<double>() ??
+          <double>[],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'data': data,
+    };
+  }
+}
+
+// Activity Overview Models
+class ActivityOverviewResponse {
+  final ActivityOverviewChart activityOverviewChart;
+
+  ActivityOverviewResponse({
+    required this.activityOverviewChart,
+  });
+
+  factory ActivityOverviewResponse.fromJson(Map<String, dynamic> json) {
+    return ActivityOverviewResponse(
+      activityOverviewChart:
+          ActivityOverviewChart.fromJson(json['activity_overview_chart'] ?? {}),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'activity_overview_chart': activityOverviewChart.toJson(),
+    };
+  }
+}
+
+class ActivityOverviewChart {
+  final List<String> dates;
+  final List<ActivitySeriesData> series;
+
+  ActivityOverviewChart({
+    required this.dates,
+    required this.series,
+  });
+
+  factory ActivityOverviewChart.fromJson(Map<String, dynamic> json) {
+    return ActivityOverviewChart(
+      dates: (json['dates'] as List<dynamic>?)
+              ?.map((item) => item.toString())
+              .toList() ??
+          <String>[],
+      series: (json['series'] as List<dynamic>?)
+              ?.map((item) => ActivitySeriesData.fromJson(item))
+              .toList() ??
+          <ActivitySeriesData>[],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'dates': dates,
+      'series': series.map((item) => item.toJson()).toList(),
+    };
+  }
+}
+
+class ActivitySeriesData {
+  final String name;
+  final List<double> data;
+
+  ActivitySeriesData({
+    required this.name,
+    required this.data,
+  });
+
+  factory ActivitySeriesData.fromJson(Map<String, dynamic> json) {
+    return ActivitySeriesData(
+      name: json['name'] ?? '',
+      data: (json['data'] as List<dynamic>?)
+              ?.map((item) => (item ?? 0).toDouble())
+              .toList()
+              .cast<double>() ??
+          <double>[],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'data': data,
+    };
+  }
+}

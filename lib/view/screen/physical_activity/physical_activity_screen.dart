@@ -4,7 +4,6 @@ import 'package:sodiet/constant/staticData.dart';
 import 'package:sodiet/controller/physicalActivity/physicalController.dart';
 import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
-import 'package:sodiet/view/widgets/chart/intake_overview_chart.dart';
 import 'package:sodiet/view/widgets/common/custom_toast.dart';
 import 'package:sodiet/view/widgets/common/title_section_widget.dart';
 import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
@@ -150,38 +149,6 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
 
     CustomToast.showInfo('$activity selected with $duration minutes duration');
   }
-
-  // Sample data for the intake overview chart - matching the design screenshot
-  List<IntakeData> sampleIntakeData = [
-    IntakeData(
-      date: DateTime(2025, 1, 28),
-      breakfast: 200,
-      lunch: 0,
-      dinner: 0,
-      snacks: 150,
-    ),
-    IntakeData(
-      date: DateTime(2025, 1, 29),
-      breakfast: 850,
-      lunch: 200,
-      dinner: 350,
-      snacks: 100,
-    ),
-    IntakeData(
-      date: DateTime(2025, 1, 30),
-      breakfast: 500,
-      lunch: 0,
-      dinner: 0,
-      snacks: 0,
-    ),
-    IntakeData(
-      date: DateTime(2025, 2, 6),
-      breakfast: 0,
-      lunch: 0,
-      dinner: 0,
-      snacks: 0,
-    ),
-  ];
 
   // Pagination scroll listener
   void _onScroll() {
