@@ -131,26 +131,14 @@ class _CourseCorrectionScreenState extends State<CourseCorrectionScreen> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                   ),
-                                  child: controller.isSubmitting.value
-                                      ? const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                                    Colors.white),
-                                          ),
-                                        )
-                                      : SemiBoldText(
-                                          'Submit',
-                                          fontSize: 16,
-                                          textColor: controller
-                                                  .selectedCorrections
-                                                  .isNotEmpty
-                                              ? Colors.white
-                                              : Colors.grey.shade600,
-                                        ),
+                                  child: SemiBoldText(
+                                    'Submit',
+                                    fontSize: 16,
+                                    textColor: controller
+                                            .selectedCorrections.isNotEmpty
+                                        ? Colors.white
+                                        : Colors.grey.shade600,
+                                  ),
                                 ),
                               ),
                             ],

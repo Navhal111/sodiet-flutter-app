@@ -76,6 +76,7 @@ class AppConstants {
 
   // Course Correction endpoints
   static const String GET_CC_PENDING_DATA = '${BASE_URL}cc/get-cc-pending-data';
+  static const String CC_MASTER = '${BASE_URL}cc/CCMaster';
 
   // Contant Save data keys
   static const String INTRO = 'intro';

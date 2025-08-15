@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:sodiet/view/screen/auth/forgot_password/forgot_password_screen.dart';
 import 'package:sodiet/view/screen/auth/login_screen.dart';
 import 'package:sodiet/view/screen/course_correction/course_correction_screen.dart';
+import 'package:sodiet/view/screen/course_correction/course_correction_mode_screen.dart';
 import 'package:sodiet/view/screen/fat_log/fat_log_manager_screen.dart';
 import 'package:sodiet/view/screen/home/home_screen.dart';
 import 'package:sodiet/view/screen/ingredients/add_ingredient_screen.dart';
@@ -64,6 +65,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.courseCorrectionScreen,
       page: () => const CourseCorrectionScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.courseCorrectionModeScreen,
+      page: () => const CourseCorrectionModeScreen(),
     ),
     GetPage(
       name: AppRoutes.preferenceOnboardingScreen,

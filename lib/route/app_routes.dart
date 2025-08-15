@@ -11,6 +11,8 @@ class AppRoutes {
   static const String optimizationScreen = '/optimization_screen';
   static const String mealPlanScreen = '/meal_plan_screen';
   static const String courseCorrectionScreen = '/course_correction_screen';
+  static const String courseCorrectionModeScreen =
+      '/course_correction_mode_screen';
   static const String preferenceOnboardingScreen =
       '/preference_onboarding_screen';
   static const String weightLogManagerScreen = '/weight_log_manager_screen';

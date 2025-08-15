@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:sodiet/constant/appConstant.dart';
 import 'package:sodiet/repo/authRepo.dart';
+import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/widgets/common/custom_toast.dart';
 
 class CourseCorrectionController extends GetxController implements GetxService {
@@ -92,31 +93,77 @@ class CourseCorrectionController extends GetxController implements GetxService {
     return selectedCorrections.contains(index);
   }
 
-  // Submit selected corrections
+  // Submit selected corrections - Navigate to mode selection screen
   Future<void> submitCorrections() async {
     if (selectedCorrections.isEmpty) {
       CustomToast.showWarning('Please select at least one correction');
       return;
     }
 
+    // Navigate to course correction mode selection screen
+    Get.toNamed(AppRoutes.courseCorrectionModeScreen);
+  }
+
+  // Submit course correction master
+  Future<void> submitCourseCorrectionMaster({
+    required double delta,
+    required String ccDate,
+    required String correctionMode,
+    int splitRatio = 0,
+  }) async {
     try {
       isSubmitting.value = true;
-      CustomToast.showLoading('Submitting corrections...');
 
-      // TODO: Implement submit API call when endpoint is available
-      // For now, just show success message
-      await Future.delayed(const Duration(seconds: 2));
+      final url = AppConstants.CC_MASTER;
 
-      CustomToast.showSuccess('Course corrections submitted successfully');
+      // Prepare payload
+      Map<String, dynamic> payload = {
+        "delta": delta,
+        "CCDate": ccDate,
+        "correctionMode": correctionMode,
+      };
 
-      // Clear selections and refresh data
-      selectedCorrections.clear();
-      totalDelta.value = 0.0;
-      await getCorrectionPendingData();
+      // Add split_ratio only for IA mode
+      if (correctionMode == "IA") {
+        payload["split_ratio"] = splitRatio;
+      }
+
+      print('Submitting course correction: $payload');
+
+      Response response = await authRepo.postDataSet(
+        apiName: url,
+        sendData: payload,
+      );
+
+      print('Course correction submit response status: ${response.statusCode}');
+      print('Course correction submit response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        // Get message from server response
+        final message = response.body['message'] ??
+            'Course correction submitted successfully!';
+
+        CustomToast.showSuccess(message);
+
+        // Clear selections and refresh data
+        selectedCorrections.clear();
+        totalDelta.value = 0.0;
+        await getCorrectionPendingData();
+
+        // Navigate back to course correction screen
+        Get.back();
+      } else {
+        final errorMessage =
+            response.body['message'] ?? 'Failed to submit course correction';
+        CustomToast.showError(errorMessage);
+        Get.back();
+      }
     } catch (e) {
-      print('Exception in submitCorrections: $e');
-      CustomToast.showError('Error submitting corrections: $e');
+      print('Exception in submitCourseCorrectionMaster: $e');
+      CustomToast.showError('Error submitting course correction: $e');
+      Get.back();
     } finally {
+      Get.back();
       isSubmitting.value = false;
     }
   }
