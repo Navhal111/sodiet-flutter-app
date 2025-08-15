@@ -78,6 +78,9 @@ class AppConstants {
   static const String GET_CC_PENDING_DATA = '${BASE_URL}cc/get-cc-pending-data';
   static const String CC_MASTER = '${BASE_URL}cc/CCMaster';
 
+  // Optimization endpoints
+  static const String WEEK_PLAN_MASTER = '${BASE_URL}menu/week-plan-master';
+
   // Contant Save data keys
   static const String INTRO = 'intro';
   static const String TOKEN = 'token';

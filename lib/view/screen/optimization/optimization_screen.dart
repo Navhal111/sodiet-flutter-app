@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sodiet/controller/optimization/optimization_controller.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 import 'package:sodiet/view/widgets/common/title_section_widget.dart';
+import 'package:sodiet/view/widgets/common/shimmer_loading.dart';
 import 'package:sodiet/route/app_routes.dart';
 
 class OptimizationScreen extends StatefulWidget {
@@ -15,144 +17,187 @@ class OptimizationScreen extends StatefulWidget {
 class _OptimizationScreenState extends State<OptimizationScreen> {
   bool isSnackSelected = true;
   bool isNonVegSelected = true;
+  late OptimizationController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<OptimizationController>();
+  }
 
   @override
   Widget build(BuildContext context) {
     return BaseScreenLayout(
       currentRoute: AppRoutes.optimizationScreen,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Title Section
-            TitleSectionWidget(
-              imagePath: 'assets/images/plan.png',
-              title: 'Optimization Status',
-              description:
-                  'View and manage your weekly optimization plans to track your progress and stay on top of your diet and fitness goals.',
-            ),
-            
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.symmetric(vertical: 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Filter Options
-                  Row(
-                    children: [
-                      _buildFilterOption(
-                        'Snack',
-                        isSnackSelected,
-                        () {
-                          setState(() {
-                            isSnackSelected = !isSnackSelected;
-                          });
-                        },
-                      ),
-                      const SizedBox(width: 16),
-                      _buildFilterOption(
-                        'Non-Veg',
-                        isNonVegSelected,
-                        () {
-                          setState(() {
-                            isNonVegSelected = !isNonVegSelected;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
+      child: RefreshIndicator(
+        onRefresh: () async {
+          await controller.refreshData();
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title Section
+              TitleSectionWidget(
+                imagePath: 'assets/images/plan.png',
+                title: 'Optimization Status',
+                description:
+                    'View and manage your weekly optimization plans to track your progress and stay on top of your diet and fitness goals.',
+              ),
 
-                  const SizedBox(height: 16),
+              Container(
+                color: Colors.white,
+                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Filter Options
+                    Row(
+                      children: [
+                        _buildFilterOption(
+                          'Snack',
+                          isSnackSelected,
+                          () {
+                            setState(() {
+                              isSnackSelected = !isSnackSelected;
+                            });
+                          },
+                        ),
+                        const SizedBox(width: 16),
+                        _buildFilterOption(
+                          'Non-Veg',
+                          isNonVegSelected,
+                          () {
+                            setState(() {
+                              isNonVegSelected = !isNonVegSelected;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
 
-                  // Run All Button
-                  SizedBox(
-                    width: 100,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Navigate to meal plan screen
-                        Get.toNamed(AppRoutes.mealPlanScreen);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2AB989),
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                    const SizedBox(height: 16),
+
+                    // Run All Button
+                    SizedBox(
+                      width: 100,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // Navigate to meal plan screen
+                          Get.toNamed(AppRoutes.mealPlanScreen);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2AB989),
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.play_arrow,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            SemiBoldText(
+                              'Run all',
+                              fontSize: 16,
+                              textColor: Colors.white,
+                            ),
+                          ],
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.play_arrow,
-                            color: Colors.white,
-                            size: 20,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 4),
+
+              // Optimization Cards - Dynamic List
+              Obx(() {
+                if (controller.isLoading.value) {
+                  return Column(
+                    children: List.generate(
+                      3,
+                      (index) => Padding(
+                        padding: const EdgeInsets.only(bottom: 4.0),
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          child: ShimmerLoading(
+                            width: double.infinity,
+                            height: 120,
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          const SizedBox(width: 8),
-                          SemiBoldText(
-                            'Run all',
-                            fontSize: 16,
-                            textColor: Colors.white,
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
+                  );
+                }
 
-            const SizedBox(height: 4),
+                if (controller.weekPlanData.isEmpty) {
+                  return Container(
+                    padding: const EdgeInsets.all(32),
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.grey.withOpacity(0.1),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.inbox_outlined,
+                          size: 48,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 16),
+                        SemiBoldText(
+                          'No optimization data available',
+                          fontSize: 16,
+                          textColor: Colors.grey.shade600,
+                        ),
+                        const SizedBox(height: 8),
+                        RegularText(
+                          'Pull to refresh to check for new data',
+                          fontSize: 14,
+                          textColor: Colors.grey.shade500,
+                        ),
+                      ],
+                    ),
+                  );
+                }
 
-            // Optimization Cards
-            _buildOptimizationCard(
-              'Week 1',
-              'Feb25 - Mar2',
-              'Optimal',
-              'Yesterday',
-              const Color(0xFFE8F5E8),
-              const Color(0xFF2E7D32),
-              [
-                const Color(0xFF4CAF50),
-                const Color(0xFF81C784),
-                const Color(0xFFA5D6A7),
-              ],
-            ),
-
-            const SizedBox(height: 4),
-
-            _buildOptimizationCard(
-              'Week 2',
-              'Mar13 - Mar 20',
-              'NA',
-              'Yesterday',
-              const Color(0xFFF5F5F5),
-              const Color(0xFF4C4C4C),
-              [
-                const Color(0xFFFFB74D),
-                const Color(0xFFFFCC02),
-                const Color(0xFFFFF176),
-              ],
-            ),
-
-            const SizedBox(height: 4),
-            
-            _buildOptimizationCard(
-              'Week 3',
-              'Mar3 - Mar10',
-              'Error',
-              'Yesterday',
-              const Color(0xFFFFEBEE),
-              const Color(0xFFE53935),
-              [
-                const Color(0xFFE57373),
-                const Color(0xFFEF5350),
-                const Color(0xFFE53935),
-              ],
-            ),
-          ],
+                return Column(
+                  children: controller.weekPlanData.map((weekPlan) {
+                    final colors =
+                        controller.getStatusColors(weekPlan.optStatus);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 4.0),
+                      child: _buildOptimizationCard(
+                        'Week ${weekPlan.week}',
+                        weekPlan.dateRange,
+                        weekPlan.optStatus,
+                        weekPlan.lastRunDate,
+                        colors[0] as Color, // Background color
+                        colors[1] as Color, // Text color
+                        colors[2] as List<Color>, // Action colors
+                      ),
+                    );
+                  }).toList(),
+                );
+              }),
+            ],
+          ),
         ),
       ),
     );
