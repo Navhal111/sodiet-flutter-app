@@ -56,6 +56,47 @@ class _PreferenceOnboardingScreenState
                           )),
                       const SizedBox(height: 16),
 
+                      // Add Combination Button
+                      Obx(() => SizedBox(
+                            width: double.infinity,
+                            height: 45,
+                            child: ElevatedButton.icon(
+                              onPressed: controller.isCreatingCombination.value
+                                  ? null
+                                  : controller.createCombination,
+                              icon: controller.isCreatingCombination.value
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                Colors.white),
+                                      ),
+                                    )
+                                  : const Icon(Icons.add),
+                              label: Text(
+                                controller.isCreatingCombination.value
+                                    ? 'Creating...'
+                                    : 'Add Combination',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF4CAF50),
+                                foregroundColor: Colors.white,
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          )),
+                      const SizedBox(height: 16),
+
                       // API Combinations - Each as its own CombinationFormWidget
                       Obx(() {
                         if (controller.isLoading.value) {

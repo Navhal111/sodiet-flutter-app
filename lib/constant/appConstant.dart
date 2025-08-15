@@ -55,6 +55,8 @@ class AppConstants {
   // Preference endpoints
   static const String GET_PREFERENCES =
       '${BASE_URL}personalization/preferences';
+  static const String CREATE_COMBINATION =
+      '${BASE_URL}personalization/preferences/combinations';
   static String getAddFoodToCombinationUrl(int combinationId) =>
       '${BASE_URL}personalization/preferences/combinations/$combinationId';
   static String getDeleteFoodFromPreferencesUrl(int pkey) =>

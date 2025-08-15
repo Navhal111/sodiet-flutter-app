@@ -17,6 +17,7 @@ class PreferenceOnboardingController extends GetxController
   var selectedMealType = 'Breakfast'.obs;
   var isLoading = false.obs;
   var isLoadingRecipes = false.obs;
+  var isCreatingCombination = false.obs;
 
   // API response data
   var apiCombinations = <PreferenceCombination>[].obs;
@@ -232,6 +233,49 @@ class PreferenceOnboardingController extends GetxController
       print('Exception in deleteFoodFromPreferencesAPI: $e'); // Debug log
       CustomToast.showError('Error deleting food from preferences: $e');
       return false;
+    }
+  }
+
+  // Create new combination via API
+  Future<bool> createCombination() async {
+    try {
+      isCreatingCombination.value = true;
+      CustomToast.showLoading('Creating new combination...');
+
+      final url = AppConstants.CREATE_COMBINATION;
+
+      final payload = {
+        "foods": [],
+        "time": selectedMealType.value.toLowerCase(),
+      };
+
+      print('Creating combination API URL: $url'); // Debug log
+      print('Payload: $payload'); // Debug log
+
+      Response response = await authRepo.postDataSet(
+        sendData: payload,
+        apiName: url,
+      );
+
+      print(
+          'Create combination response status: ${response.statusCode}'); // Debug log
+      print('Create combination response body: ${response.body}'); // Debug log
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomToast.showSuccess('New combination created successfully');
+        // Refresh preferences to get updated data
+        await getPreferences();
+        return true;
+      } else {
+        CustomToast.showError('Failed to create new combination');
+        return false;
+      }
+    } catch (e) {
+      print('Exception in createCombination: $e'); // Debug log
+      CustomToast.showError('Error creating combination: $e');
+      return false;
+    } finally {
+      isCreatingCombination.value = false;
     }
   }
 
