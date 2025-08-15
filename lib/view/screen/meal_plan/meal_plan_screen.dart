@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sodiet/constant/appConstant.dart';
+import 'package:sodiet/controller/optimization/optimization_controller.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/header/app_header.dart';
 import 'package:sodiet/view/widgets/common/title_section_widget.dart';
+import 'package:sodiet/view/widgets/common/shimmer_loading.dart';
 
 class MealPlanScreen extends StatefulWidget {
   const MealPlanScreen({Key? key}) : super(key: key);
@@ -15,6 +18,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   String selectedOption = 'All';
   bool viewTwoDays = false;
   final TextEditingController _searchController = TextEditingController();
+  late OptimizationController controller;
+  String searchQuery = '';
 
   final List<String> options = [
     'All',
@@ -22,8 +27,18 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     'Sunday',
     'Monday',
     'Tuesday',
-    'Wednesday'
+    'Wednesday',
+    'Thursday',
+    'Friday'
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Use the existing OptimizationController
+    controller = Get.find<OptimizationController>();
+    print('MealPlanScreen initState - Using OptimizationController');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,51 +123,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                               },
                             ),
                           ),
-
-                          const SizedBox(height: 16),
-
-                          // View 2 days checkbox
-                          Row(
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    viewTwoDays = !viewTwoDays;
-                                  });
-                                },
-                                child: Container(
-                                  width: 20,
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                    color: viewTwoDays
-                                        ? const Color(0xFFA8D8A8)
-                                        : Colors.transparent,
-                                    border: Border.all(
-                                      color: viewTwoDays
-                                          ? const Color(0xFFA8D8A8)
-                                          : Colors.grey.shade400,
-                                      width: 2,
-                                    ),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: viewTwoDays
-                                      ? const Icon(
-                                          Icons.check,
-                                          size: 14,
-                                          color: Colors.black,
-                                        )
-                                      : null,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              RegularText(
-                                'View 2 days',
-                                fontSize: 14,
-                                textColor: Colors.grey.shade600,
-                              ),
-                            ],
-                          ),
-
                           const SizedBox(height: 16),
 
                           // Search recipe field
@@ -163,6 +133,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                             ),
                             child: TextField(
                               controller: _searchController,
+                              onChanged: (value) {
+                                setState(() {
+                                  searchQuery = value.toLowerCase();
+                                });
+                              },
                               decoration: InputDecoration(
                                 hintText: 'Search recipe',
                                 hintStyle: TextStyle(
@@ -181,54 +156,170 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                               ),
                             ),
                           ),
+
+                          const SizedBox(height: 16),
                         ],
                       ),
                     ),
 
                     const SizedBox(height: 8),
 
-                    // Meal Plan Content - Simple day format
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
-                            spreadRadius: 1,
-                            blurRadius: 5,
-                            offset: const Offset(0, 2),
+                    // Meal Plan Content - Simple list approach
+                    Obx(() {
+                      print(
+                          'MealPlanScreen Obx - isMenuLoading: ${controller.isMenuLoading.value}');
+                      print(
+                          'MealPlanScreen Obx - weeklyMenuList length: ${controller.weeklyMenuList.length}');
+
+                      if (controller.isMenuLoading.value) {
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                spreadRadius: 1,
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Saturday
-                          _buildDaySection('Saturday'),
-                          const SizedBox(height: 18),
-                          // Sunday
-                          _buildDaySection('Sunday'),
-                          const SizedBox(height: 18),
-                          // Monday
-                          _buildDaySection('Monday'),
-                          const SizedBox(height: 18),
-                          // Tuesday
-                          _buildDaySection('Tuesday'),
-                          const SizedBox(height: 18),
-                          // Wednesday
-                          _buildDaySection('Wednesday'),
-                          const SizedBox(height: 18),
-                          // Thursday
-                          _buildDaySection('Thursday'),
-                          const SizedBox(height: 18),
-                          // Friday
-                          _buildDaySection('Friday'),
-                        ],
-                      ),
-                    ),
+                          child: Column(
+                            children: List.generate(
+                              7,
+                              (index) => Padding(
+                                padding: const EdgeInsets.only(bottom: 18.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    ShimmerLoading(
+                                      width: 100,
+                                      height: 20,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    ShimmerLoading(
+                                      width: double.infinity,
+                                      height: 80,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    ShimmerLoading(
+                                      width: double.infinity,
+                                      height: 80,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (controller.weeklyMenuList.isEmpty) {
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                spreadRadius: 1,
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.restaurant_menu,
+                                size: 48,
+                                color: Colors.grey.shade400,
+                              ),
+                              const SizedBox(height: 16),
+                              SemiBoldText(
+                                'No meal plan available',
+                                fontSize: 16,
+                                textColor: Colors.grey.shade600,
+                              ),
+                              const SizedBox(height: 8),
+                              RegularText(
+                                'No meals planned for week ${controller.currentWeekNo.value}',
+                                fontSize: 14,
+                                textColor: Colors.grey.shade500,
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              spreadRadius: 1,
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Show current week info
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              margin: const EdgeInsets.only(bottom: 16),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .primaryColor
+                                    .withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today,
+                                    size: 16,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  SemiBoldText(
+                                    'Week ${controller.currentWeekNo.value} Meal Plan',
+                                    fontSize: 14,
+                                    textColor: Theme.of(context).primaryColor,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Dynamic days - filtered based on selected option
+                            ...(_getFilteredDays()).map((day) {
+                              final isLast = day == _getFilteredDays().last;
+                              return Column(
+                                children: [
+                                  _buildDaySection(day),
+                                  if (!isLast) const SizedBox(height: 18),
+                                ],
+                              );
+                            }).toList(),
+                          ],
+                        ),
+                      );
+                    }),
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -241,6 +332,16 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   Widget _buildDaySection(String day) {
+    final menuItems = controller.getMenuForDay(day);
+
+    // Filter menu items based on search query
+    final filteredMenuItems = menuItems.where((menuItem) {
+      if (searchQuery.isEmpty) return true;
+      final recipeName =
+          menuItem['Recipe_Name']?.toString().toLowerCase() ?? '';
+      return recipeName.contains(searchQuery);
+    }).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -252,19 +353,47 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         ),
         const SizedBox(height: 12),
 
-        // Meal items for the day
-        _buildMealItem(
-          'assets/images/food/food1.png', // You can use your existing food images
-          'Masala Karela',
-          '1 Tbsp',
-          '15.2gms',
-        ),
-        _buildMealItem(
-          'assets/images/food/food2.png',
-          'Biryani',
-          '2.0 Number',
-          '39.3gms',
-        ),
+        // Dynamic meal items for the day
+        if (filteredMenuItems.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.grey.shade200,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: Colors.grey.shade400,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: RegularText(
+                    searchQuery.isEmpty
+                        ? 'No meals planned for $day'
+                        : 'No recipes found matching "$searchQuery" for $day',
+                    fontSize: 14,
+                    textColor: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ...filteredMenuItems
+              .map((menuItem) => _buildMealItem(
+                    '${AppConstants.BASE_URL_IMAGE}${menuItem['Recipe_Code']}.jpg', // image path - we'll use default
+                    menuItem['Recipe_Name']?.toString() ?? 'Unknown Recipe',
+                    '${menuItem['Portion']?.toString() ?? '0'} ${menuItem['Description']?.toString() ?? ''}',
+                    '${menuItem['Recipe_Weight']?.toString() ?? '0'}gms',
+                  ))
+              .toList(),
       ],
     );
   }
@@ -300,20 +429,49 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 topLeft: Radius.circular(12),
                 bottomLeft: Radius.circular(12),
               ),
-              child: Image.asset(
-                imagePath,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: Colors.grey.shade200,
-                    child: Icon(
-                      Icons.image_not_supported,
-                      color: Colors.grey.shade400,
-                      size: 25,
+              child: imagePath.startsWith('http')
+                  ? Image.network(
+                      imagePath,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey.shade200,
+                          child: Icon(
+                            Icons.image_not_supported,
+                            color: Colors.grey.shade400,
+                            size: 25,
+                          ),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: Colors.grey.shade200,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.grey.shade400,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  : Image.asset(
+                      imagePath,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey.shade200,
+                          child: Icon(
+                            Icons.image_not_supported,
+                            color: Colors.grey.shade400,
+                            size: 25,
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ),
 
@@ -431,6 +589,18 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         ],
       ),
     );
+  }
+
+  // Get filtered days based on selected option
+  List<String> _getFilteredDays() {
+    if (selectedOption == 'All') {
+      return controller.availableDays;
+    } else {
+      // Return only the selected day if it exists in available days
+      return controller.availableDays
+          .where((day) => day == selectedOption)
+          .toList();
+    }
   }
 
   @override

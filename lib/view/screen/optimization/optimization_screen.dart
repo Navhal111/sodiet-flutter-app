@@ -191,6 +191,7 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
                         colors[0] as Color, // Background color
                         colors[1] as Color, // Text color
                         colors[2] as List<Color>, // Action colors
+                        weekPlan.week, // Pass week number for navigation
                       ),
                     );
                   }).toList(),
@@ -251,6 +252,7 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
     Color backgroundColor,
     Color statusColor,
     List<Color> actionColors,
+    int weekNumber,
   ) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -321,16 +323,35 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
                   _buildActionButton(
                     Icons.play_arrow,
                     actionColors[0],
+                    () {
+                      // Handle play/run action
+                    },
                   ),
                   const SizedBox(width: 8),
                   _buildActionButton(
                     Icons.visibility,
                     actionColors[1],
+                    () {
+                      // Clear old data and navigate immediately
+                      controller.weeklyMenuList.clear();
+                      controller.currentWeekNo.value = weekNumber;
+
+                      // Navigate immediately
+                      Get.toNamed(AppRoutes.mealPlanScreen, arguments: {
+                        'week_no': weekNumber,
+                      });
+
+                      // Load data after navigation
+                      controller.getWeeklyMenu(weekNumber);
+                    },
                   ),
                   const SizedBox(width: 8),
                   _buildActionButton(
                     Icons.settings,
                     actionColors[2],
+                    () {
+                      // Handle settings action
+                    },
                   ),
                 ],
               ),
@@ -341,18 +362,21 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
     );
   }
 
-  Widget _buildActionButton(IconData icon, Color color) {
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Icon(
-        icon,
-        color: Colors.white,
-        size: 18,
+  Widget _buildActionButton(IconData icon, Color color, VoidCallback? onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          icon,
+          color: Colors.white,
+          size: 18,
+        ),
       ),
     );
   }

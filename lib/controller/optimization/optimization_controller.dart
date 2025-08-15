@@ -16,6 +16,11 @@ class OptimizationController extends GetxController implements GetxService {
   var weekPlanData = <WeekPlanData>[].obs;
   var totalRecords = 0.obs;
 
+  // Weekly menu data variables
+  var isMenuLoading = false.obs;
+  var weeklyMenuList = <Map<String, dynamic>>[].obs;
+  var currentWeekNo = 1.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -61,6 +66,75 @@ class OptimizationController extends GetxController implements GetxService {
   // Refresh data
   Future<void> refreshData() async {
     await getWeekPlanMaster();
+  }
+
+  // Get weekly menu data for specific week
+  Future<void> getWeeklyMenu(int weekNo) async {
+    try {
+      isMenuLoading.value = true;
+      currentWeekNo.value = weekNo;
+
+      final url = AppConstants.WEEKLY_MENU;
+
+      final payload = {
+        "week_no": weekNo,
+      };
+
+      Response response = await authRepo.postDataSet(
+        apiName: url,
+        sendData: payload,
+      );
+
+      print('Weekly menu response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        print('Weekly menu API response successful');
+
+        if (response.body['weekly_menu'] != null) {
+          final data = response.body['weekly_menu'] as List;
+          print('Weekly menu data length: ${data.length}');
+
+          // Simply store the list directly
+          weeklyMenuList.value = List<Map<String, dynamic>>.from(data);
+          print('Data stored in list, count: ${weeklyMenuList.length}');
+        } else {
+          print('No weekly_menu key found in response');
+          weeklyMenuList.value = [];
+        }
+      } else {
+        final errorMessage =
+            response.body['message'] ?? 'Failed to fetch weekly menu';
+        CustomToast.showError(errorMessage);
+      }
+    } catch (e) {
+      print('Exception in getWeeklyMenu: $e');
+      CustomToast.showError('Error fetching weekly menu: $e');
+    } finally {
+      isMenuLoading.value = false;
+    }
+  }
+
+  // Get unique days from the menu list
+  List<String> get availableDays {
+    final days =
+        weeklyMenuList.map((item) => item['Day'].toString()).toSet().toList();
+    const dayOrder = [
+      'Saturday',
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday'
+    ];
+    return dayOrder.where((day) => days.contains(day)).toList();
+  }
+
+  // Get menu items for a specific day
+  List<Map<String, dynamic>> getMenuForDay(String day) {
+    return weeklyMenuList
+        .where((item) => item['Day'].toString() == day)
+        .toList();
   }
 
   // Get background color based on status
