@@ -9,6 +9,7 @@ import 'package:sodiet/controller/theme/themeController.dart';
 import 'package:sodiet/controller/weight_log/weight_log_controller.dart';
 import 'package:sodiet/controller/fat_log/fat_log_controller.dart';
 import 'package:sodiet/controller/preference/preference_onboarding_controller.dart';
+import 'package:sodiet/controller/course_correction/course_correction_controller.dart';
 
 import '../api/api_client.dart';
 import '../constant/appConstant.dart';
@@ -40,6 +41,8 @@ init() async {
   Get.lazyPut(() => WeightLogController(authRepo: Get.find()), fenix: true);
   Get.lazyPut(() => FatLogController(authRepo: Get.find()), fenix: true);
   Get.lazyPut(() => PreferenceOnboardingController(authRepo: Get.find()),
+      fenix: true);
+  Get.lazyPut(() => CourseCorrectionController(authRepo: Get.find()),
       fenix: true);
 
   // Navigation
