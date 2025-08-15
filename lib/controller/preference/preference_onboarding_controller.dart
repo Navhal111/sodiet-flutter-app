@@ -31,6 +31,11 @@ class PreferenceOnboardingController extends GetxController
   // User combination data for each combination
   var userCombinationsByIndex = <int, RxList<Map<String, String>>>{}.obs;
 
+  // Popup form variables
+  RxList<Map<String, dynamic>> tempFoodsList = <Map<String, dynamic>>[].obs;
+  RxString selectedFoodName = ''.obs;
+  RxString selectedFoodQuantity = ''.obs;
+
   // Available meal types
   final List<String> mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
 
@@ -94,8 +99,8 @@ class PreferenceOnboardingController extends GetxController
 
       print('Fetching recipes...'); // Debug log
 
-      Response response =
-          await authRepo.getDataSet(apiName: AppConstants.GET_RECIPES);
+      Response response = await authRepo.getDataSet(
+          apiName: "${AppConstants.GET_RECIPES}/?page=1&page_size=100");
 
       print(
           'Recipes response status code: ${response.statusCode}'); // Debug log
@@ -276,6 +281,104 @@ class PreferenceOnboardingController extends GetxController
       return false;
     } finally {
       isCreatingCombination.value = false;
+    }
+  }
+
+  // Clear temporary foods list
+  void clearTempFoods() {
+    tempFoodsList.clear();
+    selectedFoodName.value = '';
+    selectedFoodQuantity.value = '';
+  }
+
+  // Add food to temporary list
+  void addFoodToTempList() {
+    if (selectedFoodName.value.isNotEmpty &&
+        selectedFoodQuantity.value.isNotEmpty) {
+      // Find the selected recipe to get Recipe_weight
+      final selectedRecipe = recipeList.firstWhereOrNull(
+        (recipe) => recipe.recipeName == selectedFoodName.value,
+      );
+
+      tempFoodsList.add({
+        "Food_Name": selectedFoodName.value,
+        "Food_Qty": double.tryParse(selectedFoodQuantity.value) ?? 0.0,
+        "Time": selectedMealType.value.toLowerCase(),
+        "Description": selectedRecipe?.recipeDescription.isNotEmpty == true
+            ? selectedRecipe!.recipeDescription
+            : selectedFoodName.value,
+        "Recipe_weight": selectedRecipe?.recipeWeightG ?? 0.0,
+      });
+
+      // Clear form fields
+      selectedFoodName.value = '';
+      selectedFoodQuantity.value = '';
+
+      CustomToast.showSuccess('Food added to combination');
+    } else {
+      CustomToast.showWarning('Please fill all fields');
+    }
+  }
+
+  // Remove food from temporary list
+  void removeFoodFromTempList(int index) {
+    if (index >= 0 && index < tempFoodsList.length) {
+      tempFoodsList.removeAt(index);
+      CustomToast.showSuccess('Food removed from combination');
+    }
+  }
+
+  // Save combination with foods
+  Future<bool> saveCombination() async {
+    try {
+      if (tempFoodsList.isEmpty) {
+        CustomToast.showWarning('Please add at least one food item');
+        return false;
+      }
+
+      isCreatingCombination.value = true;
+      CustomToast.showLoading('Saving combination...');
+
+      final url = AppConstants.CREATE_COMBINATION;
+
+      final payload = {
+        "foods": tempFoodsList.toList(),
+        "time": selectedMealType.value.toLowerCase(),
+      };
+
+      print('Saving combination API URL: $url'); // Debug log
+      print('Payload: $payload'); // Debug log
+
+      Response response = await authRepo.postDataSet(
+        sendData: payload,
+        apiName: url,
+      );
+
+      print(
+          'Save combination response status: ${response.statusCode}'); // Debug log
+      print('Save combination response body: ${response.body}'); // Debug log
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomToast.showSuccess('Combination saved successfully');
+        // Clear temporary data
+        clearTempFoods();
+        // Refresh preferences to get updated data
+        await getPreferences();
+        // Small delay to ensure UI updates complete
+        await Future.delayed(const Duration(milliseconds: 500));
+        print('Returning true from saveCombination'); // Debug
+        isCreatingCombination.value = false;
+        return true;
+      } else {
+        CustomToast.showError('Failed to save combination');
+        isCreatingCombination.value = false;
+        return false;
+      }
+    } catch (e) {
+      print('Exception in saveCombination: $e'); // Debug log
+      CustomToast.showError('Error saving combination: $e');
+      isCreatingCombination.value = false;
+      return false;
     }
   }
 
