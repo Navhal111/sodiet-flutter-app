@@ -13,6 +13,7 @@ import 'package:sodiet/view/screen/recipes/recipes_screen.dart';
 import 'package:sodiet/view/screen/recipes/recipe_detail_screen.dart';
 import 'package:sodiet/view/screen/optimization/optimization_screen.dart';
 import 'package:sodiet/view/screen/meal_plan/meal_plan_screen.dart';
+import 'package:sodiet/view/screen/calendar/calendar_screen.dart';
 import 'package:sodiet/view/screen/preference_onboarding_screen.dart';
 import 'package:sodiet/view/screen/weight_log/weight_log_manager_screen.dart';
 import 'package:sodiet/view/screen/physical_activity/physical_activity_screen.dart';
@@ -61,6 +62,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.mealPlanScreen,
       page: () => const MealPlanScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.calendarScreen,
+      page: () => const CalendarScreen(),
     ),
     GetPage(
       name: AppRoutes.courseCorrectionScreen,

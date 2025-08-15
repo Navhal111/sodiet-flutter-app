@@ -161,7 +161,10 @@ class _HomeDrawerState extends State<HomeDrawer> {
                         navigationController.navigateToCoursesCorrection(),
                   ),
                   _buildDrawerItem(
-                      context, Icons.calendar_today_outlined, 'Calendar'),
+                      context, Icons.calendar_today_outlined, 'Calendar',
+                      isSelected: navigationController.currentRoute ==
+                          AppRoutes.calendarScreen,
+                      onTap: () => navigationController.navigateToCalendar()),
                   _buildDrawerItem(
                     context,
                     Icons.settings_outlined,

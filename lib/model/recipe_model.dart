@@ -119,7 +119,9 @@ class Recipe {
           .toDouble(), // Changed to double conversion
       codeCooccurence: json['Code_cooccurence'] ?? '',
       subcategories: json['Subcategories'] ?? '',
-      energyKcal: (json['Energy_kcal'] ?? 0).toDouble(),
+      energyKcal: json['Energy_Kcal'] != null
+          ? (json['Energy_Kcal'] ?? 0).toDouble()
+          : (json['Energy_kcal'] ?? 0).toDouble(),
     );
   }
 }

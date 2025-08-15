@@ -107,6 +107,13 @@ class NavigationController extends GetxController {
     }
   }
 
+  void navigateToCalendar() {
+    if (_currentRoute.value != AppRoutes.calendarScreen) {
+      Get.offNamed(AppRoutes.calendarScreen);
+      // Route will be updated by BaseScreenLayout
+    }
+  }
+
   void navigateToPreferences() {
     if (_currentRoute.value != AppRoutes.preferenceOnboardingScreen) {
       Get.offNamed(AppRoutes.preferenceOnboardingScreen);
