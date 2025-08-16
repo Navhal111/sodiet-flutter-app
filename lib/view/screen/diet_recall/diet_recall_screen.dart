@@ -11,6 +11,8 @@ import 'package:sodiet/view/widgets/common/title_section_widget.dart';
 import 'package:sodiet/view/widgets/custom_text_field.dart';
 import 'package:sodiet/view/widgets/diet_recall/diet_entry_card_widget.dart';
 import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
+import 'package:sodiet/view/widgets/chart/intake_overview_chart.dart';
+import 'package:sodiet/view/widgets/common/shimmer_loading.dart';
 
 import '../../../controller/diet/dietController.dart';
 
@@ -96,6 +98,7 @@ class _DietRecallScreenState extends State<DietRecallScreen>
     _dateController.text = DateTime.now().toString().split(' ')[0];
     dietController.getDietRecallList();
     dietController.getRecipes(); // Fetch recipes from API
+    dietController.getIntakeOverview(); // Fetch intake overview data
 
     // Add scroll listener for pagination
     _scrollController.addListener(_onScroll);
@@ -170,6 +173,31 @@ class _DietRecallScreenState extends State<DietRecallScreen>
                         Container(
                           key: const ValueKey('form_section'), // Stable key
                           child: _buildFormSection(),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Intake Overview Chart
+                        Container(
+                          key: const ValueKey(
+                              'intake_chart_section'), // Stable key
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Obx(() {
+                            if (dietController.isLoadingIntakeOverview.value) {
+                              return ShimmerChart(
+                                width: double.infinity,
+                                height: 300,
+                                title: 'Intake Overview',
+                              );
+                            }
+
+                            return IntakeOverviewChart(
+                              intakeData: dietController.intakeOverviewChart,
+                              title: 'Intake Overview',
+                              titleColor: const Color(0xFF091242),
+                              titleFontSize: 22,
+                            );
+                          }),
                         ),
 
                         const SizedBox(height: 20),

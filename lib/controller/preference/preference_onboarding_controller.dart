@@ -100,7 +100,7 @@ class PreferenceOnboardingController extends GetxController
       print('Fetching recipes...'); // Debug log
 
       Response response = await authRepo.getDataSet(
-          apiName: "${AppConstants.GET_RECIPES}/?page=1&page_size=100");
+          apiName: "${AppConstants.GET_RECIPES_SEARCH}/?page=1&page_size=100");
 
       print(
           'Recipes response status code: ${response.statusCode}'); // Debug log

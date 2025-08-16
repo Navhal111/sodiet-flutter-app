@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../constant/appConstant.dart';
 import '../../model/diet_recall_model.dart';
 import '../../model/recipe_model.dart';
+import '../../model/plan_model.dart';
 import '../../repo/authRepo.dart';
 
 class DietController extends GetxController implements GetxService {
@@ -17,6 +18,11 @@ class DietController extends GetxController implements GetxService {
   RxBool isLoadingRecipes = false.obs;
   RxBool isLoadingMore = false.obs;
   RxBool hasMoreData = true.obs;
+
+  // Observable variables to store intake overview data
+  RxBool isLoadingIntakeOverview = false.obs;
+  Rx<IntakeOverviewResponse?> intakeOverviewResponse =
+      Rx<IntakeOverviewResponse?>(null);
 
   int currentPage = 1;
   int pageSize = 20; // Load 20 items per page
@@ -218,5 +224,57 @@ class DietController extends GetxController implements GetxService {
         'message': 'Network error. Please check your connection.'
       };
     }
+  }
+
+  getIntakeOverview() async {
+    isLoadingIntakeOverview.value = true;
+    try {
+      Response response =
+          await authRepo.getDataSet(apiName: AppConstants.GET_INTAKE_OVERVIEW);
+      print("Intake Overview API Response Status: ${response.statusCode}");
+      print("Intake Overview API Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        intakeOverviewResponse.value =
+            IntakeOverviewResponse.fromJson(response.body);
+
+        print('Intake Overview loaded successfully');
+        return {
+          'success': true,
+          'message': 'Intake overview loaded successfully!'
+        };
+      } else {
+        print('Error loading intake overview: ${response.statusCode}');
+        intakeOverviewResponse.value = null;
+        return {'success': false, 'message': 'Failed to load intake overview'};
+      }
+    } catch (e) {
+      print('Exception in getIntakeOverview: $e');
+      intakeOverviewResponse.value = null;
+      return {
+        'success': false,
+        'message': 'Network error. Please check your connection.'
+      };
+    } finally {
+      isLoadingIntakeOverview.value = false;
+      update();
+    }
+  }
+
+  // Intake Overview Helper Methods
+  bool get hasIntakeOverview => intakeOverviewResponse.value != null;
+
+  IntakeOverviewChart? get intakeOverviewChart =>
+      intakeOverviewResponse.value?.intakeOverviewChart;
+
+  List<String> get intakeDates =>
+      intakeOverviewResponse.value?.intakeOverviewChart.dates ?? [];
+
+  List<IntakeSeriesData> get intakeSeries =>
+      intakeOverviewResponse.value?.intakeOverviewChart.series ?? [];
+
+  // Method to refresh intake overview
+  void refreshIntakeOverview() {
+    getIntakeOverview();
   }
 }
