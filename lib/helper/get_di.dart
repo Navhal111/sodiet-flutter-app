@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sodiet/controller/calendar/calendar_controller.dart';
 import 'package:sodiet/controller/home/homeController.dart';
 import 'package:sodiet/controller/navigation/navigation_controller.dart';
 import 'package:sodiet/controller/physicalActivity/physicalController.dart';
@@ -48,6 +49,7 @@ init() async {
       fenix: true);
   Get.lazyPut(() => OptimizationController(authRepo: Get.find()), fenix: true);
   Get.lazyPut(() => MealPlanController(authRepo: Get.find()), fenix: true);
+  Get.lazyPut(() => CalendarController(authRepo: Get.find()), fenix: true);
 
   // Navigation
   Get.put(NavigationController(), permanent: true);

@@ -25,6 +25,8 @@ class AppConstants {
   static const String GET_FOOD_GROUPS =
       '${BASE_URL}recipes/ingredients/food-groups';
   static const String SUBMIT_INGREDIENT = '${BASE_URL}recipes/ingredients';
+  static const String GET_INGREDIENT_LIST =
+      '${BASE_URL}recipes/ingredient-list';
 
   // Recipe Like/Dislike endpoints
   static String getRecipeLikeUrl(String recipeCode) =>

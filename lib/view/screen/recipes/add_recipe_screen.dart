@@ -80,9 +80,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
   void initState() {
     super.initState();
     recipeController = Get.find<RecipeController>();
-    // Load food categories when screen initializes
+    // Load food categories and ingredients when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       recipeController.getFoodCategories();
+      recipeController.getIngredientList(); // Load ingredients for dropdown
     });
   }
 
@@ -948,46 +949,51 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
           const SizedBox(height: 24),
 
           // Ingredient Name Dropdown
-          _buildDropdownField(
-            value: _selectedIngredient,
-            hint: 'Ingredient Name',
-            items: [
-              'Rice Cooked',
-              'Wheat Flour',
-              'Onion',
-              'Tomato',
-              'Potato',
-              'Garlic',
-              'Ginger',
-              'Cumin Seeds',
-              'Coriander Seeds',
-              'Turmeric Powder',
-              'Red Chili Powder',
-              'Salt',
-              'Oil',
-              'Ghee',
-              'Milk',
-              'Yogurt',
-              'Paneer',
-              'Chicken',
-              'Fish',
-              'Mutton',
-              'Lentils (Dal)',
-              'Chickpeas',
-              'Green Beans',
-              'Carrot',
-              'Cabbage',
-              'Spinach',
-              'Coriander Leaves',
-              'Mint Leaves'
-            ],
-            onChanged: (value) {
-              setState(() {
-                _selectedIngredient = value;
-              });
-            },
-            searchHint: 'Search ingredients...',
-          ),
+          Obx(() {
+            final isLoading = recipeController.isLoadingIngredientList.value;
+            final ingredientNames = recipeController.ingredientNamesList;
+
+            return Column(
+              children: [
+                if (isLoading)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        RegularText(
+                          'Loading ingredients...',
+                          fontSize: 14,
+                          textColor: Colors.grey.shade600,
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  _buildDropdownField(
+                    value: _selectedIngredient,
+                    hint: 'Ingredient Name',
+                    items: ingredientNames,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedIngredient = value;
+                      });
+                    },
+                    searchHint: 'Search ingredients...',
+                  ),
+              ],
+            );
+          }),
 
           const SizedBox(height: 16),
 

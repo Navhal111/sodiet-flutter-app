@@ -98,7 +98,7 @@ class DietController extends GetxController implements GetxService {
     update(); // Force update
     try {
       Response response = await authRepo.getDataSet(
-          apiName: "${AppConstants.GET_RECIPES}/?page=1&page_size=100");
+          apiName: "${AppConstants.GET_RECIPES_SEARCH}/?page=1&page_size=100");
       print("Recipe API Response Status: ${response.statusCode}");
       // print("Recipe API Response Body: ${response.body}"); // Comment out to reduce console spam
 

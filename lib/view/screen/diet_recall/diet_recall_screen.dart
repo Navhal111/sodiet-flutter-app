@@ -6,7 +6,7 @@ import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/utils/images.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/common/custom_toast.dart';
-import 'package:sodiet/view/widgets/common/searchable_bottom_sheet.dart';
+import 'package:sodiet/view/widgets/common/searchable_recipe_bottom_sheet.dart';
 import 'package:sodiet/view/widgets/common/title_section_widget.dart';
 import 'package:sodiet/view/widgets/custom_text_field.dart';
 import 'package:sodiet/view/widgets/diet_recall/diet_entry_card_widget.dart';
@@ -379,7 +379,6 @@ class _DietRecallScreenState extends State<DietRecallScreen>
 
   Widget _buildRecipeDropdown() {
     final isLoadingRecipes = dietController.isLoadingRecipes.value;
-    final recipeList = dietController.recipeList;
 
     if (isLoadingRecipes) {
       return Container(
@@ -423,29 +422,20 @@ class _DietRecallScreenState extends State<DietRecallScreen>
               context: context,
               isScrollControlled: true,
               backgroundColor: Colors.transparent,
-              builder: (context) => SearchableBottomSheet(
+              builder: (context) => SearchableRecipeBottomSheet(
                 title: 'Select Recipe',
-                items: recipeList.map((recipe) => recipe.recipeName).toList(),
                 selectedValue: selectedRecipeValue,
-                onSelected: (String? selectedValue) {
+                onSelected: (String? selectedValue, String? selectedCode) {
                   selectedRecipeValueNotifier.value = selectedValue;
-                  // Find the corresponding recipe code
-                  final selectedRecipe = recipeList.firstWhereOrNull(
-                      (recipe) => recipe.recipeName == selectedValue);
-                  selectedRecipeKeyNotifier.value = selectedRecipe?.recipeCode;
+                  selectedRecipeKeyNotifier.value = selectedCode;
 
                   // Reset unit selection and set default based on new recipe
-                  if (selectedRecipe != null &&
-                      selectedRecipe.recipeDescription.isNotEmpty) {
-                    String dynamicUnit = selectedRecipe.recipeDescription;
-                    dynamicUnit = dynamicUnit[0].toUpperCase() +
-                        dynamicUnit.substring(1).toLowerCase();
-                    selectedUnitNotifier.value = dynamicUnit;
-                  } else {
+                  if (selectedValue != null) {
+                    // We don't have recipe description from API search, so default to Grams
                     selectedUnitNotifier.value = 'Grams';
                   }
                 },
-                searchHint: 'Search recipes...',
+                searchHint: 'Search for recipes or browse all',
               ),
             );
           },
@@ -1181,7 +1171,6 @@ class _DietRecallScreenState extends State<DietRecallScreen>
 
   Widget _buildEditRecipeDropdown() {
     final isLoadingRecipes = dietController.isLoadingRecipes.value;
-    final recipeList = dietController.recipeList;
 
     if (isLoadingRecipes) {
       return Container(
@@ -1225,29 +1214,20 @@ class _DietRecallScreenState extends State<DietRecallScreen>
               context: context,
               isScrollControlled: true,
               backgroundColor: Colors.transparent,
-              builder: (context) => SearchableBottomSheet(
+              builder: (context) => SearchableRecipeBottomSheet(
                 title: 'Select Recipe',
-                items: recipeList.map((recipe) => recipe.recipeName).toList(),
                 selectedValue: selectedRecipeValue,
-                onSelected: (String? selectedValue) {
+                onSelected: (String? selectedValue, String? selectedCode) {
                   _editRecipeValueNotifier.value = selectedValue;
-                  // Find the corresponding recipe code
-                  final selectedRecipe = recipeList.firstWhereOrNull(
-                      (recipe) => recipe.recipeName == selectedValue);
-                  _editRecipeKeyNotifier.value = selectedRecipe?.recipeCode;
+                  _editRecipeKeyNotifier.value = selectedCode;
 
                   // Reset unit selection and set default based on new recipe
-                  if (selectedRecipe != null &&
-                      selectedRecipe.recipeDescription.isNotEmpty) {
-                    String dynamicUnit = selectedRecipe.recipeDescription;
-                    dynamicUnit = dynamicUnit[0].toUpperCase() +
-                        dynamicUnit.substring(1).toLowerCase();
-                    _editUnitNotifier.value = dynamicUnit;
-                  } else {
+                  if (selectedValue != null) {
+                    // We don't have recipe description from API search, so default to Grams
                     _editUnitNotifier.value = 'Grams';
                   }
                 },
-                searchHint: 'Search recipes...',
+                searchHint: 'Search for recipes or browse all',
               ),
             );
           },

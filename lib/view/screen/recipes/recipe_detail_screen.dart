@@ -20,20 +20,9 @@ class RecipeDetailScreen extends StatefulWidget {
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   bool _isNutrientsSelected = true;
   bool _isExpanded = false;
-  String _selectedDescription = 'select'; // Default description value
 
-  // Description dropdown options
-  final List<String> _descriptionOptions = [
-    'select',
-    'cup',
-    'number',
-    'tablespoon',
-    'glass',
-    'teaspoon',
-    'scoop',
-    'slice',
-    'bowl',
-  ];
+  // Multiplier for all ingredients (default 1)
+  double servingMultiplier = 1.0;
 
   late RecipeController recipeController = Get.find<RecipeController>();
 
@@ -114,7 +103,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       padding: EdgeInsets.only(
                         bottom: !_isNutrientsSelected
                             ? 100
-                            : 0, // Space for bottom widget when ingredients tab is active
+                            : 40, // Extra padding when ingredients tab is selected for sticky controls
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -501,7 +490,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                                 Expanded(
                                                   flex: 2,
                                                   child: SemiBoldText(
-                                                    'Description',
+                                                    'Quantity',
                                                     fontSize: 14,
                                                     textColor:
                                                         const Color(0xffA2A2A2),
@@ -766,15 +755,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               ],
             ),
 
-            // Bottom description selector - only show when ingredients tab is selected
+            // Sticky Plus/Minus Controls - Only show when ingredients tab is selected
             if (!_isNutrientsSelected)
               Positioned(
                 bottom: 0,
                 left: 0,
                 right: 0,
                 child: Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.all(16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     boxShadow: [
@@ -786,52 +775,81 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       ),
                     ],
                   ),
-                  child: Center(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color:
-                            const Color(0xFFFFF4E6), // Light orange background
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedDescription,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFFFF9500), // Orange text
-                          ),
-                          dropdownColor: Colors.white,
-                          icon: const Icon(
-                            Icons.keyboard_arrow_down,
-                            color: Color(0xFFFF9500),
-                            size: 24,
-                          ),
-                          onChanged: (String? newValue) {
-                            if (newValue != null) {
-                              setState(() {
-                                _selectedDescription = newValue;
-                              });
-                            }
+                  child: SafeArea(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Minus button
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              if (servingMultiplier > 0.5) {
+                                servingMultiplier -= 0.5;
+                              }
+                            });
                           },
-                          items: _descriptionOptions
-                              .map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(
-                                value.toUpperCase(),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF091242),
-                                ),
+                          child: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF4E6),
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(
+                                color: const Color(0xFFFF9500),
+                                width: 2,
                               ),
-                            );
-                          }).toList(),
+                            ),
+                            child: const Icon(
+                              Icons.remove,
+                              size: 28,
+                              color: Color(0xFFFF9500),
+                            ),
+                          ),
                         ),
-                      ),
+
+                        const SizedBox(width: 60),
+
+                        // Serving count display
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                          child: SemiBoldText(
+                            '${servingMultiplier.toStringAsFixed(servingMultiplier % 1 == 0 ? 0 : 1)}',
+                            fontSize: 28,
+                            textColor: const Color(0xFFFF9500),
+                          ),
+                        ),
+
+                        const SizedBox(width: 60),
+
+                        // Plus button
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              servingMultiplier += 0.5;
+                            });
+                          },
+                          child: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF4E6),
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(
+                                color: const Color(0xFFFF9500),
+                                width: 2,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.add,
+                              size: 28,
+                              color: Color(0xFFFF9500),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -891,46 +909,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
           ),
 
-          // Description
+          // Quantity (multiplied by servingMultiplier)
           Expanded(
             flex: 2,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _selectedDescription,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xffA2A2A2),
-                  ),
-                  dropdownColor: Colors.white,
-                  icon: const Icon(
-                    Icons.keyboard_arrow_down,
-                    color: Color(0xffA2A2A2),
-                    size: 16,
-                  ),
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      setState(() {
-                        _selectedDescription = newValue;
-                      });
-                    }
-                  },
-                  items: _descriptionOptions
-                      .map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(
-                        value,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xffA2A2A2),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
+            child: MediumText(
+              (ingredient.ingRawAmountsG * servingMultiplier)
+                  .toStringAsFixed(1),
+              fontSize: 14,
+              textColor: const Color(0xFF091242),
+              textAlign: TextAlign.center,
             ),
           ),
 
@@ -938,18 +925,18 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           Expanded(
             flex: 2,
             child: MediumText(
-              ingredient.unit.isNotEmpty ? ingredient.unit : 'none',
+              ingredient.unit.isNotEmpty ? ingredient.unit : 'gm',
               fontSize: 14,
               textColor: const Color(0xffA2A2A2),
               textAlign: TextAlign.center,
             ),
           ),
 
-          // Weight (gram)
+          // Weight (gram) - multiplied by servingMultiplier
           Expanded(
             flex: 2,
             child: MediumText(
-              '${ingredient.ingRawAmountsG.toStringAsFixed(2)}gm',
+              '${(ingredient.ingRawAmountsG * servingMultiplier).toStringAsFixed(2)}gm',
               fontSize: 14,
               textColor: const Color(0xffA2A2A2),
               textAlign: TextAlign.center,

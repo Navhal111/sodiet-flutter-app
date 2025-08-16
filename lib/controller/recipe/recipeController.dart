@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../constant/appConstant.dart';
 import '../../model/recipe_model.dart';
 import '../../model/food_group.dart';
+import '../../model/ingredient_list_model.dart';
 import '../../repo/authRepo.dart';
 
 class RecipeController extends GetxController implements GetxService {
@@ -60,6 +61,11 @@ class RecipeController extends GetxController implements GetxService {
   // Food groups data
   RxBool isLoadingFoodGroups = false.obs;
   Rx<FoodGroupResponse?> foodGroupsResponse = Rx<FoodGroupResponse?>(null);
+
+  // Ingredient list data for dropdown
+  RxBool isLoadingIngredientList = false.obs;
+  Rx<IngredientListResponse?> ingredientListResponse =
+      Rx<IngredientListResponse?>(null);
 
   // Filter and Sort variables
   RxString selectedCategoryCode = ''.obs;
@@ -613,6 +619,89 @@ class RecipeController extends GetxController implements GetxService {
   // Method to clear food groups data
   void clearFoodGroups() {
     foodGroupsResponse.value = null;
+  }
+
+  // ==================== INGREDIENT LIST METHODS ====================
+
+  Future<bool> getIngredientList(
+      {int page = 1, int pageSize = 100, String? searchTerm}) async {
+    try {
+      isLoadingIngredientList.value = true;
+
+      String apiUrl =
+          '${AppConstants.GET_INGREDIENT_LIST}?page=$page&page_size=$pageSize';
+
+      if (searchTerm != null && searchTerm.isNotEmpty) {
+        apiUrl += '&search_term=$searchTerm';
+      }
+
+      final response = await authRepo.getDataSet(
+        apiName: apiUrl,
+      );
+
+      if (response.statusCode == 200) {
+        print("Ingredient list API response: ${response.body}");
+
+        final responseData = IngredientListResponse.fromJson(response.body);
+        ingredientListResponse.value = responseData;
+
+        print(
+            "Ingredient list loaded successfully: ${responseData.ingredients.length} ingredients");
+        return true;
+      } else {
+        print("Failed to load ingredient list: ${response.statusCode}");
+        ingredientListResponse.value = null;
+        return false;
+      }
+    } catch (e) {
+      print("Exception in getIngredientList: $e");
+      ingredientListResponse.value = null;
+      return false;
+    } finally {
+      isLoadingIngredientList.value = false;
+    }
+  }
+
+  // Method to get ingredient names list for dropdown
+  List<String> get ingredientNamesList =>
+      ingredientListResponse.value?.ingredients
+          .map((ingredient) => ingredient.foodName)
+          .toList() ??
+      [];
+
+  // Method to get food ingredient by name
+  FoodIngredient? getFoodIngredientByName(String name) {
+    try {
+      return ingredientListResponse.value?.ingredients
+          .firstWhere((ingredient) => ingredient.foodName == name);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Method to search ingredients by name
+  List<FoodIngredient> searchIngredients(String query) {
+    if (query.isEmpty) {
+      return ingredientListResponse.value?.ingredients ?? [];
+    }
+    return ingredientListResponse.value?.ingredients
+            .where((ingredient) =>
+                ingredient.foodName.toLowerCase().contains(query.toLowerCase()))
+            .toList() ??
+        [];
+  }
+
+  // Method to check if ingredient list is loaded
+  bool get hasIngredientList => ingredientListResponse.value != null;
+
+  // Method to clear ingredient list data
+  void clearIngredientList() {
+    ingredientListResponse.value = null;
+  }
+
+  // Method to refresh ingredient list
+  void refreshIngredientList() {
+    getIngredientList();
   }
 
   // Method to refresh food categories
