@@ -117,10 +117,11 @@ class _CourseCorrectionScreenState extends State<CourseCorrectionScreen> {
                                 width: 120,
                                 height: 56,
                                 child: ElevatedButton(
-                                  onPressed:
-                                      controller.selectedCorrections.isNotEmpty
-                                          ? controller.submitCorrections
-                                          : null,
+                                  onPressed: (controller
+                                              .selectedCorrections.isNotEmpty &&
+                                          controller.totalDelta.value > 0)
+                                      ? controller.submitCorrections
+                                      : null,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFFFF9800),
                                     disabledBackgroundColor:
@@ -134,8 +135,9 @@ class _CourseCorrectionScreenState extends State<CourseCorrectionScreen> {
                                   child: SemiBoldText(
                                     'Submit',
                                     fontSize: 16,
-                                    textColor: controller
-                                            .selectedCorrections.isNotEmpty
+                                    textColor: (controller.selectedCorrections
+                                                .isNotEmpty &&
+                                            controller.totalDelta.value > 0)
                                         ? Colors.white
                                         : Colors.grey.shade600,
                                   ),

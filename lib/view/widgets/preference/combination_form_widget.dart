@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
-import 'package:sodiet/view/widgets/common/searchable_bottom_sheet.dart';
+import 'package:sodiet/view/widgets/common/searchable_recipe_bottom_sheet.dart';
 import 'package:sodiet/controller/preference/preference_onboarding_controller.dart';
 
 class CombinationFormWidget extends StatefulWidget {
@@ -43,10 +43,6 @@ class _CombinationFormWidgetState extends State<CombinationFormWidget> {
   String _selectedFood = '';
   List<Map<String, String>> _userAddedFoods = [];
   bool _isAddingFood = false;
-
-  List<String> get foodOptions {
-    return widget.availableFoods ?? [];
-  }
 
   @override
   void initState() {
@@ -92,26 +88,24 @@ class _CombinationFormWidgetState extends State<CombinationFormWidget> {
             // Food name dropdown/selector
             GestureDetector(
               onTap: () {
-                if (foodOptions.isNotEmpty) {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) => SearchableBottomSheet(
-                      title: 'Select Food',
-                      items: foodOptions,
-                      selectedValue:
-                          _selectedFood.isNotEmpty ? _selectedFood : null,
-                      onSelected: (String? selectedValue) {
-                        setState(() {
-                          _selectedFood = selectedValue ?? '';
-                        });
-                        widget.onFoodChanged(selectedValue);
-                      },
-                      searchHint: 'Search foods...',
-                    ),
-                  );
-                }
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => SearchableRecipeBottomSheet(
+                    title: 'Select Food',
+                    selectedValue:
+                        _selectedFood.isNotEmpty ? _selectedFood : null,
+                    onSelected: (String? selectedValue, String? selectedCode) {
+                      setState(() {
+                        _selectedFood = selectedValue ?? '';
+                      });
+                      widget.onFoodChanged(selectedValue);
+                      // Note: We don't need selectedCode for preferences, just the name
+                    },
+                    searchHint: 'Search for foods or browse all',
+                  ),
+                );
               },
               child: Container(
                 padding:

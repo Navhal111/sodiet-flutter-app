@@ -9,7 +9,7 @@ import 'package:sodiet/view/widgets/common/shimmer_loading.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/custom_text_field.dart';
 import 'package:sodiet/view/widgets/custom_button.dart';
-import 'package:sodiet/view/widgets/common/searchable_bottom_sheet.dart';
+import 'package:sodiet/view/widgets/common/searchable_recipe_bottom_sheet.dart';
 import 'package:sodiet/route/app_routes.dart';
 
 class PreferenceOnboardingScreen extends StatefulWidget {
@@ -127,27 +127,25 @@ class _PreferenceOnboardingScreenState
                                 // Recipe Selection
                                 GestureDetector(
                                   onTap: () {
-                                    final recipeNames = controller.recipeList
-                                        .map((recipe) => recipe.recipeName)
-                                        .toList();
-
                                     showModalBottomSheet(
                                       context: context,
                                       isScrollControlled: true,
                                       backgroundColor: Colors.transparent,
                                       builder: (context) =>
-                                          SearchableBottomSheet(
+                                          SearchableRecipeBottomSheet(
                                         title: 'Select Recipe',
-                                        items: recipeNames,
                                         selectedValue: controller
                                                 .selectedFoodName.value.isEmpty
                                             ? null
                                             : controller.selectedFoodName.value,
-                                        onSelected: (value) {
+                                        onSelected: (String? selectedValue,
+                                            String? selectedCode) {
                                           controller.selectedFoodName.value =
-                                              value ?? '';
+                                              selectedValue ?? '';
+                                          // Note: We don't need selectedCode for preferences, just the name
                                         },
-                                        searchHint: 'Search recipes...',
+                                        searchHint:
+                                            'Search for recipes or browse all',
                                       ),
                                     );
                                   },
