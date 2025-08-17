@@ -20,6 +20,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   final TextEditingController _searchController = TextEditingController();
   late OptimizationController controller;
   String searchQuery = '';
+  String mode = 'view'; // Default mode, will be updated from arguments
 
   final List<String> options = [
     'All',
@@ -37,7 +38,15 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     super.initState();
     // Use the existing OptimizationController
     controller = Get.find<OptimizationController>();
-    print('MealPlanScreen initState - Using OptimizationController');
+
+    // Get mode from navigation arguments
+    final arguments = Get.arguments as Map<String, dynamic>?;
+    if (arguments != null && arguments['mode'] != null) {
+      mode = arguments['mode'];
+    }
+
+    print(
+        'MealPlanScreen initState - Using OptimizationController, mode: $mode');
   }
 
   @override
@@ -392,14 +401,15 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     menuItem['Recipe_Name']?.toString() ?? 'Unknown Recipe',
                     '${menuItem['Portion']?.toString() ?? '0'} ${menuItem['Description']?.toString() ?? ''}',
                     '${menuItem['Recipe_Weight']?.toString() ?? '0'}gms',
+                    mode, // Pass the mode to determine if close icon should be shown
                   ))
               .toList(),
       ],
     );
   }
 
-  Widget _buildMealItem(
-      String imagePath, String foodName, String quantity, String weight) {
+  Widget _buildMealItem(String imagePath, String foodName, String quantity,
+      String weight, String mode) {
     return Container(
       padding: const EdgeInsets.all(0),
       margin: const EdgeInsets.only(bottom: 8),
@@ -503,17 +513,19 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                GestureDetector(
-                  onTap: () {
-                    // Handle remove item
-                  },
-                  child: Icon(
-                    Icons.close,
-                    color: Colors.red.shade400,
-                    size: 20,
+                // Only show close icon in edit mode
+                if (mode == 'edit')
+                  GestureDetector(
+                    onTap: () {
+                      // Handle remove item
+                    },
+                    child: Icon(
+                      Icons.close,
+                      color: Colors.red.shade400,
+                      size: 20,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
+                if (mode == 'edit') const SizedBox(height: 8),
                 RegularText(
                   weight,
                   fontSize: 14,

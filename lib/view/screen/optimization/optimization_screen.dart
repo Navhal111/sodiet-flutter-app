@@ -86,8 +86,11 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
                       width: 100,
                       child: ElevatedButton(
                         onPressed: () {
-                          // Navigate to meal plan screen
-                          Get.toNamed(AppRoutes.mealPlanScreen);
+                          // Navigate to meal plan screen with default view mode
+                          Get.toNamed(AppRoutes.mealPlanScreen, arguments: {
+                            'mode':
+                                'view', // Default to view mode - no close icon
+                          });
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2AB989),
@@ -336,9 +339,10 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
                       controller.weeklyMenuList.clear();
                       controller.currentWeekNo.value = weekNumber;
 
-                      // Navigate immediately
+                      // Navigate immediately with view mode
                       Get.toNamed(AppRoutes.mealPlanScreen, arguments: {
                         'week_no': weekNumber,
+                        'mode': 'view', // View mode - no close icon
                       });
 
                       // Load data after navigation
@@ -350,7 +354,18 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
                     Icons.settings,
                     actionColors[2],
                     () {
-                      // Handle settings action
+                      // Clear old data and navigate immediately
+                      controller.weeklyMenuList.clear();
+                      controller.currentWeekNo.value = weekNumber;
+
+                      // Navigate to meal plan with edit mode
+                      Get.toNamed(AppRoutes.mealPlanScreen, arguments: {
+                        'week_no': weekNumber,
+                        'mode': 'edit', // Edit mode - show close icon
+                      });
+
+                      // Load data after navigation
+                      controller.getWeeklyMenu(weekNumber);
                     },
                   ),
                 ],
