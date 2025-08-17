@@ -16,6 +16,14 @@ class IntakeOverviewChart extends StatelessWidget {
     this.titleFontSize = 22,
   }) : super(key: key);
 
+  // Centralized color map to ensure consistency between legend and chart
+  static const Map<String, Color> mealColors = {
+    'Breakfast': Color(0xFF5DADE2),
+    'Lunch': Color(0xFF58D68D),
+    'Dinner': Color(0xFFAB7FB0),
+    'Snacks': Color(0xFFF7DC6F),
+  };
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -85,15 +93,16 @@ class IntakeOverviewChart extends StatelessWidget {
   }
 
   Widget _buildLegend() {
+    // Use Wrap to show all items and wrap to next line if needed
     return Wrap(
-      alignment: WrapAlignment.center,
+      alignment: WrapAlignment.start,
       spacing: 16,
       runSpacing: 8,
       children: [
-        _buildLegendItem('Breakfast', const Color(0xFF5DADE2)),
-        _buildLegendItem('Lunch', const Color(0xFF58D68D)),
-        _buildLegendItem('Dinner', const Color(0xFFAB7FB0)),
-        _buildLegendItem('Snacks', const Color(0xFFF7DC6F)),
+        _buildLegendItem('Breakfast', mealColors['Breakfast']!),
+        _buildLegendItem('Lunch', mealColors['Lunch']!),
+        _buildLegendItem('Dinner', mealColors['Dinner']!),
+        _buildLegendItem('Snacks', mealColors['Snacks']!),
       ],
     );
   }
@@ -103,20 +112,20 @@ class IntakeOverviewChart extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 12,
-          height: 12,
+          width: 16,
+          height: 16,
           decoration: BoxDecoration(
             color: color,
             shape: BoxShape.circle,
           ),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 8),
         Text(
           label,
           style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF37474F),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF091242),
           ),
         ),
       ],
@@ -215,13 +224,15 @@ class IntakeOverviewChart extends StatelessWidget {
       if (seriesMax > maxValue) maxValue = seriesMax;
     }
 
-    // Calculate stacked max (sum of all series at each point)
+    // Calculate stacked max (sum of all series at each point) and ensure no negatives
     double stackedMax = 0;
     for (int i = 0; i < intakeData!.dates.length; i++) {
       double stackSum = 0;
       for (var series in intakeData!.series) {
         if (i < series.data.length) {
-          stackSum += series.data[i];
+          // Clamp negative values to zero when calculating max
+          double value = series.data[i] < 0 ? 0 : series.data[i];
+          stackSum += value;
         }
       }
       if (stackSum > stackedMax) stackedMax = stackSum;
@@ -230,9 +241,18 @@ class IntakeOverviewChart extends StatelessWidget {
     // Use stacked max instead of individual series max
     maxValue = stackedMax;
 
-    // Round up to nearest 500 for clean scale
-    maxValue = ((maxValue / 500).ceil() * 500).toDouble();
-    if (maxValue < 2500) maxValue = 2500; // Minimum scale like in the image
+    print(
+        'DEBUG: Max value calculated: $maxValue (from stacked max: $stackedMax)');
+
+    // Round up to nearest 500 for clean scale, but handle very large values
+    if (maxValue > 10000) {
+      maxValue = ((maxValue / 2500).ceil() * 2500)
+          .toDouble(); // Round to 2500s for large values
+    } else {
+      maxValue = ((maxValue / 500).ceil() * 500)
+          .toDouble(); // Round to 500s for normal values
+    }
+    if (maxValue < 2500) maxValue = 2500; // Minimum scale
 
     return LineChartData(
       gridData: FlGridData(
@@ -341,8 +361,9 @@ class IntakeOverviewChart extends StatelessWidget {
       ),
       minX: 0,
       maxX: (intakeData!.dates.length - 1).toDouble(),
-      minY: 0,
+      minY: 0, // Ensure chart never goes below zero
       maxY: maxValue,
+      clipData: FlClipData.all(), // Clip any data outside bounds
       lineBarsData: _buildStackedAreaCharts(),
     );
   }
@@ -352,43 +373,55 @@ class IntakeOverviewChart extends StatelessWidget {
       return [];
     }
 
-    // Get series data organized by meal type
+    print('DEBUG: Series data received:');
+    for (var series in intakeData!.series) {
+      print('  ${series.name}: ${series.data}');
+      print('    Expected color: ${mealColors[series.name]}');
+    }
+
+    // Get series data organized by meal type and clamp negative values to zero
     Map<String, List<double>> seriesMap = {};
     for (var series in intakeData!.series) {
-      seriesMap[series.name] = series.data;
+      seriesMap[series.name] =
+          series.data.map((value) => value < 0 ? 0.0 : value).toList();
     }
+
+    print('DEBUG: Available meals in API: ${seriesMap.keys.toList()}');
+    print('DEBUG: Expected meal colors: ${mealColors.keys.toList()}');
 
     List<LineChartBarData> charts = [];
 
-    // Colors for each meal type (matching legend)
-    Map<String, Color> colors = {
-      'Snacks': const Color(0xFFF7DC6F),
-      'Dinner': const Color(0xFFAB7FB0),
-      'Lunch': const Color(0xFF58D68D),
-      'Breakfast': const Color(0xFF5DADE2),
-    };
+    // Create INDIVIDUAL line charts for each meal type (NOT STACKED)
+    // Each meal will have its own line with its own color
+    for (var entry in seriesMap.entries) {
+      String mealType = entry.key;
+      List<double> mealData = entry.value;
 
-    // Create stacked area charts
-    List<String> mealOrder = ['Snacks', 'Dinner', 'Lunch', 'Breakfast'];
+      Color mealColor = mealColors[mealType] ?? Colors.grey;
+      print('DEBUG: Creating line for $mealType with color $mealColor');
 
-    for (int i = 0; i < mealOrder.length; i++) {
-      String mealType = mealOrder[i];
-      if (seriesMap.containsKey(mealType)) {
-        charts.add(_buildAreaChart(
-          _getStackedSpots(mealType, i, seriesMap),
-          colors[mealType] ?? Colors.grey,
-          0.8,
-        ));
+      // Create individual line spots (not cumulative)
+      List<FlSpot> spots = [];
+      for (int i = 0; i < mealData.length; i++) {
+        double value = mealData[i] < 0 ? 0.0 : mealData[i];
+        spots.add(FlSpot(i.toDouble(), value));
       }
+
+      charts.add(_buildIndividualLineChart(
+        spots,
+        mealColor,
+        mealType,
+      ));
     }
 
     return charts;
   }
 
-  List<FlSpot> _getStackedSpots(
-      String currentMeal, int stackLevel, Map<String, List<double>> seriesMap) {
-    List<String> mealOrder = ['Snacks', 'Dinner', 'Lunch', 'Breakfast'];
+  List<FlSpot> _getStackedSpots(String currentMeal, int stackLevel,
+      Map<String, List<double>> seriesMap, List<String> mealOrder) {
     List<FlSpot> spots = [];
+
+    print('DEBUG: Getting spots for $currentMeal at stack level $stackLevel');
 
     for (int i = 0; i < intakeData!.dates.length; i++) {
       double cumulativeValue = 0;
@@ -397,29 +430,69 @@ class IntakeOverviewChart extends StatelessWidget {
       for (int j = 0; j <= stackLevel; j++) {
         String meal = mealOrder[j];
         if (seriesMap.containsKey(meal) && i < seriesMap[meal]!.length) {
-          cumulativeValue += seriesMap[meal]![i];
+          // Ensure no negative values are added
+          double value = seriesMap[meal]![i];
+          double cleanValue = value < 0 ? 0 : value;
+          cumulativeValue += cleanValue;
+
+          if (i == 0 && cleanValue > 0) {
+            // Debug first non-zero point
+            print(
+                '    $meal at index $i: $cleanValue (cumulative: $cumulativeValue)');
+          }
         }
       }
 
+      // Ensure cumulative value is never negative
+      cumulativeValue = cumulativeValue < 0 ? 0 : cumulativeValue;
       spots.add(FlSpot(i.toDouble(), cumulativeValue));
     }
 
     return spots;
   }
 
+  LineChartBarData _buildIndividualLineChart(
+      List<FlSpot> spots, Color color, String mealName) {
+    // Ensure all spots have Y >= 0
+    List<FlSpot> cleanSpots =
+        spots.map((spot) => FlSpot(spot.x, spot.y < 0 ? 0 : spot.y)).toList();
+
+    print('DEBUG: Building individual line for $mealName with color: $color');
+
+    return LineChartBarData(
+      spots: cleanSpots,
+      isCurved: true,
+      curveSmoothness: 0.3,
+      color: color,
+      barWidth: 3.0,
+      isStrokeCapRound: true,
+      dotData: const FlDotData(show: false),
+      // NO belowBarData - this creates individual lines, not areas
+    );
+  }
+
   LineChartBarData _buildAreaChart(
       List<FlSpot> spots, Color color, double opacity) {
+    // Ensure all spots have Y >= 0
+    List<FlSpot> cleanSpots =
+        spots.map((spot) => FlSpot(spot.x, spot.y < 0 ? 0 : spot.y)).toList();
+
+    print('DEBUG: Building area chart with color: $color');
+
     return LineChartBarData(
-      spots: spots,
+      spots: cleanSpots,
       isCurved: true,
-      curveSmoothness: 0.2,
+      curveSmoothness: 0.25,
       color: color,
-      barWidth: 1.5,
+      barWidth: 2.5,
       isStrokeCapRound: true,
       dotData: const FlDotData(show: false),
       belowBarData: BarAreaData(
         show: true,
+        // Use solid color instead of gradient for better visibility
         color: color.withOpacity(opacity),
+        cutOffY: 0, // Ensure area doesn't go below Y=0
+        applyCutOffY: true,
       ),
     );
   }

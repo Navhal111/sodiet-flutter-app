@@ -3,16 +3,16 @@ import 'package:get/get.dart';
 import 'package:sodiet/controller/home/homeController.dart';
 import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
-import 'package:sodiet/view/widgets/chart/weight_progress_chart.dart';
-import 'package:sodiet/view/widgets/chart/intake_overview_chart.dart';
 import 'package:sodiet/view/widgets/chart/activity_overview_chart.dart';
+import 'package:sodiet/view/widgets/chart/intake_overview_chart.dart';
+import 'package:sodiet/view/widgets/chart/weight_progress_chart.dart';
+import 'package:sodiet/view/widgets/common/shimmer_loading.dart';
+import 'package:sodiet/view/widgets/custom_button.dart';
+import 'package:sodiet/view/widgets/custom_text_field.dart';
+import 'package:sodiet/view/widgets/home/data_summary_widget.dart';
 import 'package:sodiet/view/widgets/home/nutrient_progress_widget.dart';
 import 'package:sodiet/view/widgets/home/welcome_title_widget.dart';
-import 'package:sodiet/view/widgets/home/data_summary_widget.dart';
 import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
-import 'package:sodiet/view/widgets/custom_text_field.dart';
-import 'package:sodiet/view/widgets/custom_button.dart';
-import 'package:sodiet/view/widgets/common/shimmer_loading.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -113,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
         margin: const EdgeInsets.only(right: 8),
         child: DataSummaryWidget(
           title: 'Target Progress',
-          startValue: kpiData.planStartDate,
+          startValue: '${kpiData.targetProgressPercentage.toStringAsFixed(2)}%',
           endValue: '',
           onClick: () {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -536,13 +536,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
 
+                // Ensure no negative values are passed to the chart
+                final intakeData = homeController.intakeOverviewChart;
+                // Optionally, you could sanitize data here if needed
+
                 return IntakeOverviewChart(
-                  intakeData: homeController.intakeOverviewChart,
+                  intakeData: intakeData,
                   title: 'Intake Overview',
                   titleColor: const Color(0xFF091242),
                   titleFontSize: 22,
+                  // Add a property if your chart supports minY: 0
+                  // minY: 0, // Uncomment if supported
                 );
               }),
+
               const SizedBox(height: 10),
               // Activity Overview Chart
               Obx(() {
