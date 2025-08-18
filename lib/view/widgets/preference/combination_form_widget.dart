@@ -98,9 +98,12 @@ class _CombinationFormWidgetState extends State<CombinationFormWidget> {
                         _selectedFood.isNotEmpty ? _selectedFood : null,
                     onSelected: (String? selectedValue, String? selectedCode,
                         String? recipeDescription) {
-                      setState(() {
-                        _selectedFood = selectedValue ?? '';
-                      });
+                      // Check if widget is still mounted before calling setState
+                      if (mounted) {
+                        setState(() {
+                          _selectedFood = selectedValue ?? '';
+                        });
+                      }
                       widget.onFoodChanged(selectedValue);
                       // Note: We don't need selectedCode for preferences, just the name
                     },
@@ -179,11 +182,12 @@ class _CombinationFormWidgetState extends State<CombinationFormWidget> {
                             _quantityController.text.isNotEmpty &&
                             widget.combinationId != null &&
                             widget.controller != null) {
-                          setState(() {
-                            _isAddingFood = true;
-                          });
-
-                          // Find the selected recipe details
+                          // Check if widget is still mounted before calling setState
+                          if (mounted) {
+                            setState(() {
+                              _isAddingFood = true;
+                            });
+                          } // Find the selected recipe details
                           final selectedRecipe = widget.controller!.recipeList
                               .firstWhereOrNull((recipe) =>
                                   recipe.recipeName == _selectedFood);
@@ -205,30 +209,37 @@ class _CombinationFormWidgetState extends State<CombinationFormWidget> {
                             );
 
                             if (success) {
-                              // Clear form on success
+                              // Clear form on success - check if widget is still mounted
+                              if (mounted) {
+                                setState(() {
+                                  _selectedFood = '';
+                                  _quantityController.clear();
+                                });
+                              }
+                            }
+                          } else {
+                            // Fallback: add to local list if recipe not found
+                            if (mounted) {
                               setState(() {
+                                _userAddedFoods.add({
+                                  'mealType': widget
+                                          .controller?.selectedMealType.value ??
+                                      'Current',
+                                  'food': _selectedFood,
+                                  'quantity': _quantityController.text,
+                                });
                                 _selectedFood = '';
                                 _quantityController.clear();
                               });
                             }
-                          } else {
-                            // Fallback: add to local list if recipe not found
-                            setState(() {
-                              _userAddedFoods.add({
-                                'mealType':
-                                    widget.controller?.selectedMealType.value ??
-                                        'Current',
-                                'food': _selectedFood,
-                                'quantity': _quantityController.text,
-                              });
-                              _selectedFood = '';
-                              _quantityController.clear();
-                            });
                           }
 
-                          setState(() {
-                            _isAddingFood = false;
-                          });
+                          // Check if widget is still mounted before calling setState
+                          if (mounted) {
+                            setState(() {
+                              _isAddingFood = false;
+                            });
+                          }
 
                           widget
                               .onAddCombination(); // Call parent callback if needed
@@ -362,14 +373,17 @@ class _CombinationFormWidgetState extends State<CombinationFormWidget> {
                         combination['pkey']?.toString() ?? '',
                         combination['food'] ?? 'Unknown Food',
                         () {
-                          setState(() {
-                            final userIndex =
-                                index - widget.combinations.length;
-                            if (userIndex >= 0 &&
-                                userIndex < _userAddedFoods.length) {
-                              _userAddedFoods.removeAt(userIndex);
-                            }
-                          });
+                          // Check if widget is still mounted before calling setState
+                          if (mounted) {
+                            setState(() {
+                              final userIndex =
+                                  index - widget.combinations.length;
+                              if (userIndex >= 0 &&
+                                  userIndex < _userAddedFoods.length) {
+                                _userAddedFoods.removeAt(userIndex);
+                              }
+                            });
+                          }
                         },
                       );
                     } else {
