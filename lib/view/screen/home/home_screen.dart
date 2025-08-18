@@ -5,6 +5,7 @@ import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/chart/activity_overview_chart.dart';
 import 'package:sodiet/view/widgets/chart/intake_overview_chart.dart';
+import 'package:sodiet/view/widgets/chart/nutrient_time_series_chart.dart';
 import 'package:sodiet/view/widgets/chart/weight_progress_chart.dart';
 import 'package:sodiet/view/widgets/common/shimmer_loading.dart';
 import 'package:sodiet/view/widgets/custom_button.dart';
@@ -35,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await homeController.getNutrientWeeklySummary();
     await homeController.getIntakeOverview();
     await homeController.getActivityOverview();
+    await homeController.getNutrientTimeSeries();
   }
 
   // Method to build KPI widgets from dashboard summary data
@@ -564,6 +566,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 return ActivityOverviewChart(
                   activityData: homeController.activityOverviewChart,
                   title: 'Activity Overview',
+                  titleColor: const Color(0xFF091242),
+                  titleFontSize: 22,
+                );
+              }),
+
+              const SizedBox(height: 10),
+              // Nutrient Time Series Chart
+              Obx(() {
+                if (homeController.isLoadingNutrientTimeSeries.value) {
+                  return ShimmerChart(
+                    width: double.infinity,
+                    height: 480, // Increased height to accommodate better axis labels
+                    title: 'Nutrient Time Series',
+                  );
+                }
+
+                return NutrientTimeSeriesChart(
+                  nutrientTimeSeriesData: homeController.nutrientTimeSeriesData,
+                  title: 'Nutrient Time Series',
                   titleColor: const Color(0xFF091242),
                   titleFontSize: 22,
                 );

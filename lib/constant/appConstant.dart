@@ -53,6 +53,8 @@ class AppConstants {
       '${BASE_URL}dashboard/intake-overview';
   static const String GET_ACTIVITY_OVERVIEW =
       '${BASE_URL}dashboard/activity-overview';
+  static const String GET_NUTRIENT_TIME_SERIES =
+      '${BASE_URL}dashboard/nutrient-time-series';
 
   // Preference endpoints
   static const String GET_PREFERENCES =

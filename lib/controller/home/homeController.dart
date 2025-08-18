@@ -36,6 +36,11 @@ class HomeController extends GetxController implements GetxService {
   Rx<ActivityOverviewResponse?> activityOverviewResponse =
       Rx<ActivityOverviewResponse?>(null);
 
+  // Observable variables to store nutrient time series data
+  RxBool isLoadingNutrientTimeSeries = false.obs;
+  Rx<NutrientTimeSeriesResponse?> nutrientTimeSeriesResponse =
+      Rx<NutrientTimeSeriesResponse?>(null);
+
   // Weight log variables for quick add functionality
   var isSubmittingWeightLog = false.obs;
   final TextEditingController weightLogDateController = TextEditingController();
@@ -193,6 +198,44 @@ class HomeController extends GetxController implements GetxService {
     }
   }
 
+  getNutrientTimeSeries() async {
+    isLoadingNutrientTimeSeries.value = true;
+    try {
+      Response response = await authRepo.getDataSet(
+          apiName: AppConstants.GET_NUTRIENT_TIME_SERIES);
+      print("Nutrient Time Series API Response Status: ${response.statusCode}");
+      print("Nutrient Time Series API Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        nutrientTimeSeriesResponse.value =
+            NutrientTimeSeriesResponse.fromJson(response.body);
+
+        print('Nutrient Time Series loaded successfully');
+        return {
+          'success': true,
+          'message': 'Nutrient time series loaded successfully!'
+        };
+      } else {
+        print('Error loading nutrient time series: ${response.statusCode}');
+        nutrientTimeSeriesResponse.value = null;
+        return {
+          'success': false,
+          'message': 'Failed to load nutrient time series'
+        };
+      }
+    } catch (e) {
+      print('Exception in getNutrientTimeSeries: $e');
+      nutrientTimeSeriesResponse.value = null;
+      return {
+        'success': false,
+        'message': 'Network error. Please check your connection.'
+      };
+    } finally {
+      isLoadingNutrientTimeSeries.value = false;
+      update();
+    }
+  }
+
   // Dashboard Summary Helper Methods
   bool get hasDashboardSummary => dashboardSummaryResponse.value != null;
 
@@ -281,6 +324,20 @@ class HomeController extends GetxController implements GetxService {
     getActivityOverview();
   }
 
+  // Nutrient Time Series Helper Methods
+  bool get hasNutrientTimeSeries => nutrientTimeSeriesResponse.value != null;
+
+  NutrientTimeSeriesResponse? get nutrientTimeSeriesData =>
+      nutrientTimeSeriesResponse.value;
+
+  List<String> get availableNutrients =>
+      nutrientTimeSeriesResponse.value?.nutrientTimeSeries.keys.toList() ?? [];
+
+  // Method to refresh nutrient time series
+  void refreshNutrientTimeSeries() {
+    getNutrientTimeSeries();
+  }
+
   // Weight Log Methods
   String formatDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -328,6 +385,7 @@ class HomeController extends GetxController implements GetxService {
           getNutrientWeeklySummary();
           getIntakeOverview();
           getActivityOverview();
+          getNutrientTimeSeries();
         });
       } else {
         CustomToast.showError('Failed to add weight log');
@@ -352,12 +410,14 @@ class HomeController extends GetxController implements GetxService {
     getNutrientWeeklySummary();
     getIntakeOverview();
     getActivityOverview();
+    getNutrientTimeSeries();
   }
 
   // Method to clear dashboard data
   void clearDashboardData() {
     dashboardSummaryResponse.value = null;
     nutrientWeeklySummaryResponse.value = null;
+    nutrientTimeSeriesResponse.value = null;
     update();
   }
 

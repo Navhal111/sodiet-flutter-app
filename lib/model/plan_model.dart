@@ -584,3 +584,114 @@ class ActivitySeriesData {
     };
   }
 }
+
+// Nutrient Time Series Models
+class NutrientTimeSeriesResponse {
+  final Map<String, NutrientTimeSeriesData> nutrientTimeSeries;
+
+  NutrientTimeSeriesResponse({
+    required this.nutrientTimeSeries,
+  });
+
+  factory NutrientTimeSeriesResponse.fromJson(Map<String, dynamic> json) {
+    Map<String, NutrientTimeSeriesData> timeSeries = {};
+    
+    if (json['nutrient_time_series'] != null) {
+      final timeSeriesJson = json['nutrient_time_series'] as Map<String, dynamic>;
+      timeSeriesJson.forEach((key, value) {
+        timeSeries[key] = NutrientTimeSeriesData.fromJson(value);
+      });
+    }
+    
+    return NutrientTimeSeriesResponse(
+      nutrientTimeSeries: timeSeries,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> timeSeriesJson = {};
+    nutrientTimeSeries.forEach((key, value) {
+      timeSeriesJson[key] = value.toJson();
+    });
+    
+    return {
+      'nutrient_time_series': timeSeriesJson,
+    };
+  }
+}
+
+class NutrientTimeSeriesData {
+  final String unit;
+  final List<String> dates;
+  final NutrientDatasets datasets;
+
+  NutrientTimeSeriesData({
+    required this.unit,
+    required this.dates,
+    required this.datasets,
+  });
+
+  factory NutrientTimeSeriesData.fromJson(Map<String, dynamic> json) {
+    return NutrientTimeSeriesData(
+      unit: json['unit']?.toString() ?? '',
+      dates: (json['dates'] as List<dynamic>?)
+          ?.map((date) => date.toString())
+          .toList() ?? [],
+      datasets: NutrientDatasets.fromJson(json['datasets'] ?? {}),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'unit': unit,
+      'dates': dates,
+      'datasets': datasets.toJson(),
+    };
+  }
+}
+
+class NutrientDatasets {
+  final List<double> breakfast;
+  final List<double> lunch;
+  final List<double> dinner;
+  final List<double> snacks;
+  final List<double> total;
+
+  NutrientDatasets({
+    required this.breakfast,
+    required this.lunch,
+    required this.dinner,
+    required this.snacks,
+    required this.total,
+  });
+
+  factory NutrientDatasets.fromJson(Map<String, dynamic> json) {
+    return NutrientDatasets(
+      breakfast: (json['Breakfast'] as List<dynamic>?)
+          ?.map((item) => (item as num).toDouble())
+          .toList() ?? [],
+      lunch: (json['Lunch'] as List<dynamic>?)
+          ?.map((item) => (item as num).toDouble())
+          .toList() ?? [],
+      dinner: (json['Dinner'] as List<dynamic>?)
+          ?.map((item) => (item as num).toDouble())
+          .toList() ?? [],
+      snacks: (json['Snacks'] as List<dynamic>?)
+          ?.map((item) => (item as num).toDouble())
+          .toList() ?? [],
+      total: (json['Total'] as List<dynamic>?)
+          ?.map((item) => (item as num).toDouble())
+          .toList() ?? [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'Breakfast': breakfast,
+      'Lunch': lunch,
+      'Dinner': dinner,
+      'Snacks': snacks,
+      'Total': total,
+    };
+  }
+}
