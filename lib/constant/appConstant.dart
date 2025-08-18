@@ -85,6 +85,10 @@ class AppConstants {
   // Optimization endpoints
   static const String WEEK_PLAN_MASTER = '${BASE_URL}menu/week-plan-master';
   static const String WEEKLY_MENU = '${BASE_URL}menu/weekly-menu';
+  static const String MENU_INTERACTIONS_DRAFT =
+      '${BASE_URL}menu/menu-interactions-draft';
+  static const String SUBMIT_MENU_INTERACTIONS =
+      '${BASE_URL}menu/menu-rearrangement-submit';
 
   // Contant Save data keys
   static const String INTRO = 'intro';

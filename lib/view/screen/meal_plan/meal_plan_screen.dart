@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:sodiet/constant/appConstant.dart';
 import 'package:sodiet/controller/optimization/optimization_controller.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
+import 'package:sodiet/view/widgets/common/searchable_recipe_bottom_sheet.dart';
 import 'package:sodiet/view/widgets/header/app_header.dart';
 import 'package:sodiet/view/widgets/common/title_section_widget.dart';
 import 'package:sodiet/view/widgets/common/shimmer_loading.dart';
@@ -21,6 +22,14 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   late OptimizationController controller;
   String searchQuery = '';
   String mode = 'view'; // Default mode, will be updated from arguments
+
+  // Recipe selection state variables
+  String? selectedRecipeName;
+  String? selectedRecipeCode;
+
+  // Day and timing selection state variables
+  String? selectedDay;
+  String? selectedTiming;
 
   final List<String> options = [
     'All',
@@ -47,6 +56,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
     print(
         'MealPlanScreen initState - Using OptimizationController, mode: $mode');
+
+    // Load menu interactions draft
+    controller.getMenuInteractionsDraft();
   }
 
   @override
@@ -134,37 +146,40 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          // Search recipe field
-                          Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF5F5F5),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: TextField(
-                              controller: _searchController,
-                              onChanged: (value) {
-                                setState(() {
-                                  searchQuery = value.toLowerCase();
-                                });
-                              },
-                              decoration: InputDecoration(
-                                hintText: 'Search recipe',
-                                hintStyle: TextStyle(
-                                  color: Colors.grey.shade500,
-                                  fontSize: 14,
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.search,
-                                  color: Colors.grey.shade500,
-                                ),
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
+                          // Search recipe field or Recipe dropdown based on mode
+                          if (mode == 'edit')
+                            Obx(() => _buildRecipeDropdown())
+                          else
+                            Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF5F5F5),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: TextField(
+                                controller: _searchController,
+                                onChanged: (value) {
+                                  setState(() {
+                                    searchQuery = value.toLowerCase();
+                                  });
+                                },
+                                decoration: InputDecoration(
+                                  hintText: 'Search recipe',
+                                  hintStyle: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 14,
+                                  ),
+                                  prefixIcon: Icon(
+                                    Icons.search,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
 
                           const SizedBox(height: 16),
                         ],
@@ -337,14 +352,108 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           ],
         ),
       ),
+      // Show submit button only when there are menu interactions in draft
+      bottomNavigationBar: Obx(
+        () => controller.menuInteractionsList.isNotEmpty
+            ? Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.3),
+                      spreadRadius: 1,
+                      blurRadius: 8,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Draft info
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color:
+                              Theme.of(context).primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.drafts,
+                              color: Theme.of(context).primaryColor,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${controller.menuInteractionsList.length} draft changes pending',
+                              style: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Submit button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            _submitDraftChanges();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 2,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.check_circle_outline,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Submit Draft Changes',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : const SizedBox.shrink(),
+      ),
     );
   }
 
   Widget _buildDaySection(String day) {
     final menuItems = controller.getMenuForDay(day);
 
-    // Filter menu items based on search query
+    // Filter menu items based on search query (only in view mode)
     final filteredMenuItems = menuItems.where((menuItem) {
+      // In edit mode, don't filter by search query since we use recipe bottom sheet
+      if (mode == 'edit') return true;
+
       if (searchQuery.isEmpty) return true;
       final recipeName =
           menuItem['Recipe_Name']?.toString().toLowerCase() ?? '';
@@ -384,9 +493,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: RegularText(
-                    searchQuery.isEmpty
-                        ? 'No meals planned for $day'
-                        : 'No recipes found matching "$searchQuery" for $day',
+                    mode == 'edit'
+                        ? 'No meals planned for $day. Select a recipe above to add meals.'
+                        : searchQuery.isEmpty
+                            ? 'No meals planned for $day'
+                            : 'No recipes found matching "$searchQuery" for $day',
                     fontSize: 14,
                     textColor: Colors.grey.shade600,
                   ),
@@ -402,6 +513,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     '${menuItem['Portion']?.toString() ?? '0'} ${menuItem['Description']?.toString() ?? ''}',
                     '${menuItem['Recipe_Weight']?.toString() ?? '0'}gms',
                     mode, // Pass the mode to determine if close icon should be shown
+                    menuItem, // Pass the full menu item for remove functionality
+                    day, // Pass the day for remove functionality
                   ))
               .toList(),
       ],
@@ -409,7 +522,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   Widget _buildMealItem(String imagePath, String foodName, String quantity,
-      String weight, String mode) {
+      String weight, String mode, Map<String, dynamic> menuItem, String day) {
     return Container(
       padding: const EdgeInsets.all(0),
       margin: const EdgeInsets.only(bottom: 8),
@@ -517,7 +630,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 if (mode == 'edit')
                   GestureDetector(
                     onTap: () {
-                      // Handle remove item
+                      _showRemoveConfirmationDialog(menuItem, day);
                     },
                     child: Icon(
                       Icons.close,
@@ -613,6 +726,987 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           .where((day) => day == selectedOption)
           .toList();
     }
+  }
+
+  // Submit draft changes
+  void _submitDraftChanges() {
+    // Show confirmation dialog
+    Get.dialog(
+      AlertDialog(
+        title: Text(
+          'Submit Draft Changes',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF091242),
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'You have ${controller.menuInteractionsList.length} pending changes:',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade700,
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Show summary of changes
+            Container(
+              constraints: BoxConstraints(maxHeight: 200),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: controller.menuInteractionsList.map((interaction) {
+                    return Container(
+                      padding: const EdgeInsets.all(8),
+                      margin: const EdgeInsets.only(bottom: 4),
+                      decoration: BoxDecoration(
+                        color: interaction.isAddInteraction
+                            ? Colors.green.shade50
+                            : Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: interaction.isAddInteraction
+                              ? Colors.green.shade200
+                              : Colors.red.shade200,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            interaction.isAddInteraction
+                                ? Icons.add_circle_outline
+                                : Icons.remove_circle_outline,
+                            color: interaction.isAddInteraction
+                                ? Colors.green.shade600
+                                : Colors.red.shade600,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${interaction.status} ${interaction.recipeCode} - ${interaction.dayDisplayName} ${interaction.timingDisplayName}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: interaction.isAddInteraction
+                                    ? Colors.green.shade700
+                                    : Colors.red.shade700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Do you want to submit these changes?',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              _performRemoveDrafts();
+            },
+            child: Text(
+              'Remove Drafts',
+              style: TextStyle(
+                color: Colors.red.shade600,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              _performSubmitDraftChanges();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).primaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              'Submit',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Perform actual submit operation
+  void _performSubmitDraftChanges() async {
+    bool isDialogOpen = false;
+
+    try {
+      // Show loading dialog
+      Get.dialog(
+        AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                'Submitting changes...',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        barrierDismissible: false,
+      );
+      isDialogOpen = true;
+
+      // Call the actual API to submit draft changes
+      final result = await controller.submitMenuInteractionsDraft();
+
+      // Close loading dialog
+      if (isDialogOpen && Get.isDialogOpen == true) {
+        Get.back();
+        isDialogOpen = false;
+      }
+
+      if (result['success'] == true) {
+        // Show success message
+        Get.snackbar(
+          'Success',
+          result['message'] ?? 'Draft changes submitted successfully!',
+          backgroundColor: Colors.green.shade100,
+          colorText: Colors.green.shade800,
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 3),
+          icon: Icon(
+            Icons.check_circle,
+            color: Colors.green.shade600,
+          ),
+        );
+
+        // Refresh data after successful submission
+        await controller.getMenuInteractionsDraft();
+      } else {
+        // Show error message from API
+        Get.snackbar(
+          'Error',
+          result['message'] ??
+              'Failed to submit draft changes. Please try again.',
+          backgroundColor: Colors.red.shade100,
+          colorText: Colors.red.shade800,
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 3),
+          icon: Icon(
+            Icons.error,
+            color: Colors.red.shade600,
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog if open
+      if (isDialogOpen && Get.isDialogOpen == true) {
+        Get.back();
+        isDialogOpen = false;
+      }
+
+      print('Exception in _performSubmitDraftChanges: $e');
+
+      // Show error message
+      Get.snackbar(
+        'Error',
+        'An unexpected error occurred. Please try again.',
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade800,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
+        icon: Icon(
+          Icons.error,
+          color: Colors.red.shade600,
+        ),
+      );
+    } finally {
+      // Final safety check to ensure dialog is closed
+      if (isDialogOpen && Get.isDialogOpen == true) {
+        try {
+          Get.back();
+        } catch (e) {
+          print('Error closing dialog in finally block: $e');
+        }
+      }
+    }
+  }
+
+  // Perform remove drafts operation
+  void _performRemoveDrafts() async {
+    bool isDialogOpen = false;
+
+    try {
+      // Show loading dialog
+      Get.dialog(
+        AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                'Removing drafts...',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        barrierDismissible: false,
+      );
+      isDialogOpen = true;
+
+      // Call the API to remove drafts
+      final result = await controller.removeDraftInteractions();
+
+      // Close loading dialog
+      if (isDialogOpen && Get.isDialogOpen == true) {
+        Get.back();
+        isDialogOpen = false;
+      }
+
+      if (result['success'] == true) {
+        // Show success message
+        Get.snackbar(
+          'Success',
+          result['message'] ?? 'Draft changes removed successfully!',
+          backgroundColor: Colors.green.shade100,
+          colorText: Colors.green.shade800,
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 3),
+          icon: Icon(
+            Icons.check_circle,
+            color: Colors.green.shade600,
+          ),
+        );
+
+        // Refresh data after successful removal
+        await controller.getMenuInteractionsDraft();
+      } else {
+        // Show error message from API
+        Get.snackbar(
+          'Error',
+          result['message'] ??
+              'Failed to remove draft changes. Please try again.',
+          backgroundColor: Colors.red.shade100,
+          colorText: Colors.red.shade800,
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 3),
+          icon: Icon(
+            Icons.error,
+            color: Colors.red.shade600,
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog if open
+      if (isDialogOpen && Get.isDialogOpen == true) {
+        Get.back();
+        isDialogOpen = false;
+      }
+
+      print('Exception in _performRemoveDrafts: $e');
+
+      // Show error message
+      Get.snackbar(
+        'Error',
+        'An unexpected error occurred. Please try again.',
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade800,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
+        icon: Icon(
+          Icons.error,
+          color: Colors.red.shade600,
+        ),
+      );
+    } finally {
+      // Final safety check to ensure dialog is closed
+      if (isDialogOpen && Get.isDialogOpen == true) {
+        try {
+          Get.back();
+        } catch (e) {
+          print('Error closing dialog in finally block: $e');
+        }
+      }
+    }
+  }
+
+  // Show remove confirmation dialog
+  void _showRemoveConfirmationDialog(
+      Map<String, dynamic> menuItem, String day) {
+    final recipeName = menuItem['Recipe_Name']?.toString() ?? 'Unknown Recipe';
+    final timing = menuItem['Timings']?.toString() ?? '';
+
+    Get.dialog(
+      AlertDialog(
+        title: Text(
+          'Remove Recipe',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF091242),
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Are you sure you want to remove this recipe from your meal plan?',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade700,
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Recipe details
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Colors.red.shade200,
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.restaurant_menu,
+                        color: Colors.red.shade600,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          recipeName,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.red.shade700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        color: Colors.red.shade600,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '$day - $timing',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.red.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              _performRemoveMenuItem(menuItem, day);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              'Remove',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Perform remove menu item operation
+  void _performRemoveMenuItem(Map<String, dynamic> menuItem, String day) async {
+    bool isDialogOpen = false;
+
+    try {
+      final recipeCode = menuItem['Recipe_Code']?.toString() ?? '';
+      final timing = menuItem['Timings']?.toString() ?? '';
+
+      if (recipeCode.isEmpty) {
+        Get.snackbar(
+          'Error',
+          'Cannot remove recipe: Recipe code not found',
+          backgroundColor: Colors.red.shade100,
+          colorText: Colors.red.shade800,
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 3),
+          icon: Icon(
+            Icons.error,
+            color: Colors.red.shade600,
+          ),
+        );
+        return;
+      }
+
+      // Show loading dialog
+      Get.dialog(
+        AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                'Removing recipe...',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        barrierDismissible: false,
+      );
+      isDialogOpen = true;
+
+      // Call the API to remove menu interaction
+      final result = await controller.removeMenuInteraction(
+        weekNo: controller.currentWeekNo.value,
+        recipeCode: recipeCode,
+        day: day,
+        timings: timing,
+      );
+
+      // Close loading dialog
+      if (isDialogOpen && Get.isDialogOpen == true) {
+        Get.back();
+        isDialogOpen = false;
+      }
+
+      if (result['success'] == true) {
+        // Show success message
+        Get.snackbar(
+          'Success',
+          result['message'] ?? 'Recipe removed from meal plan successfully!',
+          backgroundColor: Colors.green.shade100,
+          colorText: Colors.green.shade800,
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 3),
+          icon: Icon(
+            Icons.check_circle,
+            color: Colors.green.shade600,
+          ),
+        );
+
+        // Refresh data after successful removal
+        await controller.getMenuInteractionsDraft();
+      } else {
+        // Show error message from API
+        Get.snackbar(
+          'Error',
+          result['message'] ?? 'Failed to remove recipe. Please try again.',
+          backgroundColor: Colors.red.shade100,
+          colorText: Colors.red.shade800,
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 3),
+          icon: Icon(
+            Icons.error,
+            color: Colors.red.shade600,
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog if open
+      if (isDialogOpen && Get.isDialogOpen == true) {
+        Get.back();
+        isDialogOpen = false;
+      }
+
+      print('Exception in _performRemoveMenuItem: $e');
+
+      // Show error message
+      Get.snackbar(
+        'Error',
+        'An unexpected error occurred. Please try again.',
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade800,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
+        icon: Icon(
+          Icons.error,
+          color: Colors.red.shade600,
+        ),
+      );
+    } finally {
+      // Final safety check to ensure dialog is closed
+      if (isDialogOpen && Get.isDialogOpen == true) {
+        try {
+          Get.back();
+        } catch (e) {
+          print('Error closing dialog in finally block: $e');
+        }
+      }
+    }
+  }
+
+  // Show day and timing selection bottom sheet
+  void _showDayTimingSelectionSheet(String recipeName, String recipeCode) {
+    print(
+        '_showDayTimingSelectionSheet called with recipeName: $recipeName, recipeCode: $recipeCode');
+
+    // Reset selections
+    selectedDay = null;
+    selectedTiming = null;
+    bool isAddingInteraction = false;
+
+    final availableDays = [
+      'Saturday',
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday'
+    ];
+    final timingOptions = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
+
+    print('About to call showModalBottomSheet for timing selection');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: false, // Prevent dismissing while API is loading
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.55,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Colors.grey.shade200),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SemiBoldText(
+                              'Add Recipe into',
+                              fontSize: 18,
+                              textColor: Colors.black87,
+                            ),
+                            const SizedBox(height: 4),
+                            RegularText(
+                              recipeName,
+                              fontSize: 14,
+                              textColor: Colors.grey.shade600,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!isAddingInteraction) // Hide close button when loading
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                    ],
+                  ),
+                ),
+
+                // Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Day Selection
+                        SemiBoldText(
+                          'Select Day',
+                          fontSize: 16,
+                          textColor: Colors.black87,
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: availableDays.map((day) {
+                            final isSelected = selectedDay == day;
+                            return GestureDetector(
+                              onTap: isAddingInteraction
+                                  ? null
+                                  : () {
+                                      setModalState(() {
+                                        selectedDay = day;
+                                      });
+                                    },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? Theme.of(context).primaryColor
+                                      : Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: RegularText(
+                                  day,
+                                  fontSize: 12,
+                                  textColor: isSelected
+                                      ? Colors.white
+                                      : Colors.grey.shade700,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Timing Selection
+                        SemiBoldText(
+                          'Timing',
+                          fontSize: 16,
+                          textColor: Colors.black87,
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: timingOptions.map((timing) {
+                            final isSelected = selectedTiming == timing;
+                            return GestureDetector(
+                              onTap: isAddingInteraction
+                                  ? null
+                                  : () {
+                                      setModalState(() {
+                                        selectedTiming = timing;
+                                      });
+                                    },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? Theme.of(context).primaryColor
+                                      : Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: RegularText(
+                                  timing,
+                                  fontSize: 12,
+                                  textColor: isSelected
+                                      ? Colors.white
+                                      : Colors.grey.shade700,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // Add Interaction Button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: ElevatedButton(
+                            onPressed: (selectedDay != null &&
+                                    selectedTiming != null &&
+                                    !isAddingInteraction)
+                                ? () async {
+                                    setModalState(() {
+                                      isAddingInteraction = true;
+                                    });
+
+                                    // Call the API
+                                    final result =
+                                        await controller.addMenuInteraction(
+                                      weekNo: controller.currentWeekNo.value,
+                                      recipeCode: recipeCode,
+                                      day: selectedDay!,
+                                      timings: selectedTiming!,
+                                    );
+
+                                    setModalState(() {
+                                      isAddingInteraction = false;
+                                    });
+
+                                    if (result['success']) {
+                                      Navigator.pop(context);
+                                      // Clear selected recipe
+                                      if (mounted) {
+                                        setState(() {
+                                          selectedRecipeName = null;
+                                          selectedRecipeCode = null;
+                                        });
+                                      }
+                                    }
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: (selectedDay != null &&
+                                      selectedTiming != null &&
+                                      !isAddingInteraction)
+                                  ? Theme.of(context).primaryColor
+                                  : Colors.grey.shade400,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: isAddingInteraction
+                                ? Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                  Colors.white),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      SemiBoldText(
+                                        'Adding...',
+                                        fontSize: 16,
+                                        textColor: Colors.white,
+                                      ),
+                                    ],
+                                  )
+                                : SemiBoldText(
+                                    'Add Interaction',
+                                    fontSize: 16,
+                                    textColor: Colors.white,
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // Build recipe dropdown for edit mode
+  Widget _buildRecipeDropdown() {
+    final hasRecipes = controller.recipeList.isNotEmpty;
+
+    return GestureDetector(
+      onTap: hasRecipes
+          ? () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => SearchableRecipeBottomSheet(
+                  title: 'Select Recipe',
+                  selectedValue: selectedRecipeName,
+                  recipeList: controller
+                      .recipeList, // Use OptimizationController recipe list
+                  onSelected: (String? selectedValue, String? selectedCode,
+                      String? recipeDescription) async {
+                    print(
+                        'Selected recipe 123: $selectedValue, code: $selectedCode');
+
+                    if (mounted) {
+                      setState(() {
+                        selectedRecipeName = selectedValue;
+                        selectedRecipeCode = selectedCode;
+                      });
+                    }
+                    print(
+                        'Selected recipe: $selectedValue, code: $selectedCode');
+
+                    // Show day and timing selection bottom sheet
+                    if (selectedCode != null) {
+                      print(
+                          'About to show day timing sheet with recipe: $selectedValue, code: $selectedCode');
+
+                      // Wait for the current modal to fully close first
+                      await Future.delayed(const Duration(milliseconds: 500));
+
+                      if (mounted && context.mounted) {
+                        print('Context is still mounted, showing timing sheet');
+                        _showDayTimingSelectionSheet(
+                            selectedValue!, selectedCode);
+                      } else {
+                        _showDayTimingSelectionSheet(
+                            selectedValue!, selectedCode);
+                        print('Context not mounted, cannot show timing sheet');
+                      }
+                    } else {
+                      print('selectedCode is null, cannot show timing sheet');
+                    }
+                  },
+                  searchHint: 'Search for recipes',
+                ),
+              );
+            }
+          : null,
+      child: Container(
+        decoration: BoxDecoration(
+          color: hasRecipes ? const Color(0xFFF5F5F5) : Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(
+              hasRecipes ? Icons.restaurant_menu : Icons.hourglass_empty,
+              color: Colors.grey.shade500,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                !hasRecipes
+                    ? 'Loading recipes...'
+                    : selectedRecipeName?.isNotEmpty == true
+                        ? selectedRecipeName!
+                        : 'Select recipe to add',
+                style: TextStyle(
+                  color: !hasRecipes
+                      ? Colors.grey.shade500
+                      : selectedRecipeName?.isNotEmpty == true
+                          ? Colors.black87
+                          : Colors.grey.shade600,
+                  fontSize: 14,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (hasRecipes)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (selectedRecipeName?.isNotEmpty == true)
+                    GestureDetector(
+                      onTap: () {
+                        if (mounted) {
+                          setState(() {
+                            selectedRecipeName = null;
+                            selectedRecipeCode = null;
+                          });
+                        }
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        child: Icon(
+                          Icons.clear,
+                          color: Colors.grey.shade500,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Colors.grey.shade500,
+                    size: 20,
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
