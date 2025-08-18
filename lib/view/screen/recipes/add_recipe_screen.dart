@@ -19,10 +19,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
   late RecipeController recipeController;
   late TabController _tabController;
 
-  // Individual scroll controllers for each tab
-  final ScrollController _recipeScrollController = ScrollController();
-  final ScrollController _ingredientScrollController = ScrollController();
-
   @override
   bool get wantKeepAlive => true;
 
@@ -94,8 +90,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
     _quantityController.dispose();
     _ingredientQuantityController.dispose();
     _tabController.dispose();
-    _recipeScrollController.dispose();
-    _ingredientScrollController.dispose();
     super.dispose();
   }
 
@@ -146,7 +140,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
 
   Widget _buildRecipeFormContent() {
     return SingleChildScrollView(
-      controller: _recipeScrollController,
       key: const ValueKey('recipe_form_content'),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -579,7 +572,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
 
   Widget _buildIngredientsContent() {
     return SingleChildScrollView(
-      controller: _ingredientScrollController,
       key: const ValueKey('ingredients_content'),
       child: Padding(
         padding: const EdgeInsets.all(16),

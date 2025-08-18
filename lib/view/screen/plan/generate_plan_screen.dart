@@ -16,30 +16,29 @@ class GeneratePlanScreen extends StatefulWidget {
 
 class _GeneratePlanScreenState extends State<GeneratePlanScreen>
     with AutomaticKeepAliveClientMixin {
-  final ScrollController _scrollController = ScrollController();
   late PlanController planController;
 
   @override
   bool get wantKeepAlive => true;
 
-  // Method to preserve scroll position during state updates
-  void _preserveScrollAndSetState(VoidCallback fn) {
-    final scrollPosition =
-        _scrollController.hasClients ? _scrollController.offset : 0.0;
+  // // Method to preserve scroll position during state updates
+  // void _preserveScrollAndSetState(VoidCallback fn) {
+  //   final scrollPosition =
+  //       _scrollController.hasClients ? _scrollController.offset : 0.0;
 
-    setState(fn);
+  //   setState(fn);
 
-    // Restore scroll position after rebuild
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          scrollPosition,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
+  //   // // Restore scroll position after rebuild
+  //   // WidgetsBinding.instance.addPostFrameCallback((_) {
+  //   //   if (_scrollController.hasClients) {
+  //   //     _scrollController.animateTo(
+  //   //       scrollPosition,
+  //   //       duration: const Duration(milliseconds: 100),
+  //   //       curve: Curves.easeOut,
+  //   //     );
+  //   //   }
+  //   // });
+  // }
 
   // Form controllers
   final TextEditingController _ageController = TextEditingController();
@@ -49,12 +48,6 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
   final TextEditingController _durationController = TextEditingController();
   final TextEditingController _startDateController = TextEditingController();
 
-  // Dropdown values
-  String? _selectedSex;
-  String? _selectedPlan; // 'Rapid', 'Relaxed', 'Custom'
-
-  // Sex options
-
   @override
   void initState() {
     super.initState();
@@ -63,7 +56,6 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
 
   @override
   void dispose() {
-    _scrollController.dispose();
     _ageController.dispose();
     _heightController.dispose();
     _weightController.dispose();
@@ -76,39 +68,32 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
-    return GestureDetector(
-      onTap: () {
-        // Close keyboard when tapping outside
-        FocusScope.of(context).unfocus();
-      },
-      child: BaseScreenLayout(
-        currentRoute: AppRoutes.generatePlanScreen,
-        title: 'Generate Plan',
-        child: Container(
-          color: Colors.grey.shade50,
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            physics: const ClampingScrollPhysics(),
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            child: Column(
-              children: [
-                // Header Section
-                _buildHeaderSection(),
+    return BaseScreenLayout(
+      currentRoute: AppRoutes.generatePlanScreen,
+      title: 'Generate Plan',
+      child: Container(
+        color: Colors.grey.shade50,
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Column(
+            children: [
+              // Header Section
+              _buildHeaderSection(),
 
-                const SizedBox(height: 10),
+              const SizedBox(height: 10),
 
-                // Plan Details Section
-                _buildPlanDetailsSection(),
+              // Plan Details Section
+              _buildPlanDetailsSection(),
 
-                const SizedBox(height: 10),
+              const SizedBox(height: 10),
 
-                // Submit Button
-                _buildSubmitButton(),
+              // Submit Button
+              _buildSubmitButton(),
 
-                // Add bottom padding for keyboard
-                const SizedBox(height: 100),
-              ],
-            ),
+              // Add bottom padding for keyboard
+              const SizedBox(height: 100),
+            ],
           ),
         ),
       ),
@@ -337,74 +322,76 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                // Male Radio Button
-                Expanded(
-                  child: Row(
-                    children: [
-                      Radio<String>(
-                        value: 'Male',
-                        groupValue: _selectedSex,
-                        onChanged: (String? value) {
-                          setState(() {
-                            _selectedSex = value;
-                          });
-                        },
-                        activeColor: Theme.of(context).primaryColor,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedSex = 'Male';
-                          });
-                        },
-                        child: Text(
-                          'Male',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: const Color(0xFF091242),
+            child: Obx(() => Row(
+                  children: [
+                    // Male Radio Button
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Radio<String>(
+                            value: 'Male',
+                            groupValue: planController.selectedSex.value.isEmpty
+                                ? null
+                                : planController.selectedSex.value,
+                            onChanged: (String? value) {
+                              if (value != null) {
+                                planController.selectedSex.value = value;
+                              }
+                            },
+                            activeColor: Theme.of(context).primaryColor,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Female Radio Button
-                Expanded(
-                  child: Row(
-                    children: [
-                      Radio<String>(
-                        value: 'Female',
-                        groupValue: _selectedSex,
-                        onChanged: (String? value) {
-                          setState(() {
-                            _selectedSex = value;
-                          });
-                        },
-                        activeColor: Theme.of(context).primaryColor,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedSex = 'Female';
-                          });
-                        },
-                        child: Text(
-                          'Female',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: const Color(0xFF091242),
+                          GestureDetector(
+                            onTap: () {
+                              planController.selectedSex.value = 'Male';
+                            },
+                            child: Text(
+                              'Male',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: const Color(0xFF091242),
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+                    ),
+                    // Female Radio Button
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Radio<String>(
+                            value: 'Female',
+                            groupValue: planController.selectedSex.value.isEmpty
+                                ? null
+                                : planController.selectedSex.value,
+                            onChanged: (String? value) {
+                              if (value != null) {
+                                planController.selectedSex.value = value;
+                              }
+                            },
+                            activeColor: Theme.of(context).primaryColor,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              planController.selectedSex.value = 'Female';
+                            },
+                            child: Text(
+                              'Female',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: const Color(0xFF091242),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                )),
           ),
         ),
       ],
@@ -426,41 +413,41 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
         ),
 
         // Plan Cards Row
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Rapid Plan
-            Expanded(
-              child: _buildPlanCard(
-                title: 'Rapid Weight Transformation',
-                subtitle: 'Quickly transform with a focused 2-week plan.',
-                planType: 'Rapid',
-                isSelected: _selectedPlan == 'Rapid',
-              ),
-            ),
-            const SizedBox(width: 8),
-            // Relaxed Plan
-            Expanded(
-              child: _buildPlanCard(
-                title: 'Relaxed Weight Transformation',
-                subtitle:
-                    'Comprehensive transformation spread over two months.',
-                planType: 'Relaxed',
-                isSelected: _selectedPlan == 'Relaxed',
-              ),
-            ),
-            const SizedBox(width: 8),
-            // Custom Plan
-            Expanded(
-              child: _buildPlanCard(
-                title: 'Custom',
-                subtitle: 'Set your own pace with a custom duration.',
-                planType: 'Custom',
-                isSelected: _selectedPlan == 'Custom',
-              ),
-            ),
-          ],
-        ),
+        Obx(() => Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Rapid Plan
+                Expanded(
+                  child: _buildPlanCard(
+                    title: 'Rapid Weight Transformation',
+                    subtitle: 'Quickly transform with a focused 2-week plan.',
+                    planType: 'Rapid',
+                    isSelected: planController.selectedPlan.value == 'Rapid',
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Relaxed Plan
+                Expanded(
+                  child: _buildPlanCard(
+                    title: 'Relaxed Weight Transformation',
+                    subtitle:
+                        'Comprehensive transformation spread over two months.',
+                    planType: 'Relaxed',
+                    isSelected: planController.selectedPlan.value == 'Relaxed',
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Custom Plan
+                Expanded(
+                  child: _buildPlanCard(
+                    title: 'Custom',
+                    subtitle: 'Set your own pace with a custom duration.',
+                    planType: 'Custom',
+                    isSelected: planController.selectedPlan.value == 'Custom',
+                  ),
+                ),
+              ],
+            )),
       ],
     );
   }
@@ -473,35 +460,20 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
   }) {
     return GestureDetector(
       onTap: () {
-        // Store current scroll position before state change
-        final currentScrollOffset =
-            _scrollController.hasClients ? _scrollController.offset : 0.0;
-
-        setState(() {
-          _selectedPlan = planType;
-          // Set default values based on plan type
-          if (planType == 'Rapid') {
-            _durationController.text = '14';
-            _targetWeightController.clear();
-          } else if (planType == 'Relaxed') {
-            _durationController.text = '60';
-            _targetWeightController.clear();
-          } else if (planType == 'Custom') {
-            _durationController.clear();
-            _targetWeightController.clear();
-          }
-          // Set default start date to today
-          _startDateController.text = '13/08/2025';
-        });
-
-        // Restore scroll position after rebuild and animation
-        WidgetsBinding.instance.addPostFrameCallback((_) async {
-          if (_scrollController.hasClients) {
-            // Add a small delay to ensure the animation is complete
-            await Future.delayed(const Duration(milliseconds: 50));
-            _scrollController.jumpTo(currentScrollOffset);
-          }
-        });
+        planController.selectedPlan.value = planType;
+        // Set default values based on plan type
+        if (planType == 'Rapid') {
+          _durationController.text = '14';
+          _targetWeightController.clear();
+        } else if (planType == 'Relaxed') {
+          _durationController.text = '60';
+          _targetWeightController.clear();
+        } else if (planType == 'Custom') {
+          _durationController.clear();
+          _targetWeightController.clear();
+        }
+        // Set default start date to today
+        _startDateController.text = '18/08/2025';
       },
       child: Container(
         height: 100, // Fixed height for all cards
@@ -577,20 +549,20 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
           ),
         );
       },
-      child: _selectedPlan != null
+      child: Obx(() => planController.selectedPlan.value.isNotEmpty
           ? Column(
-              key: ValueKey(
-                  _selectedPlan), // Key to help AnimatedSwitcher track changes
+              key: ValueKey(planController.selectedPlan
+                  .value), // Key to help AnimatedSwitcher track changes
               children: [
                 // Target Weight Field (editable for Custom, disabled for Rapid/Relaxed)
                 _buildInputField(
                   controller: _targetWeightController,
                   labelText: 'Target Weight (in kg)',
-                  hintText: _selectedPlan == 'Custom'
+                  hintText: planController.selectedPlan.value == 'Custom'
                       ? 'Enter your target weight'
                       : 'Will be calculated automatically',
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
-                  enabled: _selectedPlan == 'Custom',
+                  enabled: planController.selectedPlan.value == 'Custom',
                 ),
 
                 const SizedBox(height: 16),
@@ -599,11 +571,11 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
                 _buildInputField(
                   controller: _durationController,
                   labelText: 'Duration (in days)',
-                  hintText: _selectedPlan == 'Custom'
+                  hintText: planController.selectedPlan.value == 'Custom'
                       ? 'Enter duration in days'
-                      : '${_selectedPlan == 'Rapid' ? '14' : '60'} days',
+                      : '${planController.selectedPlan.value == 'Rapid' ? '14' : '60'} days',
                   keyboardType: TextInputType.number,
-                  enabled: _selectedPlan == 'Custom',
+                  enabled: planController.selectedPlan.value == 'Custom',
                 ),
 
                 const SizedBox(height: 16),
@@ -612,7 +584,7 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
                 _buildDateField(),
               ],
             )
-          : const SizedBox.shrink(key: ValueKey('empty')),
+          : const SizedBox.shrink(key: ValueKey('empty'))),
     );
   }
 
@@ -681,10 +653,8 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
     );
 
     if (picked != null) {
-      setState(() {
-        _startDateController.text =
-            '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
-      });
+      _startDateController.text =
+          '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
     }
   }
 
@@ -740,7 +710,7 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
       return;
     }
 
-    if (_selectedSex == null || _selectedSex!.isEmpty) {
+    if (planController.selectedSex.value.isEmpty) {
       CustomToast.showError('Please select your sex');
       return;
     }
@@ -755,7 +725,7 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
       return;
     }
 
-    if (_selectedPlan == null || _selectedPlan!.isEmpty) {
+    if (planController.selectedPlan.value.isEmpty) {
       CustomToast.showError('Please select a transformation plan');
       return;
     }
@@ -785,7 +755,7 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
     }
 
     // Validate plan-specific fields
-    if (_selectedPlan == 'Custom') {
+    if (planController.selectedPlan.value == 'Custom') {
       if (_targetWeightController.text.trim().isEmpty) {
         CustomToast.showError(
             'Please enter your target weight for custom plan');
@@ -815,10 +785,10 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
       double targetWeight;
       int duration;
 
-      if (_selectedPlan == 'Custom') {
+      if (planController.selectedPlan.value == 'Custom') {
         targetWeight = double.parse(_targetWeightController.text.trim());
         duration = int.parse(_durationController.text.trim());
-      } else if (_selectedPlan == 'Rapid') {
+      } else if (planController.selectedPlan.value == 'Rapid') {
         duration = 14;
         // For non-custom plans, we'll use current weight as target weight
         // The backend will calculate the actual target weight
@@ -840,7 +810,8 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
       }
 
       print('Calling generatePlan API with:');
-      print('Age: $age, Sex: ${_selectedSex!.toLowerCase()}');
+      print(
+          'Age: $age, Sex: ${planController.selectedSex.value.toLowerCase()}');
       print('Height: $height, Weight: $weight');
       print('Target Weight: $targetWeight, Duration: $duration');
       print('Start Date: $formattedDate');
@@ -848,7 +819,7 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
       // Call the actual API
       final result = await planController.generatePlan(
         age: age,
-        sex: _selectedSex!.toLowerCase(),
+        sex: planController.selectedSex.value.toLowerCase(),
         height: height,
         weight: weight,
         targetWeight: targetWeight,
@@ -882,9 +853,6 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
     _targetWeightController.clear();
     _durationController.clear();
     _startDateController.clear();
-    setState(() {
-      _selectedSex = null;
-      _selectedPlan = null;
-    });
+    planController.clearFormFields();
   }
 }

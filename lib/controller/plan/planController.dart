@@ -22,6 +22,16 @@ class PlanController extends GetxController implements GetxService {
   RxString planId = ''.obs;
   RxBool isActive = false.obs;
 
+  // Observable variables for form fields to prevent UI rebuilding
+  RxString selectedSex = ''.obs;
+  RxString selectedPlan = ''.obs;
+
+  // Method to clear form fields
+  void clearFormFields() {
+    selectedSex.value = '';
+    selectedPlan.value = '';
+  }
+
   // Observable variables to store plan details data
   Rx<PlanDetailsResponse?> planDetailsResponse = Rx<PlanDetailsResponse?>(null);
   RxList<PlanData> planDataList = <PlanData>[].obs;
