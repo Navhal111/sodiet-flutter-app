@@ -31,6 +31,11 @@ class PlanController extends GetxController implements GetxService {
   Rx<DashboardSummaryResponse?> dashboardSummaryResponse =
       Rx<DashboardSummaryResponse?>(null);
 
+  // Observable variables to store activity overview data
+  RxBool isLoadingActivityOverview = false.obs;
+  Rx<ActivityOverviewResponse?> activityOverviewResponse =
+      Rx<ActivityOverviewResponse?>(null);
+
   // Raw response storage
   Map<String, dynamic>? activePlanResponse;
 
@@ -153,6 +158,44 @@ class PlanController extends GetxController implements GetxService {
     }
   }
 
+  getActivityOverview() async {
+    isLoadingActivityOverview.value = true;
+    try {
+      Response response = await authRepo.getDataSet(
+          apiName: AppConstants.GET_ACTIVITY_OVERVIEW);
+      print("Activity Overview API Response Status: ${response.statusCode}");
+      print("Activity Overview API Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        activityOverviewResponse.value =
+            ActivityOverviewResponse.fromJson(response.body);
+
+        print('Activity Overview loaded successfully');
+        return {
+          'success': true,
+          'message': 'Activity overview loaded successfully!'
+        };
+      } else {
+        print('Error loading activity overview: ${response.statusCode}');
+        activityOverviewResponse.value = null;
+        return {
+          'success': false,
+          'message': 'Failed to load activity overview'
+        };
+      }
+    } catch (e) {
+      print('Exception in getActivityOverview: $e');
+      activityOverviewResponse.value = null;
+      return {
+        'success': false,
+        'message': 'Network error. Please check your connection.'
+      };
+    } finally {
+      isLoadingActivityOverview.value = false;
+      update();
+    }
+  }
+
   deletePlan(String planId) async {
     isLoading.value = true;
     try {
@@ -196,6 +239,7 @@ class PlanController extends GetxController implements GetxService {
     final activePlanResult = await getActivePlan();
     if (activePlanResult['success'] && planId.value.isNotEmpty) {
       await getDashboardSummary();
+      await getActivityOverview();
       return await getPlanDetails(planId.value);
     } else {
       Get.offNamed(AppRoutes.generatePlanScreen);
@@ -251,6 +295,23 @@ class PlanController extends GetxController implements GetxService {
   LegacyFormat? get legacyFormat =>
       dashboardSummaryResponse.value?.summaryData.legacyFormat;
 
+  // Activity Overview Helper Methods
+  bool get hasActivityOverview => activityOverviewResponse.value != null;
+
+  ActivityOverviewChart? get activityOverviewChart =>
+      activityOverviewResponse.value?.activityOverviewChart;
+
+  List<String> get activityDates =>
+      activityOverviewResponse.value?.activityOverviewChart.dates ?? [];
+
+  List<ActivitySeriesData> get activitySeries =>
+      activityOverviewResponse.value?.activityOverviewChart.series ?? [];
+
+  // Method to refresh activity overview
+  void refreshActivityOverview() {
+    getActivityOverview();
+  }
+
   // Method to refresh dashboard summary
   void refreshDashboardSummary() {
     getDashboardSummary();
@@ -264,6 +325,7 @@ class PlanController extends GetxController implements GetxService {
     planDetailsResponse.value = null;
     planDataList.clear();
     dashboardSummaryResponse.value = null;
+    activityOverviewResponse.value = null;
     update();
   }
 

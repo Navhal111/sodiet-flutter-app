@@ -274,10 +274,10 @@ class _CourseCorrectionModeScreenState
                   correctionMode = 'PA'; // Physical Activity
                   break;
                 case 1:
-                  correctionMode = '3D'; // 3-day
+                  correctionMode = 'AC'; // 3-day
                   break;
                 case 2:
-                  correctionMode = 'AC'; // Auto Correction
+                  correctionMode = '3D'; // Auto Correction
                   break;
                 case 3:
                   correctionMode = 'IA'; // Intake and Activity mix

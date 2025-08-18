@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sodiet/constant/staticData.dart';
 import 'package:sodiet/controller/physicalActivity/physicalController.dart';
+import 'package:sodiet/controller/plan/planController.dart';
 import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
+import 'package:sodiet/view/widgets/chart/activity_overview_chart.dart';
 import 'package:sodiet/view/widgets/common/custom_toast.dart';
+import 'package:sodiet/view/widgets/common/shimmer_loading.dart';
 import 'package:sodiet/view/widgets/common/title_section_widget.dart';
 import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 
@@ -21,6 +24,7 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
   final ScrollController _scrollController = ScrollController();
   final PhysicalActivityController controller =
       Get.find<PhysicalActivityController>();
+  final PlanController planController = Get.find<PlanController>();
 
   String selectedActivity = StaticData.PHYSICAL_ACTIVITIES.keys.first;
   String selectedTime = 'Morning';
@@ -29,8 +33,6 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
   List<String> get activities => StaticData.PHYSICAL_ACTIVITIES.keys.toList();
 
   final List<String> timeOptions = ['Morning', 'Afternoon', 'Evening', 'Night'];
-
-  final List<ActivityEntry> _activityEntries = [];
 
   // Generate suggestions from first 3 records from API data
   List<Map<String, dynamic>> get suggestions {
@@ -54,6 +56,8 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
     _dateController.text = _formatDate(DateTime.now());
     // Load PA recall data
     controller.getPaRecallList();
+    // Load Activity Overview data
+    planController.getActivityOverview();
 
     // Add scroll listener for pagination
     _scrollController.addListener(_onScroll);
@@ -813,6 +817,56 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
 
               const SizedBox(height: 10),
 
+              // Activity Overview Chart
+              Obx(() {
+                if (planController.isLoadingActivityOverview.value) {
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          spreadRadius: 1,
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ShimmerChart(
+                      width: double.infinity,
+                      height: 300,
+                      title: 'Activity Overview',
+                    ),
+                  );
+                }
+
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ActivityOverviewChart(
+                    activityData: planController.activityOverviewChart,
+                    title: 'Activity Overview',
+                    titleColor: const Color(0xFF091242),
+                    titleFontSize: 22,
+                  ),
+                );
+              }),
+
+              const SizedBox(height: 10),
+
               // PA Recall List Section - Updated with pagination
               Obx(() => Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -1043,18 +1097,4 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
       ),
     );
   }
-}
-
-class ActivityEntry {
-  final String date;
-  final String activity;
-  final int duration;
-  final String time;
-
-  ActivityEntry({
-    required this.date,
-    required this.activity,
-    required this.duration,
-    required this.time,
-  });
 }
