@@ -126,11 +126,13 @@ class _NutrientTimeSeriesChartState extends State<NutrientTimeSeriesChart> {
         widget.nutrientTimeSeriesData!.nutrientTimeSeries.keys.toList();
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), // Reduced padding
+      padding: const EdgeInsets.symmetric(
+          horizontal: 12, vertical: 4), // Reduced padding
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(6), // Slightly smaller border radius
+        borderRadius:
+            BorderRadius.circular(6), // Slightly smaller border radius
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.08), // Reduced shadow opacity
@@ -146,9 +148,8 @@ class _NutrientTimeSeriesChartState extends State<NutrientTimeSeriesChart> {
                   ? nutrients.first
                   : selectedNutrient.value,
               isExpanded: true,
-              icon: Icon(Icons.keyboard_arrow_down, 
-                  color: Colors.grey.shade600, 
-                  size: 20), // Reduced icon size
+              icon: Icon(Icons.keyboard_arrow_down,
+                  color: Colors.grey.shade600, size: 20), // Reduced icon size
               items: nutrients.map((String nutrient) {
                 return DropdownMenuItem<String>(
                   value: nutrient,

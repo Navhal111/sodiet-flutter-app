@@ -595,14 +595,15 @@ class NutrientTimeSeriesResponse {
 
   factory NutrientTimeSeriesResponse.fromJson(Map<String, dynamic> json) {
     Map<String, NutrientTimeSeriesData> timeSeries = {};
-    
+
     if (json['nutrient_time_series'] != null) {
-      final timeSeriesJson = json['nutrient_time_series'] as Map<String, dynamic>;
+      final timeSeriesJson =
+          json['nutrient_time_series'] as Map<String, dynamic>;
       timeSeriesJson.forEach((key, value) {
         timeSeries[key] = NutrientTimeSeriesData.fromJson(value);
       });
     }
-    
+
     return NutrientTimeSeriesResponse(
       nutrientTimeSeries: timeSeries,
     );
@@ -613,7 +614,7 @@ class NutrientTimeSeriesResponse {
     nutrientTimeSeries.forEach((key, value) {
       timeSeriesJson[key] = value.toJson();
     });
-    
+
     return {
       'nutrient_time_series': timeSeriesJson,
     };
@@ -635,8 +636,9 @@ class NutrientTimeSeriesData {
     return NutrientTimeSeriesData(
       unit: json['unit']?.toString() ?? '',
       dates: (json['dates'] as List<dynamic>?)
-          ?.map((date) => date.toString())
-          .toList() ?? [],
+              ?.map((date) => date.toString())
+              .toList() ??
+          [],
       datasets: NutrientDatasets.fromJson(json['datasets'] ?? {}),
     );
   }
@@ -668,20 +670,25 @@ class NutrientDatasets {
   factory NutrientDatasets.fromJson(Map<String, dynamic> json) {
     return NutrientDatasets(
       breakfast: (json['Breakfast'] as List<dynamic>?)
-          ?.map((item) => (item as num).toDouble())
-          .toList() ?? [],
+              ?.map((item) => (item as num).toDouble())
+              .toList() ??
+          [],
       lunch: (json['Lunch'] as List<dynamic>?)
-          ?.map((item) => (item as num).toDouble())
-          .toList() ?? [],
+              ?.map((item) => (item as num).toDouble())
+              .toList() ??
+          [],
       dinner: (json['Dinner'] as List<dynamic>?)
-          ?.map((item) => (item as num).toDouble())
-          .toList() ?? [],
+              ?.map((item) => (item as num).toDouble())
+              .toList() ??
+          [],
       snacks: (json['Snacks'] as List<dynamic>?)
-          ?.map((item) => (item as num).toDouble())
-          .toList() ?? [],
+              ?.map((item) => (item as num).toDouble())
+              .toList() ??
+          [],
       total: (json['Total'] as List<dynamic>?)
-          ?.map((item) => (item as num).toDouble())
-          .toList() ?? [],
+              ?.map((item) => (item as num).toDouble())
+              .toList() ??
+          [],
     );
   }
 

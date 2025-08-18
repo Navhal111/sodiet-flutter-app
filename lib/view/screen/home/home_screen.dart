@@ -577,7 +577,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (homeController.isLoadingNutrientTimeSeries.value) {
                   return ShimmerChart(
                     width: double.infinity,
-                    height: 480, // Increased height to accommodate better axis labels
+                    height:
+                        480, // Increased height to accommodate better axis labels
                     title: 'Nutrient Time Series',
                   );
                 }
