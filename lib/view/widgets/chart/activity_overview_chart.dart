@@ -133,22 +133,19 @@ class ActivityOverviewChart extends StatelessWidget {
     }
   }
 
+  // Centralized activity color mapping for consistency
+  static const Map<String, Color> activityColors = {
+    'dancing': Color(0xFFE57373), // Red
+    'walking around/ strolling': Color(0xFF4FC3F7), // Light Blue
+    'walking/strolling': Color(0xFF4FC3F7), // Light Blue
+    'walking quickly': Color(0xFF2196F3), // Blue
+    'walking slowly': Color(0xFF9C27B0), // Purple
+  };
+
   Color _getActivityColor(String activityName) {
-    // Colors based on the image shown
-    switch (activityName.toLowerCase()) {
-      case 'dancing':
-        return const Color(0xFFE57373); // Red
-      case 'walking around/ strolling':
-        return const Color(0xFF4FC3F7); // Light Blue
-      case 'walking/strolling':
-        return const Color(0xFF4FC3F7); // Light Blue
-      case 'walking quickly':
-        return const Color(0xFF2196F3); // Blue
-      case 'walking slowly':
-        return const Color(0xFF9C27B0); // Purple
-      default:
-        return Colors.grey.shade400;
-    }
+    // Use centralized color mapping
+    final normalizedName = activityName.toLowerCase();
+    return activityColors[normalizedName] ?? Colors.grey.shade400;
   }
 
   Widget _buildLegendItem(String label, Color color) {
@@ -259,20 +256,18 @@ class ActivityOverviewChart extends StatelessWidget {
       return LineChartData();
     }
 
-    // Calculate stacked max (sum of all series at each point)
-    double stackedMax = 0;
-    for (int i = 0; i < activityData!.dates.length; i++) {
-      double stackSum = 0;
-      for (var series in activityData!.series) {
-        if (i < series.data.length && series.data[i] > 0) {
-          stackSum += series.data[i];
-        }
+    // Calculate individual max (highest single value, not stacked)
+    double maxValue = 0;
+    for (var series in activityData!.series) {
+      for (int i = 0; i < series.data.length; i++) {
+        // Extra safety: prevent negative values from affecting max calculation
+        double rawValue = series.data[i];
+        double value = rawValue < 0 ? 0.0 : rawValue;
+        if (value > maxValue) maxValue = value;
+        print(
+            '📈 Max calc - Activity: ${series.name}, Raw: $rawValue, Processed: $value, Current Max: $maxValue');
       }
-      if (stackSum > stackedMax) stackedMax = stackSum;
     }
-
-    // Use stacked max
-    double maxValue = stackedMax;
 
     // Round up to nearest 50 for clean scale (energy is typically lower than intake)
     maxValue = ((maxValue / 50).ceil() * 50).toDouble();
@@ -290,6 +285,7 @@ class ActivityOverviewChart extends StatelessWidget {
           );
         },
       ),
+      clipData: FlClipData.all(), // Ensure clipping at chart boundaries
       titlesData: FlTitlesData(
         show: true,
         rightTitles:
@@ -396,69 +392,62 @@ class ActivityOverviewChart extends StatelessWidget {
       return [];
     }
 
-    // Get series data organized by activity type, only include activities with data
-    Map<String, List<double>> seriesMap = {};
-    List<String> activitiesWithData = [];
+    List<LineChartBarData> charts = [];
 
+    // Create individual line charts for each activity with data
     for (var series in activityData!.series) {
       // Check if this activity has any non-zero data
       bool hasData = series.data.any((value) => value > 0);
       if (hasData) {
-        seriesMap[series.name] = series.data;
-        activitiesWithData.add(series.name);
+        print('🎯 Creating individual line for activity: ${series.name}');
+        final color = _getActivityColor(series.name);
+        print('🎨 Color for ${series.name}: $color');
+
+        charts.add(_buildIndividualLineChart(series, color));
       }
-    }
-
-    List<LineChartBarData> charts = [];
-
-    // Create stacked area charts for activities with data
-    for (int i = 0; i < activitiesWithData.length; i++) {
-      String activityType = activitiesWithData[i];
-      charts.add(_buildAreaChart(
-        _getStackedSpots(activityType, i, seriesMap, activitiesWithData),
-        _getActivityColor(activityType),
-        0.8,
-      ));
     }
 
     return charts;
   }
 
-  List<FlSpot> _getStackedSpots(String currentActivity, int stackLevel,
-      Map<String, List<double>> seriesMap, List<String> activitiesWithData) {
+  LineChartBarData _buildIndividualLineChart(
+      models.ActivitySeriesData series, Color color) {
     List<FlSpot> spots = [];
 
     for (int i = 0; i < activityData!.dates.length; i++) {
-      double cumulativeValue = 0;
-
-      // Add up all the values up to and including the current stack level
-      for (int j = 0; j <= stackLevel; j++) {
-        String activity = activitiesWithData[j];
-        if (seriesMap.containsKey(activity) &&
-            i < seriesMap[activity]!.length) {
-          cumulativeValue += seriesMap[activity]![i];
-        }
+      // Extra safety: prevent negative values - clamp to zero
+      double value = 0.0;
+      if (i < series.data.length) {
+        double rawValue = series.data[i];
+        // Double-check: ensure no negative values can pass through
+        value = rawValue < 0 ? 0.0 : rawValue;
+        print(
+            '📊 Activity: ${series.name}, Index: $i, Raw: $rawValue, Clamped: $value');
       }
-
-      spots.add(FlSpot(i.toDouble(), cumulativeValue));
+      spots.add(FlSpot(i.toDouble(), value));
     }
 
-    return spots;
-  }
-
-  LineChartBarData _buildAreaChart(
-      List<FlSpot> spots, Color color, double opacity) {
     return LineChartBarData(
       spots: spots,
       isCurved: true,
       curveSmoothness: 0.2,
       color: color,
-      barWidth: 1.5,
+      barWidth: 2.0,
       isStrokeCapRound: true,
       dotData: const FlDotData(show: false),
       belowBarData: BarAreaData(
         show: true,
-        color: color.withOpacity(opacity),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            color.withOpacity(0.6), // 60% opacity at top
+            color.withOpacity(0.1), // 10% opacity at bottom
+          ],
+        ),
+        // Ensure the gradient area respects the minimum Y boundary
+        cutOffY: 0.0,
+        applyCutOffY: true,
       ),
     );
   }

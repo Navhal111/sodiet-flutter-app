@@ -467,7 +467,20 @@ class IntakeOverviewChart extends StatelessWidget {
       barWidth: 3.0,
       isStrokeCapRound: true,
       dotData: const FlDotData(show: false),
-      // NO belowBarData - this creates individual lines, not areas
+      // Add gradient fill area below each line
+      belowBarData: BarAreaData(
+        show: true,
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.6), // More opaque at top
+            color.withOpacity(0.1), // More transparent at bottom
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        cutOffY: 0, // Ensure area doesn't go below Y=0
+        applyCutOffY: true,
+      ),
     );
   }
 
