@@ -37,6 +37,7 @@ class _DietRecallScreenState extends State<DietRecallScreen>
   late ValueNotifier<String> _editUnitNotifier;
   late ValueNotifier<String?> _editRecipeKeyNotifier;
   late ValueNotifier<String?> _editRecipeValueNotifier;
+  String? _editRecipeDescription; // Store recipe description for dynamic units
 
   var dietController = Get.find<DietController>();
 
@@ -72,11 +73,9 @@ class _DietRecallScreenState extends State<DietRecallScreen>
 
     // Add dynamic unit from selected recipe's Recipe_Description
     if (selectedRecipeKey != null) {
-      final selectedRecipe = dietController.recipeList
-          .firstWhereOrNull((recipe) => recipe.recipeCode == selectedRecipeKey);
-      if (selectedRecipe != null &&
-          selectedRecipe.recipeDescription.isNotEmpty) {
-        String dynamicUnit = selectedRecipe.recipeDescription;
+      if (_editRecipeDescription != null &&
+          _editRecipeDescription!.isNotEmpty) {
+        String dynamicUnit = _editRecipeDescription!;
         // Capitalize first letter
         dynamicUnit = dynamicUnit[0].toUpperCase() +
             dynamicUnit.substring(1).toLowerCase();
@@ -453,14 +452,37 @@ class _DietRecallScreenState extends State<DietRecallScreen>
               builder: (context) => SearchableRecipeBottomSheet(
                 title: 'Select Recipe',
                 selectedValue: selectedRecipeValue,
-                onSelected: (String? selectedValue, String? selectedCode) {
+                recipeList:
+                    dietController.recipeList, // Pass existing recipe list
+                onSelected: (String? selectedValue, String? selectedCode,
+                    String? recipeDescription) {
+                  print("🔥🔥🔥 NEW DYNAMIC UNIT LOGIC RUNNING 🔥🔥🔥");
+                  print("=== RECIPE SELECTED ===");
+                  print("Recipe Name: $selectedValue");
+                  print("Recipe Code: $selectedCode");
+                  print("Recipe Description: $recipeDescription");
+
                   selectedRecipeValueNotifier.value = selectedValue;
                   selectedRecipeKeyNotifier.value = selectedCode;
 
                   // Reset unit selection and set default based on new recipe
-                  if (selectedValue != null) {
-                    // We don't have recipe description from API search, so default to Grams
-                    selectedUnitNotifier.value = 'Grams';
+                  if (selectedValue != null && selectedCode != null) {
+                    // Use the recipeDescription directly from the selected recipe
+                    if (recipeDescription != null &&
+                        recipeDescription.isNotEmpty) {
+                      // Set unit based on recipe description
+                      String dynamicUnit = recipeDescription;
+                      dynamicUnit = dynamicUnit[0].toUpperCase() +
+                          dynamicUnit.substring(1).toLowerCase();
+                      selectedUnitNotifier.value = dynamicUnit;
+                      _editRecipeDescription = dynamicUnit;
+                      print("✅ SUCCESS: Unit set to: $dynamicUnit");
+                    } else {
+                      // Default to Grams if no description
+                      selectedUnitNotifier.value = 'Grams';
+                      print(
+                          "❌ No recipe description, using default unit: Grams");
+                    }
                   }
                 },
                 searchHint: 'Search for recipes or browse all',
@@ -931,6 +953,9 @@ class _DietRecallScreenState extends State<DietRecallScreen>
         .firstWhereOrNull((recipe) => recipe.recipeCode == entry.foodName);
     _editRecipeValueNotifier = ValueNotifier(selectedRecipe?.recipeName);
 
+    // Initialize recipe description for dynamic units
+    _editRecipeDescription = selectedRecipe?.recipeDescription;
+
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(
@@ -1245,14 +1270,33 @@ class _DietRecallScreenState extends State<DietRecallScreen>
               builder: (context) => SearchableRecipeBottomSheet(
                 title: 'Select Recipe',
                 selectedValue: selectedRecipeValue,
-                onSelected: (String? selectedValue, String? selectedCode) {
+                recipeList:
+                    dietController.recipeList, // Pass existing recipe list
+                onSelected: (String? selectedValue, String? selectedCode,
+                    String? recipeDescription) {
                   _editRecipeValueNotifier.value = selectedValue;
                   _editRecipeKeyNotifier.value = selectedCode;
-
+                  _editRecipeDescription =
+                      recipeDescription; // Store for unit options
+                  print("recipeDescription ====== : $recipeDescription");
                   // Reset unit selection and set default based on new recipe
-                  if (selectedValue != null) {
-                    // We don't have recipe description from API search, so default to Grams
-                    _editUnitNotifier.value = 'Grams';
+                  if (selectedValue != null && selectedCode != null) {
+                    // Use the recipeDescription directly from the selected recipe
+                    if (recipeDescription != null &&
+                        recipeDescription.isNotEmpty) {
+                      // Set unit based on recipe description
+                      String dynamicUnit = recipeDescription;
+                      dynamicUnit = dynamicUnit[0].toUpperCase() +
+                          dynamicUnit.substring(1).toLowerCase();
+                      _editUnitNotifier.value = dynamicUnit;
+                      print(
+                          "Edit: Unit set from recipe description: $dynamicUnit");
+                    } else {
+                      // Default to Grams if no description
+                      _editUnitNotifier.value = 'Grams';
+                      print(
+                          "Edit: No recipe description, using default unit: Grams");
+                    }
                   }
                 },
                 searchHint: 'Search for recipes or browse all',
@@ -1294,26 +1338,22 @@ class _DietRecallScreenState extends State<DietRecallScreen>
 
   // Dynamic unit options based on selected recipe for edit dialog
   List<Map<String, dynamic>> getEditUnitOptions() {
+    print("_editRecipeDescription ====== : $_editRecipeDescription");
     List<Map<String, dynamic>> units = [
       {'label': 'Grams', 'icon': 'assets/units/piece.png'}, // Static option
     ];
 
-    // Add dynamic unit from selected recipe's Recipe_Description
-    if (_editRecipeKeyNotifier.value != null) {
-      final selectedRecipe = dietController.recipeList.firstWhereOrNull(
-          (recipe) => recipe.recipeCode == _editRecipeKeyNotifier.value);
-      if (selectedRecipe != null &&
-          selectedRecipe.recipeDescription.isNotEmpty) {
-        String dynamicUnit = selectedRecipe.recipeDescription;
-        // Capitalize first letter
-        dynamicUnit = dynamicUnit[0].toUpperCase() +
-            dynamicUnit.substring(1).toLowerCase();
+    // Use stored recipe description instead of searching local list
+    if (_editRecipeDescription != null && _editRecipeDescription!.isNotEmpty) {
+      String dynamicUnit = _editRecipeDescription!;
+      // Capitalize first letter
+      dynamicUnit =
+          dynamicUnit[0].toUpperCase() + dynamicUnit.substring(1).toLowerCase();
 
-        units.insert(0, {
-          'label': dynamicUnit,
-          'icon': 'assets/units/cup.png', // You can change this icon as needed
-        });
-      }
+      units.insert(0, {
+        'label': dynamicUnit,
+        'icon': 'assets/units/cup.png', // You can change this icon as needed
+      });
     }
 
     return units;
@@ -1329,7 +1369,7 @@ class _DietRecallScreenState extends State<DietRecallScreen>
           builder: (context, selectedRecipeKey, child) {
             final currentUnitOptions =
                 getEditUnitOptions(); // Get dynamic options
-
+            print("===============getEditUnitOptions ${currentUnitOptions}");
             // Ensure selected unit is valid for current options
             if (!currentUnitOptions
                 .any((unit) => unit['label'] == selectedUnit)) {

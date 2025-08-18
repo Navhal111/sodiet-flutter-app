@@ -258,78 +258,14 @@ class _PlanScreenState extends State<PlanScreen> {
     return [];
   }
 
-  // Method to get chart weight data (copied from home controller logic)
+  // Method to get chart weight data (using controller method)
   List<WeightData> _getChartWeightData() {
-    if (!planController.hasDashboardSummary ||
-        planController.dailyDataList.isEmpty) {
-      return [];
-    }
-
-    return planController.dailyDataList.map((dailyData) {
-      return WeightData(
-        day: int.tryParse(dailyData.day) ?? 0,
-        projectedWeightKg: dailyData.projectedWeight,
-        loggedWeightKg: dailyData.loggedWeight,
-        targetIntakeKcal: dailyData.targetIntake,
-        targetExpenditureKcal: dailyData.targetExpenditure,
-        actualIntakeKcal: dailyData.actualIntake,
-        actualExpenditureKcal: dailyData.actualExpenditure,
-        ccIntakeKcal: dailyData.ccIntake,
-        ccExpenditureKcal: dailyData.ccExpenditure,
-      );
-    }).toList();
+    return planController.getChartWeightData();
   }
 
-  // Method to get chart data ranges (copied from home controller logic)
+  // Method to get chart data ranges (using controller method)
   Map<String, double> _getChartDataRanges() {
-    if (!planController.hasDashboardSummary ||
-        planController.dailyDataList.isEmpty) {
-      return {
-        'minIntake': 1500.0,
-        'maxIntake': 2500.0,
-        'minWeight': 60.0,
-        'maxWeight': 80.0,
-      };
-    }
-
-    final intakeValues = planController.dailyDataList
-        .where((data) => data.targetIntake > 0)
-        .map((data) => data.targetIntake)
-        .toList();
-
-    final weightValues = <double>[];
-    for (var data in planController.dailyDataList) {
-      if (data.loggedWeight != null && data.loggedWeight! > 0) {
-        weightValues.add(data.loggedWeight!);
-      }
-      if (data.projectedWeight > 0) {
-        weightValues.add(data.projectedWeight);
-      }
-    }
-
-    double minIntake = intakeValues.isNotEmpty
-        ? intakeValues.reduce((a, b) => a < b ? a : b)
-        : 1500.0;
-    double maxIntake = intakeValues.isNotEmpty
-        ? intakeValues.reduce((a, b) => a > b ? a : b)
-        : 2500.0;
-    double minWeight = weightValues.isNotEmpty
-        ? weightValues.reduce((a, b) => a < b ? a : b)
-        : 60.0;
-    double maxWeight = weightValues.isNotEmpty
-        ? weightValues.reduce((a, b) => a > b ? a : b)
-        : 80.0;
-
-    // Add some padding to the ranges
-    double intakeRange = maxIntake - minIntake;
-    double weightRange = maxWeight - minWeight;
-
-    return {
-      'minIntake': minIntake - (intakeRange * 0.1),
-      'maxIntake': maxIntake + (intakeRange * 0.1),
-      'minWeight': minWeight - (weightRange * 0.1),
-      'maxWeight': maxWeight + (weightRange * 0.1),
-    };
+    return planController.getChartDataRanges();
   }
 
   @override

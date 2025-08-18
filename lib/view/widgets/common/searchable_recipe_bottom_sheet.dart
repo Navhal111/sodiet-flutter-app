@@ -9,9 +9,10 @@ import '../../widgets/app_text.dart';
 class SearchableRecipeBottomSheet extends StatefulWidget {
   final String title;
   final String? selectedValue;
-  final Function(String?, String?)
-      onSelected; // Returns (recipeName, recipeCode)
+  final Function(String?, String?, String?)
+      onSelected; // Returns (recipeName, recipeCode, recipeDescription)
   final String searchHint;
+  final List<Recipe>? recipeList; // Optional pre-loaded recipe list
 
   const SearchableRecipeBottomSheet({
     Key? key,
@@ -19,6 +20,7 @@ class SearchableRecipeBottomSheet extends StatefulWidget {
     this.selectedValue,
     required this.onSelected,
     this.searchHint = 'Search recipes...',
+    this.recipeList, // Add optional recipe list parameter
   }) : super(key: key);
 
   @override
@@ -45,6 +47,7 @@ class _SearchableRecipeBottomSheetState
 
   @override
   void dispose() {
+    _debounceTimer?.cancel(); // Cancel timer to prevent setState after dispose
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
@@ -65,7 +68,9 @@ class _SearchableRecipeBottomSheetState
     // Only search if term has at least 2 characters
     if (searchTerm.length >= 2) {
       _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-        _searchRecipes(searchTerm);
+        if (mounted) {
+          _searchRecipes(searchTerm);
+        }
       });
     }
   }
@@ -73,23 +78,37 @@ class _SearchableRecipeBottomSheetState
   Timer? _debounceTimer;
 
   Future<void> _loadDefaultRecipes() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
     });
 
     try {
+      // Use local recipe list if provided, otherwise call API
+      if (widget.recipeList != null) {
+        if (!mounted) return;
+        setState(() {
+          _searchResults = widget.recipeList!;
+          _hasSearched = true;
+          _isLoading = false;
+        });
+        return;
+      }
+
       // Call API without search_term to get default list
       final url = "${AppConstants.GET_RECIPES_SEARCH}/?page=1&page_size=50";
       final response = await _authRepo.getDataSet(apiName: url);
 
       if (response.statusCode == 200) {
         final recipeResponse = RecipeResponse.fromJson(response.body);
+        if (!mounted) return;
         setState(() {
           _searchResults = recipeResponse.recipes;
           _hasSearched = true;
           _isLoading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() {
           _searchResults.clear();
           _hasSearched = true;
@@ -98,6 +117,7 @@ class _SearchableRecipeBottomSheetState
       }
     } catch (e) {
       print("Error loading default recipes: $e");
+      if (!mounted) return;
       setState(() {
         _searchResults.clear();
         _hasSearched = true;
@@ -109,23 +129,27 @@ class _SearchableRecipeBottomSheetState
   Future<void> _searchRecipes(String searchTerm) async {
     if (searchTerm.isEmpty) return;
 
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
     });
 
     try {
+      // Always call API for search - don't do local filtering on 40,000+ recipes
       final url =
           "${AppConstants.GET_RECIPES_SEARCH}/?search_term=$searchTerm&page=1&page_size=50";
       final response = await _authRepo.getDataSet(apiName: url);
 
       if (response.statusCode == 200) {
         final recipeResponse = RecipeResponse.fromJson(response.body);
+        if (!mounted) return;
         setState(() {
           _searchResults = recipeResponse.recipes;
           _hasSearched = true;
           _isLoading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() {
           _searchResults.clear();
           _hasSearched = true;
@@ -134,6 +158,7 @@ class _SearchableRecipeBottomSheetState
       }
     } catch (e) {
       print("Error searching recipes: $e");
+      if (!mounted) return;
       setState(() {
         _searchResults.clear();
         _hasSearched = true;
@@ -252,7 +277,7 @@ class _SearchableRecipeBottomSheetState
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () {
-                    widget.onSelected(null, null);
+                    widget.onSelected(null, null, null);
                     Navigator.of(context).pop();
                   },
                   style: OutlinedButton.styleFrom(
@@ -373,7 +398,8 @@ class _SearchableRecipeBottomSheetState
                 )
               : null,
           onTap: () {
-            widget.onSelected(recipe.recipeName, recipe.recipeCode);
+            widget.onSelected(
+                recipe.recipeName, recipe.recipeCode, recipe.recipeDescription);
             Navigator.of(context).pop();
           },
         );
@@ -385,7 +411,7 @@ class _SearchableRecipeBottomSheetState
     required BuildContext context,
     required String title,
     String? selectedValue,
-    required Function(String?, String?) onSelected,
+    required Function(String?, String?, String?) onSelected,
     String searchHint = 'Search recipes...',
   }) {
     showModalBottomSheet(

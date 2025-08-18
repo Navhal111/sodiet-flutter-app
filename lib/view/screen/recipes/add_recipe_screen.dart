@@ -15,20 +15,16 @@ class AddRecipeScreen extends StatefulWidget {
 }
 
 class _AddRecipeScreenState extends State<AddRecipeScreen>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   late RecipeController recipeController;
-  int _currentPage = 0;
+  late TabController _tabController;
 
-  // Main scroll controller for the entire screen
-  final ScrollController _mainScrollController = ScrollController();
+  // Individual scroll controllers for each tab
+  final ScrollController _recipeScrollController = ScrollController();
+  final ScrollController _ingredientScrollController = ScrollController();
 
   @override
   bool get wantKeepAlive => true;
-
-  // Method to update state without triggering rebuilds for dropdowns
-  void _updateState(VoidCallback fn) {
-    fn(); // Just execute the function, no setState for dropdowns
-  }
 
   // Form controllers
   final TextEditingController _recipeNameController = TextEditingController();
@@ -79,6 +75,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     recipeController = Get.find<RecipeController>();
     // Load food categories and ingredients when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -96,14 +93,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
     _portionWeightController.dispose();
     _quantityController.dispose();
     _ingredientQuantityController.dispose();
-    _mainScrollController.dispose();
+    _tabController.dispose();
+    _recipeScrollController.dispose();
+    _ingredientScrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
-    print("Building AddRecipeScreen, current page: $_currentPage");
     return GestureDetector(
       onTap: () {
         // Close keyboard when tapping outside
@@ -113,32 +111,33 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
         currentRoute: AppRoutes.addRecipeScreen,
         child: Container(
           color: Colors.grey.shade50,
-          child: SingleChildScrollView(
-            controller: _mainScrollController,
-            physics: const ClampingScrollPhysics(),
-            child: Column(
-              key: const ValueKey('main_content_column'),
-              children: [
-                // Image Upload Section at the top
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: _buildImageUploadSection(),
+          child: Column(
+            children: [
+              // Image Upload Section at the top
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: _buildImageUploadSection(),
+              ),
+
+              // Tab Buttons
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _buildTabButtons(),
+              ),
+
+              const SizedBox(height: 24),
+
+              // TabBarView for content - maintains state and prevents rebuilds
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildRecipeFormContent(),
+                    _buildIngredientsContent(),
+                  ],
                 ),
-
-                // Tab Buttons
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _buildTabButtons(),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Main content - now directly rendered instead of IndexedStack
-                _currentPage == 0
-                    ? _buildRecipeFormContent()
-                    : _buildIngredientsContent(),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -146,26 +145,30 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
   } // Close build method
 
   Widget _buildRecipeFormContent() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Form Title
-          SemiBoldText(
-            'Provide Recipe information',
-            fontSize: 16,
-            textColor: Color(0xFF091242),
-          ),
+    return SingleChildScrollView(
+      controller: _recipeScrollController,
+      key: const ValueKey('recipe_form_content'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Form Title
+            SemiBoldText(
+              'Provide Recipe information',
+              fontSize: 16,
+              textColor: Color(0xFF091242),
+            ),
 
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          // Basic Information Section
-          _buildBasicInformationSection(),
+            // Basic Information Section
+            _buildBasicInformationSection(),
 
-          // Add bottom padding for keyboard
-          const SizedBox(height: 100),
-        ],
+            // Add bottom padding for keyboard
+            const SizedBox(height: 100),
+          ],
+        ),
       ),
     );
   }
@@ -243,20 +246,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
           Expanded(
             child: GestureDetector(
               onTap: () {
-                print("Recipe Form tab clicked, current page: $_currentPage");
-                setState(() {
-                  _currentPage = 0;
-                });
+                _tabController.animateTo(0);
               },
               child: Container(
                 margin: const EdgeInsets.all(4),
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: _currentPage == 0
+                  color: _tabController.index == 0
                       ? Theme.of(context).primaryColor.withOpacity(0.3)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(6),
-                  border: _currentPage == 0
+                  border: _tabController.index == 0
                       ? Border.all(
                           color: Theme.of(context).primaryColorDark,
                           width: 1,
@@ -264,12 +264,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
                       : null,
                 ),
                 child: Center(
-                  child: SemiBoldText(
-                    'Recipe Form',
-                    fontSize: 14,
-                    textColor: _currentPage == 0
-                        ? Theme.of(context).primaryColorDark
-                        : Colors.grey.shade600,
+                  child: AnimatedBuilder(
+                    animation: _tabController,
+                    builder: (context, child) {
+                      return SemiBoldText(
+                        'Recipe Form',
+                        fontSize: 14,
+                        textColor: _tabController.index == 0
+                            ? Theme.of(context).primaryColorDark
+                            : Colors.grey.shade600,
+                      );
+                    },
                   ),
                 ),
               ),
@@ -278,20 +283,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
           Expanded(
             child: GestureDetector(
               onTap: () {
-                print("Ingredients tab clicked, current page: $_currentPage");
-                setState(() {
-                  _currentPage = 1;
-                });
+                _tabController.animateTo(1);
               },
               child: Container(
                 margin: const EdgeInsets.all(4),
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: _currentPage == 1
+                  color: _tabController.index == 1
                       ? Theme.of(context).primaryColor.withOpacity(0.3)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(6),
-                  border: _currentPage == 1
+                  border: _tabController.index == 1
                       ? Border.all(
                           color: Theme.of(context).primaryColorDark,
                           width: 1,
@@ -299,12 +301,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
                       : null,
                 ),
                 child: Center(
-                  child: SemiBoldText(
-                    'Ingredients',
-                    fontSize: 14,
-                    textColor: _currentPage == 1
-                        ? Theme.of(context).primaryColorDark
-                        : Colors.grey.shade600,
+                  child: AnimatedBuilder(
+                    animation: _tabController,
+                    builder: (context, child) {
+                      return SemiBoldText(
+                        'Ingredients',
+                        fontSize: 14,
+                        textColor: _tabController.index == 1
+                            ? Theme.of(context).primaryColorDark
+                            : Colors.grey.shade600,
+                      );
+                    },
                   ),
                 ),
               ),
@@ -408,8 +415,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
                   items: categories.map((e) => e.category).toList(),
                   onChanged: (value) async {
                     if (value != _selectedCategory) {
-                      _selectedCategory = value;
-                      _selectedSubcategory = null; // Reset subcategory
+                      setState(() {
+                        _selectedCategory = value;
+                        _selectedSubcategory = null; // Reset subcategory
+                      });
                       if (value != null) {
                         // Find the code for the selected category
                         final categoryCode = categories
@@ -437,7 +446,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
                       : [],
                   onChanged: (value) {
                     if (value != _selectedSubcategory) {
-                      _selectedSubcategory = value;
+                      setState(() {
+                        _selectedSubcategory = value;
+                      });
                     }
                   },
                   searchHint: 'Search subcategories...',
@@ -460,7 +471,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
                 hint: 'Description',
                 items: _descriptionOptions,
                 onChanged: (value) {
-                  _selectedDescription = value;
+                  setState(() {
+                    _selectedDescription = value;
+                  });
                 },
                 searchHint: 'Select description...',
               ),
@@ -565,31 +578,35 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
   }
 
   Widget _buildIngredientsContent() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Page Title
-          SemiBoldText(
-            'Add Recipe Ingredients',
-            fontSize: 16,
-            textColor: Color(0xFF091242),
-          ),
+    return SingleChildScrollView(
+      controller: _ingredientScrollController,
+      key: const ValueKey('ingredients_content'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Page Title
+            SemiBoldText(
+              'Add Recipe Ingredients',
+              fontSize: 16,
+              textColor: Color(0xFF091242),
+            ),
 
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          // Ingredients Form Section
-          _buildIngredientsFormSection(),
+            // Ingredients Form Section
+            _buildIngredientsFormSection(),
 
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-          // Ingredients List Section
-          _buildIngredientsListSection(),
+            // Ingredients List Section
+            _buildIngredientsListSection(),
 
-          // Add bottom padding for keyboard
-          const SizedBox(height: 100),
-        ],
+            // Add bottom padding for keyboard
+            const SizedBox(height: 100),
+          ],
+        ),
       ),
     );
   }
@@ -1053,7 +1070,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
                 ),
               ),
               child: RegularText(
-                'Add to recipe',
+                'Add ingredients',
                 fontSize: 16,
                 textColor: Colors.white,
               ),

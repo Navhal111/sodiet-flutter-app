@@ -763,7 +763,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 right: 0,
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      const EdgeInsets.symmetric(horizontal: 80, vertical: 16),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     boxShadow: [
@@ -776,80 +776,91 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     ],
                   ),
                   child: SafeArea(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Minus button
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              if (servingMultiplier > 0.5) {
-                                servingMultiplier -= 0.5;
-                              }
-                            });
-                          },
-                          child: Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFF4E6),
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color: const Color(0xFFFF9500),
-                                width: 2,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 10),
+                      decoration: BoxDecoration(
+                        color:
+                            const Color(0xFFFFF4E6), // Light orange background
+                        borderRadius: BorderRadius.circular(40),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Minus button
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                if (servingMultiplier > 0.1) {
+                                  servingMultiplier -= 0.1;
+                                  // Round to avoid floating point precision issues
+                                  servingMultiplier = double.parse(
+                                      servingMultiplier.toStringAsFixed(1));
+                                }
+                              });
+                            },
+                            child: Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: Colors.white, // White inner circle
+                                borderRadius: BorderRadius.circular(25),
+                                border: Border.all(
+                                  color:
+                                      const Color(0xFFFF9500), // Orange border
+                                  width: 3,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.remove,
+                                size: 24,
+                                color: Color(0xFFFF9500),
                               ),
                             ),
-                            child: const Icon(
-                              Icons.remove,
-                              size: 28,
-                              color: Color(0xFFFF9500),
+                          ),
+
+                          // Spacing and serving count display
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 30),
+                            child: SemiBoldText(
+                              '${servingMultiplier.toStringAsFixed(1)}',
+                              fontSize: 24,
+                              textColor: const Color(0xFFFF9500),
                             ),
                           ),
-                        ),
 
-                        const SizedBox(width: 60),
-
-                        // Serving count display
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 10,
-                          ),
-                          child: SemiBoldText(
-                            '${servingMultiplier.toStringAsFixed(servingMultiplier % 1 == 0 ? 0 : 1)}',
-                            fontSize: 28,
-                            textColor: const Color(0xFFFF9500),
-                          ),
-                        ),
-
-                        const SizedBox(width: 60),
-
-                        // Plus button
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              servingMultiplier += 0.5;
-                            });
-                          },
-                          child: Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFF4E6),
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color: const Color(0xFFFF9500),
-                                width: 2,
+                          // Plus button
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                servingMultiplier += 0.1;
+                                // Round to avoid floating point precision issues
+                                servingMultiplier = double.parse(
+                                    servingMultiplier.toStringAsFixed(1));
+                              });
+                            },
+                            child: Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: Colors.white, // White inner circle
+                                borderRadius: BorderRadius.circular(25),
+                                border: Border.all(
+                                  color:
+                                      const Color(0xFFFF9500), // Orange border
+                                  width: 3,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.add,
+                                size: 24,
+                                color: Color(0xFFFF9500),
                               ),
                             ),
-                            child: const Icon(
-                              Icons.add,
-                              size: 28,
-                              color: Color(0xFFFF9500),
-                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

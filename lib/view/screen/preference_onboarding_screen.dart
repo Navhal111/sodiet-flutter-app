@@ -139,7 +139,8 @@ class _PreferenceOnboardingScreenState
                                             ? null
                                             : controller.selectedFoodName.value,
                                         onSelected: (String? selectedValue,
-                                            String? selectedCode) {
+                                            String? selectedCode,
+                                            String? recipeDescription) {
                                           controller.selectedFoodName.value =
                                               selectedValue ?? '';
                                           // Note: We don't need selectedCode for preferences, just the name

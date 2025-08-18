@@ -96,7 +96,8 @@ class _CombinationFormWidgetState extends State<CombinationFormWidget> {
                     title: 'Select Food',
                     selectedValue:
                         _selectedFood.isNotEmpty ? _selectedFood : null,
-                    onSelected: (String? selectedValue, String? selectedCode) {
+                    onSelected: (String? selectedValue, String? selectedCode,
+                        String? recipeDescription) {
                       setState(() {
                         _selectedFood = selectedValue ?? '';
                       });
