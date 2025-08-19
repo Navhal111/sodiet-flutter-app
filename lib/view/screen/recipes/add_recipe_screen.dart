@@ -5,6 +5,7 @@ import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/common/custom_toast.dart';
 import 'package:sodiet/view/widgets/common/searchable_bottom_sheet.dart';
+import 'package:sodiet/view/widgets/common/searchable_ingredient_bottom_sheet.dart';
 import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 
 class AddRecipeScreen extends StatefulWidget {
@@ -652,7 +653,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       List<Map<String, dynamic>> tableData =
           recipeController.addedIngredients.map((ingredient) {
         return {
-          'ingredient': ingredient['name'],
+          'ingredient': ingredient['foodCode'] ?? '',
+          'foodCode': ingredient['foodCode'] ?? '',
           'quantity': double.tryParse(ingredient['quantity'].toString()) ?? 0.0,
           'unit': ingredient['unit'],
         };
@@ -690,7 +692,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       if (result['success'] == true) {
         CustomToast.showSuccess(
             result['message'] ?? 'Recipe submitted successfully');
-        Navigator.of(context).pop();
+        Get.offNamed(AppRoutes.recipesScreen);
       } else {
         CustomToast.showError(result['message'] ?? 'Failed to submit recipe');
       }
@@ -719,6 +721,57 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             selectedValue: value,
             onSelected: onChanged,
             searchHint: searchHint ?? 'Search $hint...',
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              value ?? hint,
+              style: TextStyle(
+                color: value != null
+                    ? const Color(0xFF091242)
+                    : Colors.grey.shade600,
+                fontSize: 14,
+              ),
+            ),
+            Icon(
+              Icons.keyboard_arrow_down,
+              color: Colors.grey.shade600,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIngredientDropdownField({
+    required String? value,
+    required String hint,
+    required Function(String?, String?)
+        onChanged, // Returns (foodName, foodCode)
+    String? searchHint,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => SearchableIngredientBottomSheet(
+            title: hint,
+            selectedValue: value,
+            onSelected: onChanged,
+            searchHint: searchHint ?? 'Search $hint...',
+            ingredientList:
+                recipeController.ingredientListResponse.value?.ingredients,
           ),
         );
       },
@@ -915,7 +968,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           // Ingredient Name Dropdown
           Obx(() {
             final isLoading = recipeController.isLoadingIngredientList.value;
-            final ingredientNames = recipeController.ingredientNamesList;
 
             return Column(
               children: [
@@ -944,16 +996,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     ),
                   )
                 else
-                  _buildDropdownField(
+                  _buildIngredientDropdownField(
                     value: recipeController.selectedIngredient.value.isEmpty
                         ? null
                         : recipeController.selectedIngredient.value,
                     hint: 'Ingredient Name',
-                    items: ingredientNames,
-                    onChanged: (value) {
-                      print(
-                          "recipeController.selectedIngredient.value ================= ${value}");
-                      recipeController.selectedIngredient.value = value ?? '';
+                    onChanged: (foodName, foodCode) {
+                      print("Selected ingredient: $foodName, Code: $foodCode");
+                      recipeController.selectedIngredient.value =
+                          foodName ?? '';
+                      recipeController.selectedIngredientCode.value =
+                          foodCode ?? '';
                     },
                     searchHint: 'Search ingredients...',
                   ),
@@ -1247,12 +1300,14 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
     recipeController.addedIngredients.add({
       'name': recipeController.selectedIngredient.value,
+      'foodCode': recipeController.selectedIngredientCode.value,
       'quantity': _ingredientQuantityController.text.trim(),
       'unit': recipeController.selectedUnit.value,
     });
 
     // Clear form
     recipeController.selectedIngredient.value = '';
+    recipeController.selectedIngredientCode.value = '';
     _ingredientQuantityController.clear();
     recipeController.selectedUnit.value = '';
 
