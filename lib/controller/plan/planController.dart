@@ -365,7 +365,7 @@ class PlanController extends GetxController implements GetxService {
           "sleep": 0,
           "school": 0,
           "WSA": 0,
-          "PALText": "string",
+          "PALText": "",
           "DeltaPALText": ""
         }
       };

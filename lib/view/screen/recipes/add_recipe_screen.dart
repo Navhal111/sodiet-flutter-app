@@ -14,29 +14,19 @@ class AddRecipeScreen extends StatefulWidget {
   State<AddRecipeScreen> createState() => _AddRecipeScreenState();
 }
 
-class _AddRecipeScreenState extends State<AddRecipeScreen>
-    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
+class _AddRecipeScreenState extends State<AddRecipeScreen> {
   late RecipeController recipeController;
-  late TabController _tabController;
-
-  @override
-  bool get wantKeepAlive => true;
 
   // Form controllers
   final TextEditingController _recipeNameController = TextEditingController();
   final TextEditingController _cookingTimeController = TextEditingController();
-
   final TextEditingController _tagsController = TextEditingController();
   final TextEditingController _portionController = TextEditingController();
-
   final TextEditingController _portionWeightController =
       TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
-
-  // Dropdown values
-  String? _selectedCategory;
-  String? _selectedSubcategory;
-  String? _selectedDescription = 'select';
+  final TextEditingController _ingredientQuantityController =
+      TextEditingController();
 
   // Description dropdown options for Additional Details
   final List<String> _descriptionOptions = [
@@ -51,27 +41,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
     'bowl',
   ];
 
-  // Ingredients form
-  String? _selectedIngredient;
-  String? _selectedUnit;
-  final TextEditingController _ingredientQuantityController =
-      TextEditingController();
-
-  List<Map<String, dynamic>> _addedIngredients = [];
-
-  // Recipe Attributes
-  List<String> _selectedRegionalCuisine = [];
-  List<String> _selectedMealTime = [];
-  List<String> _selectedDietaryPreference = [];
-  List<String> _selectedOtherAttributes = [];
-
-  // Image
-  String? _selectedImage;
-
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     recipeController = Get.find<RecipeController>();
     // Load food categories and ingredients when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -89,22 +61,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
     _portionWeightController.dispose();
     _quantityController.dispose();
     _ingredientQuantityController.dispose();
-    _tabController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Required for AutomaticKeepAliveClientMixin
-    return GestureDetector(
-      onTap: () {
-        // Close keyboard when tapping outside
-        FocusScope.of(context).unfocus();
-      },
-      child: BaseScreenLayout(
-        currentRoute: AppRoutes.addRecipeScreen,
-        child: Container(
-          color: Colors.grey.shade50,
+    return BaseScreenLayout(
+      currentRoute: AppRoutes.addRecipeScreen,
+      child: Container(
+        color: Colors.grey.shade50,
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
               // Image Upload Section at the top
@@ -121,21 +88,20 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
 
               const SizedBox(height: 24),
 
-              // TabBarView for content - maintains state and prevents rebuilds
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildRecipeFormContent(),
-                    _buildIngredientsContent(),
-                  ],
-                ),
-              ),
+              // Tab Content based on selected tab
+              Obx(() {
+                return recipeController.currentTabIndex.value == 0
+                    ? _buildRecipeFormContent()
+                    : _buildIngredientsContent();
+              }),
+
+              // Add bottom padding for keyboard
+              const SizedBox(height: 100),
             ],
           ),
         ),
       ),
-    ); // Close GestureDetector
+    );
   } // Close build method
 
   Widget _buildRecipeFormContent() {
@@ -175,7 +141,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[300]!),
       ),
-      child: _selectedImage != null
+      child: Obx(() => recipeController.selectedImage.value.isNotEmpty
           ? ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Container(
@@ -224,7 +190,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
                   ],
                 ),
               ),
-            ),
+            )),
     );
   }
 
@@ -234,84 +200,74 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
         color: Colors.grey.shade200,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                _tabController.animateTo(0);
-              },
-              child: Container(
-                margin: const EdgeInsets.all(4),
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: _tabController.index == 0
-                      ? Theme.of(context).primaryColor.withOpacity(0.3)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(6),
-                  border: _tabController.index == 0
-                      ? Border.all(
-                          color: Theme.of(context).primaryColorDark,
-                          width: 1,
-                        )
-                      : null,
-                ),
-                child: Center(
-                  child: AnimatedBuilder(
-                    animation: _tabController,
-                    builder: (context, child) {
-                      return SemiBoldText(
+      child: Obx(() => Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    recipeController.currentTabIndex.value = 0;
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(4),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: recipeController.currentTabIndex.value == 0
+                          ? Theme.of(context).primaryColor.withOpacity(0.3)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(6),
+                      border: recipeController.currentTabIndex.value == 0
+                          ? Border.all(
+                              color: Theme.of(context).primaryColorDark,
+                              width: 1,
+                            )
+                          : null,
+                    ),
+                    child: Center(
+                      child: SemiBoldText(
                         'Recipe Form',
                         fontSize: 14,
-                        textColor: _tabController.index == 0
+                        textColor: recipeController.currentTabIndex.value == 0
                             ? Theme.of(context).primaryColorDark
                             : Colors.grey.shade600,
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                _tabController.animateTo(1);
-              },
-              child: Container(
-                margin: const EdgeInsets.all(4),
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: _tabController.index == 1
-                      ? Theme.of(context).primaryColor.withOpacity(0.3)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(6),
-                  border: _tabController.index == 1
-                      ? Border.all(
-                          color: Theme.of(context).primaryColorDark,
-                          width: 1,
-                        )
-                      : null,
-                ),
-                child: Center(
-                  child: AnimatedBuilder(
-                    animation: _tabController,
-                    builder: (context, child) {
-                      return SemiBoldText(
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    recipeController.currentTabIndex.value = 1;
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(4),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: recipeController.currentTabIndex.value == 1
+                          ? Theme.of(context).primaryColor.withOpacity(0.3)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(6),
+                      border: recipeController.currentTabIndex.value == 1
+                          ? Border.all(
+                              color: Theme.of(context).primaryColorDark,
+                              width: 1,
+                            )
+                          : null,
+                    ),
+                    child: Center(
+                      child: SemiBoldText(
                         'Ingredients',
                         fontSize: 14,
-                        textColor: _tabController.index == 1
+                        textColor: recipeController.currentTabIndex.value == 1
                             ? Theme.of(context).primaryColorDark
                             : Colors.grey.shade600,
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
+            ],
+          )),
     );
   }
 
@@ -403,15 +359,16 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
               Obx(() {
                 final categories = recipeController.foodCategoriesList;
                 return _buildDropdownField(
-                  value: _selectedCategory,
+                  value: recipeController.selectedCategory.value.isEmpty
+                      ? null
+                      : recipeController.selectedCategory.value,
                   hint: 'Code Co-occurrence',
                   items: categories.map((e) => e.category).toList(),
                   onChanged: (value) async {
-                    if (value != _selectedCategory) {
-                      setState(() {
-                        _selectedCategory = value;
-                        _selectedSubcategory = null; // Reset subcategory
-                      });
+                    if (value != recipeController.selectedCategory.value) {
+                      recipeController.selectedCategory.value = value ?? '';
+                      recipeController.selectedSubcategory.value =
+                          ''; // Reset subcategory
                       if (value != null) {
                         // Find the code for the selected category
                         final categoryCode = categories
@@ -432,16 +389,16 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
               Obx(() {
                 final subcategories = recipeController.foodSubcategoriesList;
                 return _buildDropdownField(
-                  value: _selectedSubcategory,
+                  value: recipeController.selectedSubcategory.value.isEmpty
+                      ? null
+                      : recipeController.selectedSubcategory.value,
                   hint: 'Subcategories',
-                  items: _selectedCategory != null
+                  items: recipeController.selectedCategory.value.isNotEmpty
                       ? subcategories.map((e) => e.subCategory).toList()
                       : [],
                   onChanged: (value) {
-                    if (value != _selectedSubcategory) {
-                      setState(() {
-                        _selectedSubcategory = value;
-                      });
+                    if (value != recipeController.selectedSubcategory.value) {
+                      recipeController.selectedSubcategory.value = value ?? '';
                     }
                   },
                   searchHint: 'Search subcategories...',
@@ -459,17 +416,16 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
               const SizedBox(height: 16),
 
               // Description Field
-              _buildDropdownField(
-                value: _selectedDescription,
-                hint: 'Description',
-                items: _descriptionOptions,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedDescription = value;
-                  });
-                },
-                searchHint: 'Select description...',
-              ),
+              Obx(() => _buildDropdownField(
+                    value: recipeController.selectedDescription.value,
+                    hint: 'Description',
+                    items: _descriptionOptions,
+                    onChanged: (value) {
+                      recipeController.selectedDescription.value =
+                          value ?? 'select';
+                    },
+                    searchHint: 'Select description...',
+                  )),
 
               const SizedBox(height: 16),
 
@@ -607,9 +563,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
     try {
       // Image picker functionality to be implemented
       // For now, just simulate image selection
-      setState(() {
-        _selectedImage = "placeholder_image_path";
-      });
+      recipeController.selectedImage.value = "placeholder_image_path";
       CustomToast.showSuccess("Image picker functionality to be implemented");
     } catch (e) {
       CustomToast.showError('Failed to pick image: $e');
@@ -630,17 +584,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
       return;
     }
 
-    if (_selectedCategory == null || _selectedCategory!.isEmpty) {
+    if (recipeController.selectedCategory.value.isEmpty) {
       CustomToast.showError('Please select a category');
       return;
     }
 
-    if (_selectedSubcategory == null || _selectedSubcategory!.isEmpty) {
+    if (recipeController.selectedSubcategory.value.isEmpty) {
       CustomToast.showError('Please select a subcategory');
       return;
     }
 
-    if (_addedIngredients.isEmpty) {
+    if (recipeController.addedIngredients.isEmpty) {
       CustomToast.showError('Please add at least one ingredient');
       return;
     }
@@ -662,13 +616,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
         'Categories available: ${recipeController.foodCategoriesList.length}');
     print(
         'Subcategories available: ${recipeController.foodSubcategoriesList.length}');
-    print('Selected category: $_selectedCategory');
-    print('Selected subcategory: $_selectedSubcategory');
+    print('Selected category: ${recipeController.selectedCategory.value}');
+    print(
+        'Selected subcategory: ${recipeController.selectedSubcategory.value}');
 
     try {
       // Get category and subcategory codes with error handling
       final categoryList = recipeController.foodCategoriesList
-          .where((cat) => cat.category == _selectedCategory)
+          .where(
+              (cat) => cat.category == recipeController.selectedCategory.value)
           .toList();
 
       if (categoryList.isEmpty) {
@@ -680,7 +636,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
       final selectedCat = categoryList.first;
 
       final subcategoryList = recipeController.foodSubcategoriesList
-          .where((subcat) => subcat.subCategory == _selectedSubcategory)
+          .where((subcat) =>
+              subcat.subCategory == recipeController.selectedSubcategory.value)
           .toList();
 
       if (subcategoryList.isEmpty) {
@@ -693,7 +650,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
 
       // Convert ingredients to API format
       List<Map<String, dynamic>> tableData =
-          _addedIngredients.map((ingredient) {
+          recipeController.addedIngredients.map((ingredient) {
         return {
           'ingredient': ingredient['name'],
           'quantity': double.tryParse(ingredient['quantity'].toString()) ?? 0.0,
@@ -717,16 +674,16 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
         description: _tagsController.text.trim().isNotEmpty
             ? _tagsController.text.trim()
             : 'Recipe description',
-        additionalDescription: _selectedDescription,
+        additionalDescription: recipeController.selectedDescription.value,
         categoryCode: selectedCat.code,
         subcategoryCode: selectedSubcat.code,
         portion: portion,
         portionWeight: portionWeight,
         servings: servings,
-        regional: _selectedRegionalCuisine,
-        mealtime: _selectedMealTime,
-        dietary: _selectedDietaryPreference,
-        attributes: _selectedOtherAttributes,
+        regional: recipeController.selectedRegionalCuisine.toList(),
+        mealtime: recipeController.selectedMealTime.toList(),
+        dietary: recipeController.selectedDietaryPreference.toList(),
+        attributes: recipeController.selectedOtherAttributes.toList(),
         tableData: tableData,
       );
 
@@ -820,38 +777,38 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
           const SizedBox(height: 24),
 
           // Regional Cuisine
-          _buildCheckboxSection(
-            title: 'Regional cuisine',
-            options: ['North', 'South', 'Continental'],
-            selectedItems: _selectedRegionalCuisine,
-          ),
+          Obx(() => _buildCheckboxSection(
+                title: 'Regional cuisine',
+                options: ['North', 'South', 'Continental'],
+                selectedItems: recipeController.selectedRegionalCuisine,
+              )),
 
           const SizedBox(height: 20),
 
           // Meal Time
-          _buildCheckboxSection(
-            title: 'Meal Time',
-            options: ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Dessert'],
-            selectedItems: _selectedMealTime,
-          ),
+          Obx(() => _buildCheckboxSection(
+                title: 'Meal Time',
+                options: ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Dessert'],
+                selectedItems: recipeController.selectedMealTime,
+              )),
 
           const SizedBox(height: 20),
 
           // Dietary Preference
-          _buildCheckboxSection(
-            title: 'Dietary Preference',
-            options: ['Vegetarian', 'Non - Vegetarian', 'Ovo Vegetarian'],
-            selectedItems: _selectedDietaryPreference,
-          ),
+          Obx(() => _buildCheckboxSection(
+                title: 'Dietary Preference',
+                options: ['Vegetarian', 'Non - Vegetarian', 'Ovo Vegetarian'],
+                selectedItems: recipeController.selectedDietaryPreference,
+              )),
 
           const SizedBox(height: 20),
 
           // Other Attributes
-          _buildCheckboxSection(
-            title: 'Other Attributes',
-            options: ['Beverages', 'Savoury', 'Sweet', 'Spicy'],
-            selectedItems: _selectedOtherAttributes,
-          ),
+          Obx(() => _buildCheckboxSection(
+                title: 'Other Attributes',
+                options: ['Beverages', 'Savoury', 'Sweet', 'Spicy'],
+                selectedItems: recipeController.selectedOtherAttributes,
+              )),
         ],
       ),
     );
@@ -860,7 +817,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
   Widget _buildCheckboxSection({
     required String title,
     required List<String> options,
-    required List<String> selectedItems,
+    required RxList<String> selectedItems,
   }) {
     return Column(
       key: ValueKey('${title}_${selectedItems.join('_')}'),
@@ -885,8 +842,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
                 } else {
                   selectedItems.add(option);
                 }
-                // Force a rebuild only for this specific section
-                setState(() {});
               },
               child: Container(
                 padding:
@@ -990,13 +945,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
                   )
                 else
                   _buildDropdownField(
-                    value: _selectedIngredient,
+                    value: recipeController.selectedIngredient.value.isEmpty
+                        ? null
+                        : recipeController.selectedIngredient.value,
                     hint: 'Ingredient Name',
                     items: ingredientNames,
                     onChanged: (value) {
-                      setState(() {
-                        _selectedIngredient = value;
-                      });
+                      print(
+                          "recipeController.selectedIngredient.value ================= ${value}");
+                      recipeController.selectedIngredient.value = value ?? '';
                     },
                     searchHint: 'Search ingredients...',
                   ),
@@ -1022,27 +979,27 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
               // Unit Dropdown
               Expanded(
                 flex: 2,
-                child: _buildDropdownField(
-                  value: _selectedUnit,
-                  hint: 'Unit',
-                  items: [
-                    'cup',
-                    'tbsp',
-                    'tsp',
-                    'g',
-                    'kg',
-                    'ml',
-                    'l',
-                    'piece',
-                    'pinch'
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedUnit = value;
-                    });
-                  },
-                  searchHint: 'Search units...',
-                ),
+                child: Obx(() => _buildDropdownField(
+                      value: recipeController.selectedUnit.value.isEmpty
+                          ? null
+                          : recipeController.selectedUnit.value,
+                      hint: 'Unit',
+                      items: [
+                        'cup',
+                        'tbsp',
+                        'tsp',
+                        'g',
+                        'kg',
+                        'ml',
+                        'l',
+                        'piece',
+                        'pinch'
+                      ],
+                      onChanged: (value) {
+                        recipeController.selectedUnit.value = value ?? '';
+                      },
+                      searchHint: 'Search units...',
+                    )),
               ),
             ],
           ),
@@ -1074,10 +1031,43 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
   }
 
   Widget _buildIngredientsListSection() {
-    if (_addedIngredients.isEmpty) {
+    return Obx(() {
+      if (recipeController.addedIngredients.isEmpty) {
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.restaurant_menu,
+                size: 48,
+                color: Colors.grey.shade400,
+              ),
+              const SizedBox(height: 12),
+              RegularText(
+                'No ingredients added yet',
+                fontSize: 14,
+                textColor: Colors.grey.shade500,
+              ),
+            ],
+          ),
+        );
+      }
+
       return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -1091,175 +1081,145 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
           ],
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              Icons.restaurant_menu,
-              size: 48,
-              color: Colors.grey.shade400,
-            ),
-            const SizedBox(height: 12),
-            RegularText(
-              'No ingredients added yet',
-              fontSize: 14,
-              textColor: Colors.grey.shade500,
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              SemiBoldText(
-                'Added Ingredients',
-                fontSize: 18,
-                textColor: Color(0xFF091242),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4CAF50).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: RegularText(
-                  '${_addedIngredients.length} items',
-                  fontSize: 12,
-                  textColor: const Color(0xFF4CAF50),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Table Header
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(8),
-                topRight: Radius.circular(8),
-              ),
-            ),
-            child: Row(
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  flex: 3,
-                  child: SemiBoldText(
-                    'Ingredient',
-                    fontSize: 14,
-                    textColor: Color(0xFF091242),
+                SemiBoldText(
+                  'Added Ingredients',
+                  fontSize: 18,
+                  textColor: Color(0xFF091242),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4CAF50).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: RegularText(
+                    '${recipeController.addedIngredients.length} items',
+                    fontSize: 12,
+                    textColor: const Color(0xFF4CAF50),
                   ),
                 ),
-                Expanded(
-                  flex: 2,
-                  child: SemiBoldText(
-                    'Quantity',
-                    fontSize: 14,
-                    textColor: Color(0xFF091242),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: SemiBoldText(
-                    'Unit',
-                    fontSize: 14,
-                    textColor: Color(0xFF091242),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(width: 40), // Space for delete button
               ],
             ),
-          ),
 
-          // Ingredients List
-          ...List.generate(_addedIngredients.length, (index) {
-            final ingredient = _addedIngredients[index];
-            final isEvenRow = index % 2 == 0;
+            const SizedBox(height: 16),
 
-            return Container(
+            // Table Header
+            Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
-                color: isEvenRow ? Colors.white : Colors.grey.shade50,
-                border: Border(
-                  bottom: BorderSide(
-                    color: Colors.grey.shade200,
-                    width: 0.5,
-                  ),
+                color: Colors.grey.shade100,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(8),
+                  topRight: Radius.circular(8),
                 ),
               ),
               child: Row(
                 children: [
                   Expanded(
                     flex: 3,
-                    child: RegularText(
-                      ingredient['name'],
+                    child: SemiBoldText(
+                      'Ingredient',
                       fontSize: 14,
                       textColor: Color(0xFF091242),
                     ),
                   ),
                   Expanded(
                     flex: 2,
-                    child: RegularText(
-                      ingredient['quantity'],
+                    child: SemiBoldText(
+                      'Quantity',
                       fontSize: 14,
-                      textColor: Colors.grey.shade600,
+                      textColor: Color(0xFF091242),
                       textAlign: TextAlign.center,
                     ),
                   ),
                   Expanded(
                     flex: 1,
-                    child: RegularText(
-                      ingredient['unit'],
+                    child: SemiBoldText(
+                      'Unit',
                       fontSize: 14,
-                      textColor: Colors.grey.shade600,
+                      textColor: Color(0xFF091242),
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  SizedBox(
-                    width: 40,
-                    child: IconButton(
-                      onPressed: () => _removeIngredient(index),
-                      icon: Icon(
-                        Icons.delete_outline,
-                        color: Colors.red.shade400,
-                        size: 20,
-                      ),
-                    ),
-                  ),
+                  const SizedBox(width: 40), // Space for delete button
                 ],
               ),
-            );
-          }),
-        ],
-      ),
-    );
+            ),
+
+            // Ingredients List
+            ...List.generate(recipeController.addedIngredients.length, (index) {
+              final ingredient = recipeController.addedIngredients[index];
+              final isEvenRow = index % 2 == 0;
+
+              return Container(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: isEvenRow ? Colors.white : Colors.grey.shade50,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.grey.shade200,
+                      width: 0.5,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: RegularText(
+                        ingredient['name'],
+                        fontSize: 14,
+                        textColor: Color(0xFF091242),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: RegularText(
+                        ingredient['quantity'],
+                        fontSize: 14,
+                        textColor: Colors.grey.shade600,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: RegularText(
+                        ingredient['unit'],
+                        fontSize: 14,
+                        textColor: Colors.grey.shade600,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    SizedBox(
+                      width: 40,
+                      child: IconButton(
+                        onPressed: () => _removeIngredient(index),
+                        icon: Icon(
+                          Icons.delete_outline,
+                          color: Colors.red.shade400,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
+      );
+    });
   }
 
   void _addIngredientToRecipe() {
-    if (_selectedIngredient == null || _selectedIngredient!.isEmpty) {
+    if (recipeController.selectedIngredient.value.isEmpty) {
       CustomToast.showError('Please select an ingredient');
       return;
     }
@@ -1269,14 +1229,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
       return;
     }
 
-    if (_selectedUnit == null || _selectedUnit!.isEmpty) {
+    if (recipeController.selectedUnit.value.isEmpty) {
       CustomToast.showError('Please select a unit');
       return;
     }
 
     // Check if ingredient already exists
-    bool ingredientExists = _addedIngredients.any(
-      (ingredient) => ingredient['name'] == _selectedIngredient,
+    bool ingredientExists = recipeController.addedIngredients.any(
+      (ingredient) =>
+          ingredient['name'] == recipeController.selectedIngredient.value,
     );
 
     if (ingredientExists) {
@@ -1284,26 +1245,22 @@ class _AddRecipeScreenState extends State<AddRecipeScreen>
       return;
     }
 
-    setState(() {
-      _addedIngredients.add({
-        'name': _selectedIngredient,
-        'quantity': _ingredientQuantityController.text.trim(),
-        'unit': _selectedUnit,
-      });
-
-      // Clear form
-      _selectedIngredient = null;
-      _ingredientQuantityController.clear();
-      _selectedUnit = null;
+    recipeController.addedIngredients.add({
+      'name': recipeController.selectedIngredient.value,
+      'quantity': _ingredientQuantityController.text.trim(),
+      'unit': recipeController.selectedUnit.value,
     });
+
+    // Clear form
+    recipeController.selectedIngredient.value = '';
+    _ingredientQuantityController.clear();
+    recipeController.selectedUnit.value = '';
 
     CustomToast.showSuccess('Ingredient added successfully');
   }
 
   void _removeIngredient(int index) {
-    setState(() {
-      _addedIngredients.removeAt(index);
-    });
+    recipeController.addedIngredients.removeAt(index);
     CustomToast.showSuccess('Ingredient removed');
   }
 }

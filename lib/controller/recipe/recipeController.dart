@@ -76,6 +76,42 @@ class RecipeController extends GetxController implements GetxService {
   // Recipe submission related variables
   RxBool isSubmittingRecipe = false.obs;
 
+  // Form state management variables for Add Recipe Screen
+  RxString selectedCategory = ''.obs;
+  RxString selectedSubcategory = ''.obs;
+  RxString selectedDescription = 'select'.obs;
+  RxString selectedIngredient = ''.obs;
+  RxString selectedIngredientCode = ''.obs;
+  RxString selectedUnit = ''.obs;
+  RxString selectedImage = ''.obs;
+  RxInt currentTabIndex = 0.obs;
+
+  // Recipe attributes
+  RxList<String> selectedRegionalCuisine = <String>[].obs;
+  RxList<String> selectedMealTime = <String>[].obs;
+  RxList<String> selectedDietaryPreference = <String>[].obs;
+  RxList<String> selectedOtherAttributes = <String>[].obs;
+
+  // Added ingredients list
+  RxList<Map<String, dynamic>> addedIngredients = <Map<String, dynamic>>[].obs;
+
+  // Method to clear form fields
+  void clearRecipeFormFields() {
+    selectedCategory.value = '';
+    selectedSubcategory.value = '';
+    selectedDescription.value = 'select';
+    selectedIngredient.value = '';
+    selectedIngredientCode.value = '';
+    selectedUnit.value = '';
+    selectedImage.value = '';
+    currentTabIndex.value = 0;
+    selectedRegionalCuisine.clear();
+    selectedMealTime.clear();
+    selectedDietaryPreference.clear();
+    selectedOtherAttributes.clear();
+    addedIngredients.clear();
+  }
+
   getRecipes({bool loadMore = false}) async {
     if (loadMore) {
       if (isLoadingMore.value || !hasMoreData.value) return;
@@ -969,7 +1005,7 @@ class RecipeController extends GetxController implements GetxService {
 
     try {
       String apiUrl = AppConstants.SUBMIT_RECIPE;
-
+      print("Recipe submission apiUrl: $apiUrl");
       Map<String, dynamic> requestBody = {
         'code_cooccurence': categoryCode,
         'subcategories': subcategoryCode,

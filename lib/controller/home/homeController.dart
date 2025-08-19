@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sodiet/route/app_routes.dart';
 
 import '../../constant/appConstant.dart';
 import '../../model/plan_model.dart';
@@ -66,6 +67,7 @@ class HomeController extends GetxController implements GetxService {
         };
       } else {
         print('Error loading dashboard summary: ${response.statusCode}');
+        Get.offNamed(AppRoutes.generatePlanScreen);
         dashboardSummaryResponse.value = null;
         return {
           'success': false,
