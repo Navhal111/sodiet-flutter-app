@@ -89,6 +89,9 @@ class AppConstants {
       '${BASE_URL}menu/menu-interactions-draft';
   static const String SUBMIT_MENU_INTERACTIONS =
       '${BASE_URL}menu/menu-rearrangement-submit';
+  static const String MODEL_DRIVER = '${BASE_URL}tasks/model_driver';
+  static String getTaskStatusUrl(String taskId) =>
+      '${BASE_URL}tasks/task_status/$taskId';
 
   // Contant Save data keys
   static const String INTRO = 'intro';

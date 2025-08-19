@@ -26,6 +26,13 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
   }
 
   @override
+  void dispose() {
+    // Stop task monitoring when screen is disposed
+    controller.stopTaskMonitoring();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BaseScreenLayout(
       currentRoute: AppRoutes.optimizationScreen,
@@ -81,42 +88,42 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
 
                     const SizedBox(height: 16),
 
-                    // Run All Button
-                    SizedBox(
-                      width: 100,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // Navigate to meal plan screen with default view mode
-                          Get.toNamed(AppRoutes.mealPlanScreen, arguments: {
-                            'mode':
-                                'view', // Default to view mode - no close icon
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2AB989),
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.play_arrow,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            SemiBoldText(
-                              'Run all',
-                              fontSize: 16,
-                              textColor: Colors.white,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    // // Run All Button
+                    // SizedBox(
+                    //   width: 100,
+                    //   child: ElevatedButton(
+                    //     onPressed: () {
+                    //       // Navigate to meal plan screen with default view mode
+                    //       Get.toNamed(AppRoutes.mealPlanScreen, arguments: {
+                    //         'mode':
+                    //             'view', // Default to view mode - no close icon
+                    //       });
+                    //     },
+                    //     style: ElevatedButton.styleFrom(
+                    //       backgroundColor: const Color(0xFF2AB989),
+                    //       padding: const EdgeInsets.symmetric(vertical: 4),
+                    //       shape: RoundedRectangleBorder(
+                    //         borderRadius: BorderRadius.circular(8),
+                    //       ),
+                    //     ),
+                    //     child: Row(
+                    //       mainAxisAlignment: MainAxisAlignment.center,
+                    //       children: [
+                    //         const Icon(
+                    //           Icons.play_arrow,
+                    //           color: Colors.white,
+                    //           size: 20,
+                    //         ),
+                    //         const SizedBox(width: 8),
+                    //         SemiBoldText(
+                    //           'Run all',
+                    //           fontSize: 16,
+                    //           textColor: Colors.white,
+                    //         ),
+                    //       ],
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
@@ -195,6 +202,7 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
                         colors[1] as Color, // Text color
                         colors[2] as List<Color>, // Action colors
                         weekPlan.week, // Pass week number for navigation
+                        weekPlan, // Pass the entire weekPlan object
                       ),
                     );
                   }).toList(),
@@ -205,6 +213,121 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
         ),
       ),
     );
+  }
+
+  // Function to handle play button click
+  Future<void> _handlePlayButtonClick(
+      int weekNumber, String startDate, String endDate) async {
+    // Check if any task is already running
+    if (controller.activeTaskWeek.value != 0) {
+      // Show error message that another task is already running
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Task Already Running'),
+            content: Text(
+                'A task is already running for Week ${controller.activeTaskWeek.value}. Please wait for it to complete before starting a new task.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text('Starting optimization for Week $weekNumber...'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    try {
+      // Call the API
+      final result = await controller.runModelDriver(
+        weekNo: weekNumber,
+        startDate: startDate,
+        endDate: endDate,
+        includeSnacks: isSnackSelected,
+        includeNonVeg: isNonVegSelected,
+      );
+
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Small delay to ensure dialog is closed
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // Handle the result
+      if (result['success'] == true) {
+        // Don't show success dialog, just show a toast as monitoring will show progress
+        // The progress will be visible in the card itself
+        // CustomToast is already shown in the controller
+      } else {
+        // Show error message
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Error'),
+                content:
+                    Text(result['message'] ?? 'Failed to start optimization'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('OK'),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      }
+    } catch (e) {
+      // Close loading dialog if it's open
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Show error message
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Error'),
+              content: Text('An error occurred: $e'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    }
   }
 
   Widget _buildFilterOption(String title, bool isSelected, VoidCallback onTap) {
@@ -256,142 +379,238 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
     Color statusColor,
     List<Color> actionColors,
     int weekNumber,
+    WeekPlanData weekPlan,
   ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.grey.withOpacity(0.1),
-          width: 1,
+    return Obx(() {
+      final taskProgress = controller.getTaskProgressForWeek(weekNumber);
+      final isActiveTask = controller.isWeekTaskActive(weekNumber);
+
+      // Determine background color based on task status
+      Color cardBackgroundColor = backgroundColor;
+      if (taskProgress != null) {
+        if (taskProgress.isRunning && isActiveTask) {
+          // Green with higher opacity for running
+          cardBackgroundColor = Colors.green.withOpacity(0.3);
+        } else if (taskProgress.isFailed) {
+          // Red with higher opacity for error
+          cardBackgroundColor = Colors.red.withOpacity(0.3);
+        } else if (taskProgress.isCompleted) {
+          // Light green for success/completed status
+          cardBackgroundColor = Colors.green.withOpacity(0.3);
+        }
+      }
+
+      return Container(
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: cardBackgroundColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.grey.withOpacity(0.1),
+            width: 1,
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              SemiBoldText(
-                week,
-                fontSize: 16,
-                textColor: statusColor,
-              ),
-              SemiBoldText(
-                dateRange,
-                fontSize: 14,
-                textColor: statusColor,
-              ),
-            ],
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                SemiBoldText(
+                  week,
+                  fontSize: 16,
+                  textColor: statusColor,
+                ),
+                SemiBoldText(
+                  dateRange,
+                  fontSize: 14,
+                  textColor: statusColor,
+                ),
+              ],
+            ),
 
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-          // Status
-          SemiBoldText(
-            status,
-            fontSize: 24,
-            textColor: statusColor,
-          ),
+            // Status - Show task status if available, otherwise show original status
+            Builder(
+              builder: (context) {
+                final displayStatus = taskProgress?.status ?? status;
 
-          const SizedBox(height: 16),
+                return SemiBoldText(
+                  displayStatus,
+                  fontSize: 24,
+                  textColor: statusColor,
+                );
+              },
+            ),
 
-          // Last Run Date and Actions
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  RegularText(
-                    'Last run date',
-                    fontSize: 12,
-                    textColor: Colors.grey.shade600,
-                  ),
-                  const SizedBox(height: 2),
-                  SemiBoldText(
-                    lastRunDate,
-                    fontSize: 14,
-                    textColor: statusColor,
-                  ),
-                ],
-              ),
+            // Progress Bar (show only if task is active for this week)
+            Builder(
+              builder: (context) {
+                if (taskProgress != null &&
+                    (taskProgress.isRunning || isActiveTask)) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          RegularText(
+                            taskProgress.message,
+                            fontSize: 12,
+                            textColor: Colors.grey.shade600,
+                          ),
+                          RegularText(
+                            '${taskProgress.current}/${taskProgress.total}',
+                            fontSize: 12,
+                            textColor: Colors.grey.shade600,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      LinearProgressIndicator(
+                        value: taskProgress.progress / 100,
+                        backgroundColor: Colors.grey.shade300,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).primaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      RegularText(
+                        '${taskProgress.progress.toInt()}% complete',
+                        fontSize: 10,
+                        textColor: Colors.grey.shade500,
+                      ),
+                    ],
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
 
-              // Action Buttons
-              Row(
-                children: [
-                  _buildActionButton(
-                    Icons.play_arrow,
-                    actionColors[0],
-                    () {
-                      // Handle play/run action
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  _buildActionButton(
-                    Icons.visibility,
-                    actionColors[1],
-                    () {
-                      // Clear old data and navigate immediately
-                      controller.weeklyMenuList.clear();
-                      controller.currentWeekNo.value = weekNumber;
+            const SizedBox(height: 16),
 
-                      // Navigate immediately with view mode
-                      Get.toNamed(AppRoutes.mealPlanScreen, arguments: {
-                        'week_no': weekNumber,
-                        'mode': 'view', // View mode - no close icon
-                      });
+            // Last Run Date and Actions
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    RegularText(
+                      'Last run date',
+                      fontSize: 12,
+                      textColor: Colors.grey.shade600,
+                    ),
+                    const SizedBox(height: 2),
+                    SemiBoldText(
+                      lastRunDate,
+                      fontSize: 14,
+                      textColor: statusColor,
+                    ),
+                  ],
+                ),
 
-                      // Load data after navigation
-                      controller.getWeeklyMenu(weekNumber);
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  _buildActionButton(
-                    Icons.settings,
-                    actionColors[2],
-                    () {
-                      // Clear old data and navigate immediately
-                      controller.weeklyMenuList.clear();
-                      controller.currentWeekNo.value = weekNumber;
+                // Action Buttons
+                Row(
+                  children: [
+                    Obx(() {
+                      final taskProgress =
+                          controller.getTaskProgressForWeek(weekNumber);
+                      final isActiveTask =
+                          controller.isWeekTaskActive(weekNumber);
+                      final isTaskRunning = taskProgress != null &&
+                          (taskProgress.isRunning || isActiveTask);
 
-                      // Navigate to meal plan with edit mode
-                      Get.toNamed(AppRoutes.mealPlanScreen, arguments: {
-                        'week_no': weekNumber,
-                        'mode': 'edit', // Edit mode - show close icon
-                      });
+                      return _buildActionButton(
+                        Icons.play_arrow,
+                        actionColors[0],
+                        isTaskRunning
+                            ? null // Disable button when task is running for this week
+                            : () {
+                                // Handle play/run action
+                                _handlePlayButtonClick(weekPlan.week,
+                                    weekPlan.startDate, weekPlan.endDate);
+                              },
+                        isLoading: isTaskRunning,
+                      );
+                    }),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      Icons.visibility,
+                      actionColors[1],
+                      () {
+                        // Clear old data and navigate immediately
+                        controller.weeklyMenuList.clear();
+                        controller.currentWeekNo.value = weekNumber;
 
-                      // Load data after navigation
-                      controller.getWeeklyMenu(weekNumber);
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+                        // Navigate immediately with view mode
+                        Get.toNamed(AppRoutes.mealPlanScreen, arguments: {
+                          'week_no': weekNumber,
+                          'mode': 'view', // View mode - no close icon
+                        });
+
+                        // Load data after navigation
+                        controller.getWeeklyMenu(weekNumber);
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      Icons.settings,
+                      actionColors[2],
+                      () {
+                        // Clear old data and navigate immediately
+                        controller.weeklyMenuList.clear();
+                        controller.currentWeekNo.value = weekNumber;
+
+                        // Navigate to meal plan with edit mode
+                        Get.toNamed(AppRoutes.mealPlanScreen, arguments: {
+                          'week_no': weekNumber,
+                          'mode': 'edit', // Edit mode - show close icon
+                        });
+
+                        // Load data after navigation
+                        controller.getWeeklyMenu(weekNumber);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
   }
 
-  Widget _buildActionButton(IconData icon, Color color, VoidCallback? onTap) {
+  Widget _buildActionButton(IconData icon, Color color, VoidCallback? onTap,
+      {bool isLoading = false}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: color,
+          color: isLoading ? color.withOpacity(0.6) : color,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: 18,
-        ),
+        child: isLoading
+            ? const SizedBox(
+                width: 10,
+                height: 10,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Icon(
+                icon,
+                color: Colors.white,
+                size: 18,
+              ),
       ),
     );
   }

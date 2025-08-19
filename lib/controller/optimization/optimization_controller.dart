@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sodiet/constant/appConstant.dart';
@@ -31,6 +32,14 @@ class OptimizationController extends GetxController implements GetxService {
   var isLoadingMenuInteractions = false.obs;
   var menuInteractionsList = <MenuInteraction>[].obs;
   var totalMenuInteractionsRecords = 0.obs;
+
+  // Model driver task variables
+  var currentTaskId = ''.obs;
+  var isRunningModelDriver = false.obs;
+  var taskProgress =
+      <int, TaskProgress>{}.obs; // Map of week number to task progress
+  var activeTaskWeek = 0.obs; // Currently active task week
+  Timer? _progressTimer; // Timer for polling task status
 
   @override
   void onInit() {
@@ -78,6 +87,164 @@ class OptimizationController extends GetxController implements GetxService {
   // Refresh data
   Future<void> refreshData() async {
     await getWeekPlanMaster();
+  }
+
+  // Run model driver for optimization
+  Future<Map<String, dynamic>> runModelDriver({
+    required int weekNo,
+    required String startDate,
+    required String endDate,
+    required bool includeSnacks,
+    required bool includeNonVeg,
+  }) async {
+    try {
+      isRunningModelDriver.value = true;
+
+      final url = AppConstants.MODEL_DRIVER;
+
+      final payload = {
+        "week_no": weekNo.toString(),
+        "username": "Testlight",
+        "start_date": startDate,
+        "end_date": endDate,
+        "wr": "", // Set as per your requirement
+        "snacks": includeSnacks ? "Yes" : "No",
+        "non_veg": includeNonVeg ? "Yes" : "No",
+        "dataset": "",
+        "age_group": "",
+        "dataframes_csv": ""
+      };
+
+      print('Model driver payload: $payload');
+
+      Response response = await authRepo.postDataSet(
+        apiName: url,
+        sendData: payload,
+      );
+
+      print('Model driver response status: ${response.statusCode}');
+      print('Model driver response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.body['task_id'] != null) {
+          currentTaskId.value = response.body['task_id'];
+          print('Task ID stored: ${currentTaskId.value}');
+
+          // Start progress monitoring for this task
+          startTaskProgressMonitoring(currentTaskId.value, weekNo);
+
+          CustomToast.showSuccess(response.body['message'] ??
+              'ModelDriver task started successfully');
+
+          return {
+            'success': true,
+            'task_id': currentTaskId.value,
+            'status': response.body['status'] ?? 'pending',
+            'message': response.body['message'] ??
+                'ModelDriver task started successfully'
+          };
+        } else {
+          CustomToast.showError('Invalid response: No task ID received');
+          return {
+            'success': false,
+            'message': 'Invalid response: No task ID received'
+          };
+        }
+      } else {
+        final errorMessage =
+            response.body['message'] ?? 'Failed to start ModelDriver task';
+        CustomToast.showError(errorMessage);
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      print('Exception in runModelDriver: $e');
+      CustomToast.showError('Error starting ModelDriver task: $e');
+      return {
+        'success': false,
+        'message': 'Error starting ModelDriver task: $e'
+      };
+    } finally {
+      isRunningModelDriver.value = false;
+    }
+  }
+
+  // Start monitoring task progress
+  void startTaskProgressMonitoring(String taskId, int weekNo) {
+    currentTaskId.value = taskId;
+    activeTaskWeek.value = weekNo;
+
+    // Stop any existing timer
+    _progressTimer?.cancel();
+
+    // Start polling every 3 seconds
+    _progressTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      _checkTaskStatus(taskId, weekNo);
+    });
+
+    // Make first call immediately
+    _checkTaskStatus(taskId, weekNo);
+  }
+
+  // Check task status
+  Future<void> _checkTaskStatus(String taskId, int weekNo) async {
+    try {
+      final url = AppConstants.getTaskStatusUrl(taskId);
+
+      Response response = await authRepo.getDataSet(
+        apiName: url,
+      );
+
+      print('Task status response for $taskId: ${response.statusCode}');
+      print('Task status response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final taskProgressData = TaskProgress.fromJson(response.body);
+        taskProgress[weekNo] = taskProgressData;
+
+        // Stop polling if task is completed or failed
+        if (taskProgressData.isCompleted || taskProgressData.isFailed) {
+          _progressTimer?.cancel();
+          activeTaskWeek.value = 0;
+
+          if (taskProgressData.isCompleted) {
+            CustomToast.showSuccess('Optimization completed for Week $weekNo!');
+            // Refresh the week plan data to get updated status
+            await refreshData();
+          } else if (taskProgressData.isFailed) {
+            CustomToast.showError('Optimization failed for Week $weekNo');
+          }
+        }
+      } else {
+        print('Failed to get task status: ${response.statusCode}');
+        // If we get an error, maybe the task is no longer available
+        // Stop polling after multiple failures to avoid endless requests
+      }
+    } catch (e) {
+      print('Exception in _checkTaskStatus: $e');
+      // Don't show error toast here as it would be too frequent
+    }
+  }
+
+  // Stop task monitoring
+  void stopTaskMonitoring() {
+    _progressTimer?.cancel();
+    activeTaskWeek.value = 0;
+  }
+
+  // Get task progress for a specific week
+  TaskProgress? getTaskProgressForWeek(int weekNo) {
+    return taskProgress[weekNo];
+  }
+
+  // Check if a week has active task
+  bool isWeekTaskActive(int weekNo) {
+    return activeTaskWeek.value == weekNo;
+  }
+
+  @override
+  void onClose() {
+    _progressTimer?.cancel();
+    super.onClose();
   }
 
   // Get weekly menu data for specific week
@@ -676,4 +843,49 @@ class WeekPlanData {
       return optDate;
     }
   }
+}
+
+class TaskProgress {
+  final String taskId;
+  final String status;
+  final String message;
+  final int current;
+  final int total;
+  final double progress;
+  final int step;
+  final String startedAt;
+  final String? completedAt;
+
+  TaskProgress({
+    required this.taskId,
+    required this.status,
+    required this.message,
+    required this.current,
+    required this.total,
+    required this.progress,
+    required this.step,
+    required this.startedAt,
+    this.completedAt,
+  });
+
+  factory TaskProgress.fromJson(Map<String, dynamic> json) {
+    final result = json['result'] ?? {};
+    return TaskProgress(
+      taskId: json['task_id'] ?? '',
+      status: json['status'] ?? '',
+      message: json['message'] ?? '',
+      current: result['current'] ?? 0,
+      total: result['total'] ?? 0,
+      progress: (result['progress'] ?? 0).toDouble(),
+      step: result['step'] ?? 0,
+      startedAt: json['started_at'] ?? '',
+      completedAt: json['completed_at'],
+    );
+  }
+
+  bool get isCompleted =>
+      status.toLowerCase() == 'completed' || status.toLowerCase() == 'success';
+  bool get isRunning => status.toLowerCase() == 'running';
+  bool get isFailed =>
+      status.toLowerCase() == 'failed' || status.toLowerCase() == 'error';
 }

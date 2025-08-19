@@ -59,7 +59,7 @@ class WeightProgressChart extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           SizedBox(
-            height: 400, // Increased from 300 to 400 for better readability
+            height: 450, // Increased from 300 to 400 for better readability
             child: weightDataList.isEmpty
                 ? const Center(
                     child: Text(
