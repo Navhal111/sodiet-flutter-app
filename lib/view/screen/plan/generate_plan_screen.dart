@@ -4,6 +4,7 @@ import 'package:sodiet/controller/plan/planController.dart';
 import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/common/custom_toast.dart';
+import 'package:sodiet/view/widgets/common/searchable_bottom_sheet.dart';
 
 import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
 
@@ -567,6 +568,11 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
 
                 const SizedBox(height: 16),
 
+                // Physical Activity Estimation Button
+                _buildPhysicalActivityButton(),
+
+                const SizedBox(height: 16),
+
                 // Duration Field (editable for Custom, disabled for Rapid/Relaxed)
                 _buildInputField(
                   controller: _durationController,
@@ -835,7 +841,7 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
 
         // Navigate back to plan screen
         if (mounted) {
-          Navigator.of(context).pop();
+          Get.offNamed(AppRoutes.planScreen);
         }
       } else {
         CustomToast.showError(result['message']);
@@ -854,5 +860,815 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
     _durationController.clear();
     _startDateController.clear();
     planController.clearFormFields();
+  }
+
+  Widget _buildPhysicalActivityButton() {
+    return Container(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () => _showPhysicalActivityDialog(),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          side: const BorderSide(color: Color(0xFF3F51B5), width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        icon: const Icon(
+          Icons.fitness_center,
+          color: Color(0xFF3F51B5),
+          size: 20,
+        ),
+        label: const Text(
+          'Current Physical Activities (Estimate)',
+          style: TextStyle(
+            color: Color(0xFF3F51B5),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showPhysicalActivityDialog() {
+    // Load physical activities when dialog opens
+    planController.getPhysicalActivitiesList();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const PhysicalActivityEstimationForm(),
+        );
+      },
+    );
+  }
+}
+
+class PhysicalActivityEstimationForm extends StatefulWidget {
+  const PhysicalActivityEstimationForm({Key? key}) : super(key: key);
+
+  @override
+  State<PhysicalActivityEstimationForm> createState() =>
+      _PhysicalActivityEstimationFormState();
+}
+
+class _PhysicalActivityEstimationFormState
+    extends State<PhysicalActivityEstimationForm> {
+  late PlanController planController;
+
+  // Form controllers
+  final TextEditingController _durationController = TextEditingController();
+
+  // Selected values
+  String? selectedActivity;
+  Set<String> selectedDays = {};
+
+  // Activity level options
+  final List<String> activityLevels = [
+    'Sedentary (little or no exercise)',
+    'Lightly Active (light exercise/sports 1-3 days/week)',
+    'Moderately Active (moderate exercise/sports 3-5 days/week)',
+    'Very Active (hard exercise/sports 6-7 days a week)',
+    'Extra Active (very hard exercise/sports & physical job or 2x training)',
+  ];
+
+  // Day abbreviations
+  final Map<String, String> dayMap = {
+    'S': 'SU',
+    'M': 'MO',
+    'T': 'TU',
+    'W': 'WE',
+    'T2': 'TH',
+    'F': 'FR',
+    'S2': 'SA',
+  };
+
+  final List<String> dayLabels = ['S', 'M', 'T', 'W', 'T2', 'F', 'S2'];
+
+  @override
+  void initState() {
+    super.initState();
+    planController = Get.find<PlanController>();
+  }
+
+  @override
+  void dispose() {
+    _durationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.9,
+        maxWidth: MediaQuery.of(context).size.width * 0.98,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Estimate your Physical Activity Level',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+          ),
+
+          // Form content
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Sleep hours
+                  _buildTextFormField(
+                    label: 'Sleep (in hours)',
+                    value: planController.sleepHours,
+                    hintText: '8',
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Work/School hours
+                  _buildTextFormField(
+                    label: 'Work/School (in hours)',
+                    value: planController.workSchoolHours,
+                    hintText: '8',
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Work/School activity level
+                  _buildActivityLevelField(),
+
+                  const SizedBox(height: 24),
+
+                  // Other physical activities section
+                  _buildOtherActivitiesSection(),
+
+                  const SizedBox(height: 24),
+
+                  // Added activities table
+                  _buildAddedActivitiesTable(),
+
+                  const SizedBox(height: 24),
+
+                  // Action buttons
+                  _buildActionButtons(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextFormField({
+    required String label,
+    required RxString value,
+    required String hintText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF091242),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.grey.shade50,
+          ),
+          child: Obx(() => TextField(
+                keyboardType: TextInputType.number,
+                onChanged: (newValue) {
+                  value.value = newValue;
+                },
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  hintText: hintText,
+                  hintStyle: const TextStyle(color: Colors.grey),
+                ),
+                controller: TextEditingController(text: value.value)
+                  ..selection = TextSelection.fromPosition(
+                      TextPosition(offset: value.value.length)),
+              )),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActivityLevelField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'How would you describe your Physical Activity at Work/School',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF091242),
+          ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () => _showActivityLevelBottomSheet(),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.grey.shade50,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Obx(() => Text(
+                        planController.workSchoolActivityLevel.value,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF091242),
+                        ),
+                      )),
+                ),
+                const Icon(Icons.keyboard_arrow_down),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showActivityLevelBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => SearchableBottomSheet(
+        title: 'Activity Level',
+        items: activityLevels,
+        selectedValue: planController.workSchoolActivityLevel.value,
+        onSelected: (value) {
+          if (value != null) {
+            planController.workSchoolActivityLevel.value = value;
+          }
+        },
+        searchHint: 'Search activity level...',
+      ),
+    );
+  }
+
+  Widget _buildOtherActivitiesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Other Physical Activity',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF091242),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Activity dropdown
+        _buildActivityDropdown(),
+
+        const SizedBox(height: 16),
+
+        // Duration input
+        _buildDurationField(),
+
+        const SizedBox(height: 16),
+
+        // Days selection
+        _buildDaysSelection(),
+
+        const SizedBox(height: 16),
+
+        // Add button
+        _buildAddActivityButton(),
+      ],
+    );
+  }
+
+  Widget _buildActivityDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Activity',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF091242),
+          ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () => _showPhysicalActivitiesBottomSheet(),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Obx(() {
+              if (planController.isLoadingPhysicalActivities.value) {
+                return const Row(
+                  children: [
+                    SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    SizedBox(width: 12),
+                    Text('Loading activities...'),
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      selectedActivity ?? 'Select an activity',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: selectedActivity != null
+                            ? const Color(0xFF091242)
+                            : Colors.grey,
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.keyboard_arrow_down),
+                ],
+              );
+            }),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showPhysicalActivitiesBottomSheet() {
+    List<String> activityNames = planController.physicalActivitiesList
+        .map((activity) => activity.paName)
+        .toList();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => SearchableBottomSheet(
+        title: 'Physical Activities',
+        items: activityNames,
+        selectedValue: selectedActivity,
+        onSelected: (value) {
+          setState(() {
+            selectedActivity = value;
+          });
+        },
+        searchHint: 'Search activities...',
+      ),
+    );
+  }
+
+  Widget _buildDurationField() {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Duration (in minutes)',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF091242),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: TextField(
+                  controller: _durationController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: '5',
+                    hintStyle: TextStyle(color: Colors.grey),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDaysSelection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Times a',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF091242),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: dayLabels.map((day) {
+            String displayDay = day == 'T2' ? 'T' : (day == 'S2' ? 'S' : day);
+            String dayValue = dayMap[day]!;
+            bool isSelected = selectedDays.contains(dayValue);
+
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (isSelected) {
+                      selectedDays.remove(dayValue);
+                    } else {
+                      selectedDays.add(dayValue);
+                    }
+                  });
+                },
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? const Color(0xFF3F51B5)
+                        : Colors.transparent,
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color(0xFF3F51B5)
+                          : Colors.grey.shade300,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    displayDay,
+                    style: TextStyle(
+                      color:
+                          isSelected ? Colors.white : const Color(0xFF091242),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAddActivityButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _addActivity,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF4CAF50),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        child: const Text(
+          'Add',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddedActivitiesTable() {
+    return Obx(() {
+      if (planController.otherActivities.isEmpty) {
+        return const SizedBox.shrink();
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Added Activities',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF091242),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(8),
+                      topRight: Radius.circular(8),
+                    ),
+                  ),
+                  child: const Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          'Activity',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF091242),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Duration',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF091242),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Frequency',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF091242),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      SizedBox(
+                        width: 60,
+                        child: Text(
+                          'Action',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF091242),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Rows
+                ...planController.otherActivities.asMap().entries.map((entry) {
+                  int index = entry.key;
+                  Map<String, dynamic> activity = entry.value;
+
+                  return Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color:
+                              index == planController.otherActivities.length - 1
+                                  ? Colors.transparent
+                                  : Colors.grey.shade200,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            activity['activity'],
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF091242),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            '${activity['duration']}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF091242),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            (activity['days'] as List<String>).join(', '),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Color(0xFF091242),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        SizedBox(
+                          width: 60,
+                          child: TextButton(
+                            onPressed: () =>
+                                planController.removeOtherActivity(index),
+                            style: TextButton.styleFrom(
+                              backgroundColor: const Color(0xFFE53E3E),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              minimumSize: Size.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            child: const Text(
+                              'Remove',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: () {
+              planController.clearPhysicalActivityForm();
+              Navigator.of(context).pop();
+            },
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              side: const BorderSide(color: Colors.grey),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Close',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              CustomToast.showSuccess(
+                  'Physical activity data saved successfully!');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).primaryColor,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Save changes',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _addActivity() {
+    if (selectedActivity == null || selectedActivity!.isEmpty) {
+      CustomToast.showError('Please select an activity');
+      return;
+    }
+
+    if (_durationController.text.trim().isEmpty) {
+      CustomToast.showError('Please enter duration');
+      return;
+    }
+
+    if (selectedDays.isEmpty) {
+      CustomToast.showError('Please select at least one day');
+      return;
+    }
+
+    final duration = int.tryParse(_durationController.text.trim());
+    if (duration == null || duration <= 0) {
+      CustomToast.showError('Please enter a valid duration');
+      return;
+    }
+
+    planController.addOtherActivity(
+      selectedActivity!,
+      duration,
+      selectedDays.toList(),
+    );
+
+    // Clear form
+    setState(() {
+      selectedActivity = null;
+      selectedDays.clear();
+    });
+    _durationController.clear();
+
+    CustomToast.showSuccess('Activity added successfully!');
   }
 }

@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:get/get.dart';
 import 'package:sodiet/route/app_routes.dart';
 
 import '../../constant/appConstant.dart';
 import '../../model/plan_model.dart';
 import '../../model/weight_data.dart';
+import '../../model/physical_activity_model.dart';
 import '../../repo/authRepo.dart';
 
 class PlanController extends GetxController implements GetxService {
@@ -30,6 +33,7 @@ class PlanController extends GetxController implements GetxService {
   void clearFormFields() {
     selectedSex.value = '';
     selectedPlan.value = '';
+    clearPhysicalActivityForm();
   }
 
   // Observable variables to store plan details data
@@ -46,8 +50,104 @@ class PlanController extends GetxController implements GetxService {
   Rx<ActivityOverviewResponse?> activityOverviewResponse =
       Rx<ActivityOverviewResponse?>(null);
 
+  // Observable variables for physical activity estimation form
+  RxBool isLoadingPhysicalActivities = false.obs;
+  RxList<PhysicalActivity> physicalActivitiesList = <PhysicalActivity>[].obs;
+  RxString sleepHours = '8'.obs;
+  RxString workSchoolHours = '8'.obs;
+  RxString workSchoolActivityLevel =
+      'Lightly Active (light exercise/sports 1-3 days/week)'.obs;
+  RxList<Map<String, dynamic>> otherActivities = <Map<String, dynamic>>[].obs;
+
   // Raw response storage
   Map<String, dynamic>? activePlanResponse;
+
+  // Method to get physical activities list
+  getPhysicalActivitiesList() async {
+    isLoadingPhysicalActivities.value = true;
+    try {
+      String apiUrl = AppConstants.GET_PHYSICAL_ACTIVITIES;
+      Response response = await authRepo.getDataSet(apiName: apiUrl);
+      print("Physical Activities API Response Status: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        // Parse the response using the model
+        PhysicalActivityModel physicalActivitiesData =
+            PhysicalActivityModel.fromJson(response.body);
+        physicalActivitiesList.value = physicalActivitiesData.activities;
+
+        print("Loaded ${physicalActivitiesList.length} physical activities");
+      } else {
+        print("Physical Activities API Error: ${response.statusCode}");
+        physicalActivitiesList.clear();
+      }
+    } catch (e) {
+      print('Exception in getPhysicalActivitiesList: $e');
+      physicalActivitiesList.clear();
+    }
+    isLoadingPhysicalActivities.value = false;
+    update();
+  }
+
+  // Method to add other activity
+  void addOtherActivity(String activity, int duration, List<String> days) {
+    otherActivities.add({
+      'activity': activity,
+      'duration': duration,
+      'days': days,
+    });
+  }
+
+  // Method to remove other activity
+  void removeOtherActivity(int index) {
+    if (index >= 0 && index < otherActivities.length) {
+      otherActivities.removeAt(index);
+    }
+  }
+
+  // Method to clear physical activity form
+  void clearPhysicalActivityForm() {
+    sleepHours.value = '8';
+    workSchoolHours.value = '8';
+    workSchoolActivityLevel.value =
+        'Lightly Active (light exercise/sports 1-3 days/week)';
+    otherActivities.clear();
+  }
+
+  // Method to generate PALText from other activities
+  String generatePALText() {
+    if (otherActivities.isEmpty) return "";
+
+    List<List<String>> palData = [];
+    for (var activity in otherActivities) {
+      String daysString = (activity['days'] as List<String>).join(', ');
+      palData.add([
+        activity['activity'].toString(),
+        activity['duration'].toString(),
+        daysString,
+      ]);
+    }
+    print("ajklasdljsd==== ${jsonEncode(palData)}");
+    return jsonEncode(palData);
+  }
+
+  // Method to get WSA value based on activity level
+  int _getWSAValue(String activityLevel) {
+    switch (activityLevel) {
+      case 'Sedentary (little or no exercise)':
+        return 0;
+      case 'Lightly Active (light exercise/sports 1-3 days/week)':
+        return 1;
+      case 'Moderately Active (moderate exercise/sports 3-5 days/week)':
+        return 2;
+      case 'Very Active (hard exercise/sports 6-7 days a week)':
+        return 3;
+      case 'Extra Active (very hard exercise/sports & physical job or 2x training)':
+        return 4;
+      default:
+        return 1; // Default to lightly active
+    }
+  }
 
   getActivePlan() async {
     isLoadingActivePlan.value = true;
@@ -248,7 +348,7 @@ class PlanController extends GetxController implements GetxService {
   getActivePlanDetails() async {
     final activePlanResult = await getActivePlan();
     if (activePlanResult['success'] && planId.value.isNotEmpty) {
-      Get.offNamed(AppRoutes.generatePlanScreen);
+      // Get.offNamed(AppRoutes.generatePlanScreen);
       await getDashboardSummary();
       await getActivityOverview();
       return await getPlanDetails(planId.value);
@@ -357,16 +457,16 @@ class PlanController extends GetxController implements GetxService {
         "username": "Testlogin",
         "bwp_form_data": {
           "age": age,
-          "sex": sex,
+          "sex": sex.capitalizeFirst,
           "height": height,
           "weight": weight,
           "target_weight": targetWeight,
           "duration": duration,
           "start_date": startDate,
-          "sleep": 0,
-          "school": 0,
-          "WSA": 0,
-          "PALText": "",
+          "sleep": int.tryParse(sleepHours.value) ?? 8,
+          "school": int.tryParse(workSchoolHours.value) ?? 8,
+          "WSA": _getWSAValue(workSchoolActivityLevel.value),
+          "PALText": generatePALText(),
           "DeltaPALText": ""
         }
       };
