@@ -284,8 +284,12 @@ class WeightProgressChart extends StatelessWidget {
       maxY: maxIntake,
       lineTouchData: LineTouchData(
         touchTooltipData: LineTouchTooltipData(
-          tooltipBgColor: Colors.black.withOpacity(0.8),
+          tooltipBgColor: Colors.black.withOpacity(0.9),
           tooltipRoundedRadius: 8,
+          tooltipPadding: const EdgeInsets.all(8),
+          maxContentWidth: 180, // Set max width to prevent cropping
+          fitInsideHorizontally: true, // Keep tooltip within chart bounds
+          fitInsideVertically: true, // Keep tooltip within chart bounds
           getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
             return touchedBarSpots.map((barSpot) {
               final flSpot = barSpot;
@@ -311,37 +315,37 @@ class WeightProgressChart extends StatelessWidget {
               switch (flSpot.barIndex) {
                 case 0:
                   tooltipText =
-                      'Projected Weight: ${originalData.projectedWeightKg.toStringAsFixed(1)} kg\nDay: $day';
+                      'Weight: ${originalData.projectedWeightKg.toStringAsFixed(1)}kg\nDay: $day';
                   break;
                 case 1:
                   if (originalData.loggedWeightKg != null) {
                     tooltipText =
-                        'Logged Weight: ${originalData.loggedWeightKg!.toStringAsFixed(1)} kg\nDay: $day';
+                        'Logged: ${originalData.loggedWeightKg!.toStringAsFixed(1)}kg\nDay: $day';
                   }
                   break;
                 case 2:
                   tooltipText =
-                      'Target Intake: ${originalData.targetIntakeKcal.toStringAsFixed(0)} kcal\nDay: $day';
+                      'Target: ${(originalData.targetIntakeKcal / 1000).toStringAsFixed(1)}k\nDay: $day';
                   break;
                 case 3:
                   tooltipText =
-                      'Target Expenditure: ${originalData.targetExpenditureKcal.toStringAsFixed(0)} kcal\nDay: $day';
+                      'T.Expend: ${(originalData.targetExpenditureKcal / 1000).toStringAsFixed(1)}k\nDay: $day';
                   break;
                 case 4:
                   tooltipText =
-                      'Actual Intake: ${originalData.actualIntakeKcal.toStringAsFixed(0)} kcal\nDay: $day';
+                      'Intake: ${(originalData.actualIntakeKcal / 1000).toStringAsFixed(1)}k\nDay: $day';
                   break;
                 case 5:
                   tooltipText =
-                      'Actual Expenditure: ${originalData.actualExpenditureKcal.toStringAsFixed(0)} kcal\nDay: $day';
+                      'Expend: ${(originalData.actualExpenditureKcal / 1000).toStringAsFixed(1)}k\nDay: $day';
                   break;
                 case 6:
                   tooltipText =
-                      'CC Intake: ${originalData.ccIntakeKcal.toStringAsFixed(0)} kcal\nDay: $day';
+                      'CC In: ${(originalData.ccIntakeKcal / 1000).toStringAsFixed(1)}k\nDay: $day';
                   break;
                 case 7:
                   tooltipText =
-                      'CC Expenditure: ${originalData.ccExpenditureKcal.toStringAsFixed(0)} kcal\nDay: $day';
+                      'CC Out: ${(originalData.ccExpenditureKcal / 1000).toStringAsFixed(1)}k\nDay: $day';
                   break;
                 default:
                   tooltipText = 'Day: $day';
@@ -351,8 +355,8 @@ class WeightProgressChart extends StatelessWidget {
                 tooltipText,
                 const TextStyle(
                   color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
                 ),
               );
             }).toList();
