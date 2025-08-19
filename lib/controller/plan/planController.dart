@@ -248,6 +248,7 @@ class PlanController extends GetxController implements GetxService {
   getActivePlanDetails() async {
     final activePlanResult = await getActivePlan();
     if (activePlanResult['success'] && planId.value.isNotEmpty) {
+      Get.offNamed(AppRoutes.generatePlanScreen);
       await getDashboardSummary();
       await getActivityOverview();
       return await getPlanDetails(planId.value);
