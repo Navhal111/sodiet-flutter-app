@@ -4,7 +4,6 @@ import 'package:sodiet/controller/auth/authController.dart';
 import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/utils/images.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
-import 'package:sodiet/view/widgets/custom_button.dart';
 import 'package:sodiet/view/widgets/custom_text_field.dart';
 import 'package:sodiet/view/widgets/password_text_field.dart';
 
@@ -33,8 +32,16 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _emailController.text = "test@example.com";
+    _passwordController.text = "test123";
+  }
+
   void _login(AuthController authController) {
-    // Implement login functionality
+    // Implement Supabase login functionality
     String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
 
@@ -47,10 +54,15 @@ class _LoginScreenState extends State<LoginScreen> {
       showCustomSnackBar('Please enter your password', context);
       return;
     }
-    authController.demoLoginTry({
-      "userName": email,
-      "password": password,
-    }, context);
+
+    // Use Supabase authentication instead of demo login
+    authController.signIn(email, password, context);
+
+    // Keep demo login as fallback (remove this line when you're ready to fully switch to Supabase)
+    // authController.demoLoginTry({
+    //   "userName": email,
+    //   "password": password,
+    // }, context);
   }
 
   @override
@@ -142,15 +154,63 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 30),
                     Center(
-                      child: CustomButton(
-                        width: Get.width - 80,
-                        text: 'Login',
-                        onPressed: () {
-                          _login(authController);
-                        },
-                        height: 44,
-                        showShadow: true,
-                      ),
+                      child: Obx(() {
+                        return Container(
+                          width: Get.width - 80,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.3),
+                                spreadRadius: 1,
+                                blurRadius: 5,
+                                offset: Offset(0, 3),
+                              )
+                            ],
+                          ),
+                          child: TextButton(
+                            onPressed: authController.isLoading.value
+                                ? null
+                                : () {
+                                    _login(authController);
+                                  },
+                            style: TextButton.styleFrom(
+                              backgroundColor: authController.isLoading.value
+                                  ? Colors.grey.shade400
+                                  : Theme.of(context).primaryColor,
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.0),
+                              ),
+                            ),
+                            child: authController.isLoading.value
+                                ? Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                      SizedBox(width: 10),
+                                      MediumText(
+                                        'Logging in...',
+                                        fontSize: 14,
+                                        textColor: Colors.white,
+                                      ),
+                                    ],
+                                  )
+                                : MediumText(
+                                    'Login',
+                                    fontSize: 14,
+                                    textColor: Theme.of(context).hintColor,
+                                  ),
+                          ),
+                        );
+                      }),
                     ),
                   ],
                 ),

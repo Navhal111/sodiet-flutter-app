@@ -15,8 +15,9 @@ void main() async {
   await di.init();
 
   await Supabase.initialize(
-    url: AppConstants.SUPABASE_URL,
-    anonKey: AppConstants.SUPABASE_ANON_KEY,
+    url: "https://fqzgqbfpwhofywgdroye.supabase.co",
+    anonKey:
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxemdxYmZwd2hvZnl3Z2Ryb3llIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1MDc2NTYsImV4cCI6MjA2MjA4MzY1Nn0.wsrYPeZalAeEi4vnVTtDwzV8-lG7Kt99GGv4AZy2Duc",
   );
 
   runApp(MyApp());

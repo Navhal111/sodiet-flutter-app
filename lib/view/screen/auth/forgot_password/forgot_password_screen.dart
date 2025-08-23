@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sodiet/controller/auth/authController.dart';
 import 'package:sodiet/utils/images.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/custom_button.dart';
@@ -24,7 +25,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   void _sendResetLink() {
-    // Implement send reset link functionality
+    // Implement Supabase password reset functionality
     String email = _emailController.text.trim();
 
     if (email.isEmpty) {
@@ -32,16 +33,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       return;
     }
 
-    // TODO: Implement API call to send password reset link
-    print('Sending reset link to: $email');
-
-    // Show success message
-    Get.snackbar(
-      'Success',
-      'Password recovery link has been sent to your email',
-      backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-      colorText: Theme.of(context).primaryColor,
-    );
+    // Use AuthController to send password reset
+    final authController = Get.find<AuthController>();
+    authController.resetPassword(email, context);
   }
 
   @override

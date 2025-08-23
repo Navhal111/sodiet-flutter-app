@@ -264,8 +264,6 @@ class ActivityOverviewChart extends StatelessWidget {
         double rawValue = series.data[i];
         double value = rawValue < 0 ? 0.0 : rawValue;
         if (value > maxValue) maxValue = value;
-        print(
-            '📈 Max calc - Activity: ${series.name}, Raw: $rawValue, Processed: $value, Current Max: $maxValue');
       }
     }
 
@@ -399,9 +397,7 @@ class ActivityOverviewChart extends StatelessWidget {
       // Check if this activity has any non-zero data
       bool hasData = series.data.any((value) => value > 0);
       if (hasData) {
-        print('🎯 Creating individual line for activity: ${series.name}');
         final color = _getActivityColor(series.name);
-        print('🎨 Color for ${series.name}: $color');
 
         charts.add(_buildIndividualLineChart(series, color));
       }
@@ -421,8 +417,6 @@ class ActivityOverviewChart extends StatelessWidget {
         double rawValue = series.data[i];
         // Double-check: ensure no negative values can pass through
         value = rawValue < 0 ? 0.0 : rawValue;
-        print(
-            '📊 Activity: ${series.name}, Index: $i, Raw: $rawValue, Clamped: $value');
       }
       spots.add(FlSpot(i.toDouble(), value));
     }
