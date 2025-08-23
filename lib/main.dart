@@ -8,10 +8,17 @@ import 'package:sodiet/theme/light.dart';
 import 'helper/get_di.dart' as di;
 import 'controller/theme/themeController.dart';
 import 'route/app_routes.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await di.init();
+
+  await Supabase.initialize(
+    url: AppConstants.SUPABASE_URL,
+    anonKey: AppConstants.SUPABASE_ANON_KEY,
+  );
+
   runApp(MyApp());
 }
 

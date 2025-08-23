@@ -385,33 +385,6 @@ class _PhysicalActivityPlannerScreenState
             ),
 
             const SizedBox(height: 20),
-
-            // Calculate Button
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              width: double.infinity,
-              height: 40,
-              child: ElevatedButton(
-                onPressed: _calculateCalories,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF9800),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Calculate',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
           ],
         ),
       ),

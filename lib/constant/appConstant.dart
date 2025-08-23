@@ -107,4 +107,8 @@ class AppConstants {
 // Share Prefernce API data
   static const String userData = 'userData';
   static const String SaveAccessKey = 'access_key';
+
+  static const String SUPABASE_URL = 'https://fqzgqbfpwhofywgdroye.supabase.co';
+  static const String SUPABASE_ANON_KEY =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxemdxYmZwd2hvZnl3Z2Ryb3llIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1MDc2NTYsImV4cCI6MjA2MjA4MzY1Nn0.wsrYPeZalAeEi4vnVTtDwzV8-lG7Kt99GGv4AZy2Duc';
 }

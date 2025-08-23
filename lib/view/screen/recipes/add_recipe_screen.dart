@@ -692,6 +692,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       if (result['success'] == true) {
         CustomToast.showSuccess(
             result['message'] ?? 'Recipe submitted successfully');
+        recipeController.clearRecipeFormFields();
         Get.offNamed(AppRoutes.recipesScreen);
       } else {
         CustomToast.showError(result['message'] ?? 'Failed to submit recipe');
