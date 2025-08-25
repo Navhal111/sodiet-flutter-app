@@ -217,7 +217,8 @@ class _HomeDrawerState extends State<HomeDrawer> {
             onPressed: () {
               Get.back(); // Close dialog first
               final authController = Get.find<AuthController>();
-              authController.logout(context);
+              // Use the new context-free logout method
+              authController.logoutUser();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFF44336),

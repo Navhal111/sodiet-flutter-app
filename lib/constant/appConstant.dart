@@ -7,7 +7,7 @@ class AppConstants {
   // API DOMAIN LINK
   static const String DOMAIN = 'https://datatools.sjri.res.in';
   // static const String DOMAIN = 'http://49.204.74.61';
-  static const String BASE_URL = '${DOMAIN}/SD/api/v1/';
+  static const String BASE_URL = '${DOMAIN}/ADS/api/v1/';
   static const String BASE_URL_IMAGE = '${DOMAIN}/static/VD/food_images_large/';
 
   // API ENDPOINTS

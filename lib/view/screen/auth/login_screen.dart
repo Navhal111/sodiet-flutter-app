@@ -36,8 +36,8 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    _emailController.text = "test@example.com";
-    _passwordController.text = "test123";
+    // _emailController.text = "test@example.com";
+    // _passwordController.text = "test123";
   }
 
   void _login(AuthController authController) {
@@ -108,50 +108,50 @@ class _LoginScreenState extends State<LoginScreen> {
                       hintText: 'Password',
                       onSubmitted: (_) => _login(authController),
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: Checkbox(
-                                value: _rememberMe,
-                                activeColor: Theme.of(context).primaryColor,
-                                onChanged: (bool? value) {
-                                  setState(() {
-                                    _rememberMe = value ?? false;
-                                  });
-                                },
-                                side: BorderSide(
-                                  color: Colors.black54,
-                                  width: 1.5,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            MediumText(
-                              'Keep me logged in',
-                              textColor: Colors.black54,
-                            ),
-                          ],
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Get.toNamed(AppRoutes.forgotPasswordScreen);
-                          },
-                          child: SemiBoldText(
-                            'Forgot password',
-                            textColor: Theme.of(context).primaryColorDark,
-                          ),
-                        ),
-                      ],
-                    ),
+                    // const SizedBox(height: 4),
+                    // Row(
+                    //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    //   children: [
+                    //     Row(
+                    //       children: [
+                    //         SizedBox(
+                    //           width: 24,
+                    //           height: 24,
+                    //           child: Checkbox(
+                    //             value: _rememberMe,
+                    //             activeColor: Theme.of(context).primaryColor,
+                    //             onChanged: (bool? value) {
+                    //               setState(() {
+                    //                 _rememberMe = value ?? false;
+                    //               });
+                    //             },
+                    //             side: BorderSide(
+                    //               color: Colors.black54,
+                    //               width: 1.5,
+                    //             ),
+                    //             shape: RoundedRectangleBorder(
+                    //               borderRadius: BorderRadius.circular(4),
+                    //             ),
+                    //           ),
+                    //         ),
+                    //         const SizedBox(width: 8),
+                    //         MediumText(
+                    //           'Keep me logged in',
+                    //           textColor: Colors.black54,
+                    //         ),
+                    //       ],
+                    //     ),
+                    //     TextButton(
+                    //       onPressed: () {
+                    //         Get.toNamed(AppRoutes.forgotPasswordScreen);
+                    //       },
+                    //       child: SemiBoldText(
+                    //         'Forgot password',
+                    //         textColor: Theme.of(context).primaryColorDark,
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
                     const SizedBox(height: 30),
                     Center(
                       child: Obx(() {

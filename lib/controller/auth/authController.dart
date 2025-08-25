@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sodiet/constant/appConstant.dart';
 import 'package:sodiet/route/app_routes.dart';
@@ -131,7 +132,8 @@ class AuthController extends GetxController implements GetxService {
     isLoading.value = false;
   }
 
-  logout(BuildContext context) async {
+  // Logout method without context dependency
+  Future<bool> logoutUser() async {
     try {
       // Sign out from Supabase
       await SupabaseAuthService.signOut();
@@ -144,12 +146,38 @@ class AuthController extends GetxController implements GetxService {
       // Navigate to login screen
       Get.offAllNamed(AppRoutes.loginScreen);
 
-      // Show logout confirmation
-      showCustomSnackBar("You have been logged out successfully", context,
-          isError: false);
+      // Show success message using GetX snackbar (doesn't depend on context)
+      Get.snackbar(
+        "Success",
+        "You have been logged out successfully",
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: Duration(seconds: 2),
+        margin: EdgeInsets.all(12),
+        borderRadius: 8,
+      );
+
+      return true;
     } catch (e) {
-      showCustomSnackBar("Error during logout: ${e.toString()}", context);
+      // Show error using GetX snackbar
+      Get.snackbar(
+        "Error",
+        "Error during logout: ${e.toString()}",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: Duration(seconds: 3),
+        margin: EdgeInsets.all(12),
+        borderRadius: 8,
+      );
+      return false;
     }
+  }
+
+  // Keep the old logout method for backward compatibility
+  logout(BuildContext context) async {
+    await logoutUser();
   }
 
   // Get current user info
