@@ -21,9 +21,14 @@ class AuthController extends GetxController implements GetxService {
 
   RxBool isLoading = false.obs;
 
-  loginCheckScreen() {
+  loginCheckScreen() async {
     // Check if user is logged in with Supabase
     if (SupabaseAuthService.isLoggedIn) {
+      final response = await SupabaseAuthService.refreshSession();
+      if (response.session?.accessToken != null) {
+        await authRepo.sharedPreferences
+            .setString(AppConstants.TOKEN, response.session!.accessToken);
+      }
       Get.offNamed(AppRoutes.homeScreen);
     } else {
       Get.offNamed(AppRoutes.loginScreen);
@@ -55,13 +60,14 @@ class AuthController extends GetxController implements GetxService {
         };
         print(
             " SupabaseAuthService.userName!===== ${SupabaseAuthService.userName}");
-        print(
-            " SupabaseAuthService.userName!===== ${response.user!.userMetadata}");
+
         await authRepo.sharedPreferences
             .setString(AppConstants.userData, jsonEncode(userData));
         if (response.session?.accessToken != null) {
           await authRepo.sharedPreferences
               .setString(AppConstants.TOKEN, response.session!.accessToken);
+          print(
+              " SupabaseAuthService.new token !===== ${response.session!.accessToken}");
         }
         showCustomSnackBar("Login successful!", context, isError: false);
         Get.offNamed(AppRoutes.homeScreen);

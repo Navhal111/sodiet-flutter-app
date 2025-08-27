@@ -50,6 +50,7 @@ class ApiClient extends GetxService {
   Future<Response> getData(String uri,
       {Map<String, dynamic>? query, Map<String, String>? headers}) async {
     try {
+      token = sharedPreferences.getString(AppConstants.TOKEN);
       if (token != null) {
         updateHeader(
           token,

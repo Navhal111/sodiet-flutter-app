@@ -9,40 +9,37 @@ import 'package:sodiet/view/widgets/password_text_field.dart';
 
 import '../../widgets/common/showCustomSnackBar.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({Key? key}) : super(key: key);
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   final FocusNode _emailFocusNode = FocusNode();
   final FocusNode _passwordFocusNode = FocusNode();
-  bool _rememberMe = false;
+  final FocusNode _confirmPasswordFocusNode = FocusNode();
+
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _emailFocusNode.dispose();
     _passwordFocusNode.dispose();
+    _confirmPasswordFocusNode.dispose();
     super.dispose();
   }
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    _emailController.text = "test@example.com";
-    _passwordController.text = "test123";
-  }
-
-  void _login(AuthController authController) {
-    // Implement Supabase login functionality
+  void _signup(AuthController authController) {
     String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
+    String confirmPassword = _confirmPasswordController.text.trim();
 
     if (email.isEmpty) {
       showCustomSnackBar('Please enter your email address', context);
@@ -54,14 +51,24 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // Use Supabase authentication instead of demo login
-    authController.signIn(email, password, context);
+    if (confirmPassword.isEmpty) {
+      showCustomSnackBar('Please confirm your password', context);
+      return;
+    }
 
-    // Keep demo login as fallback (remove this line when you're ready to fully switch to Supabase)
-    // authController.demoLoginTry({
-    //   "userName": email,
-    //   "password": password,
-    // }, context);
+    if (password != confirmPassword) {
+      showCustomSnackBar('Passwords do not match', context);
+      return;
+    }
+
+    if (password.length < 6) {
+      showCustomSnackBar(
+          'Password must be at least 6 characters long', context);
+      return;
+    }
+
+    // Use Supabase authentication for signup
+    authController.signUp(email, password, context);
   }
 
   @override
@@ -84,12 +91,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 15),
                     MediumText(
-                      'Login',
+                      'Sign Up',
                       fontSize: 24,
                     ),
                     const SizedBox(height: 10),
                     RegularText(
-                      'Please enter your email and password to access your account',
+                      'Create your account to get started with your diet plan',
                       textColor: Colors.black54,
                       fontSize: 14,
                     ),
@@ -104,52 +111,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     PasswordTextField(
                       controller: _passwordController,
                       focusNode: _passwordFocusNode,
+                      nextFocus: _confirmPasswordFocusNode,
                       hintText: 'Password',
-                      onSubmitted: (_) => _login(authController),
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: Checkbox(
-                                value: _rememberMe,
-                                activeColor: Theme.of(context).primaryColor,
-                                onChanged: (bool? value) {
-                                  setState(() {
-                                    _rememberMe = value ?? false;
-                                  });
-                                },
-                                side: BorderSide(
-                                  color: Colors.black54,
-                                  width: 1.5,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            MediumText(
-                              'Keep me logged in',
-                              textColor: Colors.black54,
-                            ),
-                          ],
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Get.toNamed(AppRoutes.forgotPasswordScreen);
-                          },
-                          child: SemiBoldText(
-                            'Forgot password',
-                            textColor: Theme.of(context).primaryColorDark,
-                          ),
-                        ),
-                      ],
+                    PasswordTextField(
+                      controller: _confirmPasswordController,
+                      focusNode: _confirmPasswordFocusNode,
+                      hintText: 'Confirm Password',
+                      onSubmitted: (_) => _signup(authController),
                     ),
                     const SizedBox(height: 30),
                     Center(
@@ -171,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             onPressed: authController.isLoading.value
                                 ? null
                                 : () {
-                                    _login(authController);
+                                    _signup(authController);
                                   },
                             style: TextButton.styleFrom(
                               backgroundColor: authController.isLoading.value
@@ -196,14 +165,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                       SizedBox(width: 10),
                                       MediumText(
-                                        'Logging in...',
+                                        'Creating Account...',
                                         fontSize: 14,
                                         textColor: Colors.white,
                                       ),
                                     ],
                                   )
                                 : MediumText(
-                                    'Login',
+                                    'Sign Up',
                                     fontSize: 14,
                                     textColor: Theme.of(context).hintColor,
                                   ),
@@ -217,13 +186,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           RegularText(
-                            'Don\'t have an account? ',
+                            'Already have an account? ',
                             textColor: Colors.black54,
                             fontSize: 14,
                           ),
                           TextButton(
                             onPressed: () {
-                              Get.toNamed(AppRoutes.signupScreen);
+                              Get.back();
                             },
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,
@@ -231,7 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                             child: SemiBoldText(
-                              'Sign Up',
+                              'Login',
                               textColor: Theme.of(context).primaryColorDark,
                               fontSize: 14,
                             ),

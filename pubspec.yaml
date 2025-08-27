@@ -33,6 +33,7 @@ dependencies:
   network_info_plus: ^6.1.4
   package_info_plus: ^8.3.0
   supabase_flutter: ^2.9.1
+  app_links: ^6.3.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

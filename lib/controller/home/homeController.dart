@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sodiet/controller/auth/authController.dart';
 import 'package:sodiet/route/app_routes.dart';
 
 import '../../constant/appConstant.dart';
@@ -65,6 +66,11 @@ class HomeController extends GetxController implements GetxService {
           'success': true,
           'message': 'Dashboard summary loaded successfully!'
         };
+      }
+      if (response.statusCode == 401) {
+        final authController = Get.find<AuthController>();
+        // Use the new context-free logout method
+        authController.logoutUser();
       } else {
         print('Error loading dashboard summary: ${response.statusCode}');
         Get.offNamed(AppRoutes.generatePlanScreen);
@@ -384,10 +390,10 @@ class HomeController extends GetxController implements GetxService {
         // Then refresh dashboard data in background
         Future.delayed(const Duration(milliseconds: 100), () {
           getDashboardSummary();
-          getNutrientWeeklySummary();
-          getIntakeOverview();
-          getActivityOverview();
-          getNutrientTimeSeries();
+          // getNutrientWeeklySummary();
+          // getIntakeOverview();
+          // getActivityOverview();
+          // getNutrientTimeSeries();
         });
       } else {
         CustomToast.showError('Failed to add weight log');
