@@ -146,15 +146,30 @@ class WeightLogChart extends StatelessWidget {
       if (weight > maxWeight) maxWeight = weight;
     }
 
+    // Handle edge case when all values are the same
+    if (minWeight == maxWeight) {
+      minWeight = (minWeight - 2.0).clamp(0.0, double.infinity);
+      maxWeight = maxWeight + 2.0;
+    }
+
     // Add padding to the Y-axis range
     final weightRange = maxWeight - minWeight;
-    final padding = weightRange * 0.1;
+    final padding =
+        weightRange > 0 ? weightRange * 0.1 : 2.0; // Ensure minimum padding
     final chartMinY = (minWeight - padding).clamp(0.0, double.infinity);
     final chartMaxY = maxWeight + padding;
 
+    // Ensure minimum range for proper grid display
+    final finalRange = chartMaxY - chartMinY;
+    final adjustedChartMaxY = finalRange < 5.0 ? chartMinY + 5.0 : chartMaxY;
+
+    // Calculate horizontal interval with safety check
+    final horizontalInterval =
+        ((adjustedChartMaxY - chartMinY) / 5).clamp(0.1, double.infinity);
+
     return LineChartData(
       minY: chartMinY.toDouble(),
-      maxY: chartMaxY.toDouble(),
+      maxY: adjustedChartMaxY.toDouble(),
       minX: 0,
       maxX: (sortedLogs.length - 1).toDouble(),
       gridData: FlGridData(
@@ -162,7 +177,7 @@ class WeightLogChart extends StatelessWidget {
         drawVerticalLine: true,
         drawHorizontalLine: true,
         verticalInterval: 1,
-        horizontalInterval: (chartMaxY - chartMinY) / 5,
+        horizontalInterval: horizontalInterval,
         getDrawingVerticalLine: (value) {
           return FlLine(
             color: Colors.grey.shade300,
@@ -212,7 +227,7 @@ class WeightLogChart extends StatelessWidget {
           sideTitles: SideTitles(
             showTitles: true,
             reservedSize: 40,
-            interval: (chartMaxY - chartMinY) / 5,
+            interval: horizontalInterval,
             getTitlesWidget: (value, meta) {
               return Text(
                 '${value.toStringAsFixed(1)}kg',

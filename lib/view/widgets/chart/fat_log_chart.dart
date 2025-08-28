@@ -146,15 +146,30 @@ class FatLogChart extends StatelessWidget {
       if (fatPct > maxFat) maxFat = fatPct;
     }
 
+    // Handle edge case when all values are the same
+    if (minFat == maxFat) {
+      minFat = (minFat - 2.0).clamp(0.0, double.infinity);
+      maxFat = maxFat + 2.0;
+    }
+
     // Add padding to the Y-axis range
     final fatRange = maxFat - minFat;
-    final padding = fatRange * 0.1;
+    final padding =
+        fatRange > 0 ? fatRange * 0.1 : 2.0; // Ensure minimum padding
     final chartMinY = (minFat - padding).clamp(0.0, double.infinity);
     final chartMaxY = maxFat + padding;
 
+    // Ensure minimum range for proper grid display
+    final finalRange = chartMaxY - chartMinY;
+    final adjustedChartMaxY = finalRange < 5.0 ? chartMinY + 5.0 : chartMaxY;
+
+    // Calculate horizontal interval with safety check
+    final horizontalInterval =
+        ((adjustedChartMaxY - chartMinY) / 5).clamp(0.1, double.infinity);
+
     return LineChartData(
       minY: chartMinY.toDouble(),
-      maxY: chartMaxY.toDouble(),
+      maxY: adjustedChartMaxY.toDouble(),
       minX: 0,
       maxX: (sortedLogs.length - 1).toDouble(),
       gridData: FlGridData(
@@ -162,7 +177,7 @@ class FatLogChart extends StatelessWidget {
         drawVerticalLine: true,
         drawHorizontalLine: true,
         verticalInterval: 1,
-        horizontalInterval: (chartMaxY - chartMinY) / 5,
+        horizontalInterval: horizontalInterval,
         getDrawingVerticalLine: (value) {
           return FlLine(
             color: Colors.grey.shade300,
@@ -212,7 +227,7 @@ class FatLogChart extends StatelessWidget {
           sideTitles: SideTitles(
             showTitles: true,
             reservedSize: 40,
-            interval: (chartMaxY - chartMinY) / 5,
+            interval: horizontalInterval,
             getTitlesWidget: (value, meta) {
               return Text(
                 '${value.toStringAsFixed(1)}%',

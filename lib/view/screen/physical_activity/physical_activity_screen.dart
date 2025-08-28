@@ -129,7 +129,7 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
       // Show result toast
       if (result['success']) {
         CustomToast.showSuccess(result['message']);
-
+        planController.getActivityOverview();
         // Clear form on success
         _durationController.clear();
         // Keep date and reset to defaults

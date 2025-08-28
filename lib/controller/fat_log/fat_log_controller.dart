@@ -136,6 +136,7 @@ class FatLogController extends GetxController implements GetxService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         CustomToast.showSuccess('Fat log added successfully');
         fatController.clear();
+        Get.back();
         // Refresh the list
         await getFatLogs(isRefresh: true);
       } else {

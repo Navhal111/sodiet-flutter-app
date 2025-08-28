@@ -381,7 +381,7 @@ class HomeController extends GetxController implements GetxService {
         apiName: AppConstants.ADD_WEIGHT_LOG,
         sendData: data,
       );
-
+      Get.back();
       if (response.statusCode == 200 || response.statusCode == 201) {
         CustomToast.showSuccess('Weight log added successfully');
         weightLogWeightController.clear();

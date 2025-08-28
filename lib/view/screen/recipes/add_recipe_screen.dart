@@ -734,15 +734,20 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              value ?? hint,
-              style: TextStyle(
-                color: value != null
-                    ? const Color(0xFF091242)
-                    : Colors.grey.shade600,
-                fontSize: 14,
+            Expanded(
+              child: Text(
+                value ?? hint,
+                style: TextStyle(
+                  color: value != null
+                      ? const Color(0xFF091242)
+                      : Colors.grey.shade600,
+                  fontSize: 14,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
+            const SizedBox(width: 8),
             Icon(
               Icons.keyboard_arrow_down,
               color: Colors.grey.shade600,
@@ -785,15 +790,20 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              value ?? hint,
-              style: TextStyle(
-                color: value != null
-                    ? const Color(0xFF091242)
-                    : Colors.grey.shade600,
-                fontSize: 14,
+            Expanded(
+              child: Text(
+                value ?? hint,
+                style: TextStyle(
+                  color: value != null
+                      ? const Color(0xFF091242)
+                      : Colors.grey.shade600,
+                  fontSize: 14,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
+            const SizedBox(width: 8),
             Icon(
               Icons.keyboard_arrow_down,
               color: Colors.grey.shade600,

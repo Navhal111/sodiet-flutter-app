@@ -366,7 +366,7 @@ class _PreferenceOnboardingScreenState
                             child: Obx(() => CustomButton(
                                   text: controller.isCreatingCombination.value
                                       ? 'Saving...'
-                                      : 'Save Combination',
+                                      : 'Save',
                                   onPressed: controller
                                           .isCreatingCombination.value
                                       ? null
