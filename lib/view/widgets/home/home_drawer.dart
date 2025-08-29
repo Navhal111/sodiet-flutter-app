@@ -59,10 +59,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
                     'Dashboard',
                     isSelected: navigationController.currentRoute ==
                         AppRoutes.homeScreen,
-                    onTap: () => {
-                      navigationController.navigateToHome(),
-                      setState(() {})
-                    },
+                    onTap: () => navigationController.navigateToHome(),
                   ),
                   _buildDrawerItem(
                     context,
@@ -70,10 +67,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
                     'Plan',
                     isSelected: navigationController.currentRoute ==
                         AppRoutes.planScreen,
-                    onTap: () => {
-                      navigationController.navigateToPlan(),
-                      setState(() {})
-                    },
+                    onTap: () => navigationController.navigateToPlan(),
                   ),
                   // Recipes with submenu
                   _buildDrawerItem(
@@ -82,10 +76,17 @@ class _HomeDrawerState extends State<HomeDrawer> {
                     'Recipes',
                     hasDropdown: true,
                     isSelected: navigationController.currentRoute ==
-                        AppRoutes.recipesScreen,
+                            AppRoutes.recipesScreen ||
+                        navigationController.currentRoute ==
+                            AppRoutes.customRecipesScreen,
                     onTap: () {
-                      setState(() {
-                        isRecipesExpanded = !isRecipesExpanded;
+                      // Schedule setState for after build
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          setState(() {
+                            isRecipesExpanded = !isRecipesExpanded;
+                          });
+                        }
                       });
                     },
                     isExpanded: isRecipesExpanded,
@@ -100,7 +101,8 @@ class _HomeDrawerState extends State<HomeDrawer> {
                     _buildSubMenuItem(
                       context,
                       'Custom Recipes',
-                      onTap: () => navigationController.navigateToRecipes(),
+                      onTap: () =>
+                          navigationController.navigateToCustomRecipes(),
                     ),
                     _buildSubMenuItem(
                       context,

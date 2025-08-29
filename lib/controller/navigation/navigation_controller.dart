@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sodiet/route/app_routes.dart';
 
@@ -33,6 +34,11 @@ class NavigationController extends GetxController {
 
   // Update current route
   void updateCurrentRoute(String route) {
+    if (_currentRoute.value == route) {
+      // Route is already set, no need to update
+      return;
+    }
+
     print(
         'NavigationController: Updating route from ${_currentRoute.value} to $route');
     _currentRoute.value = route;
@@ -72,11 +78,22 @@ class NavigationController extends GetxController {
     }
   }
 
-  void navigateToRecipes() {
-    if (_currentRoute.value != AppRoutes.recipesScreen) {
-      Get.offNamed(AppRoutes.recipesScreen);
-      // Route will be updated by BaseScreenLayout
-    }
+  void navigateToRecipes({bool isCustom = false}) {
+    // Always use Get.off to ensure fresh navigation even if on same route
+    Get.offNamed(AppRoutes.recipesScreen);
+    // Defer route update to avoid build conflicts
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      updateCurrentRoute(AppRoutes.recipesScreen);
+    });
+  }
+
+  void navigateToCustomRecipes() {
+    // Always use Get.off to ensure fresh navigation even if on same route
+    Get.offNamed(AppRoutes.customRecipesScreen);
+    // Defer route update to avoid build conflicts
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      updateCurrentRoute(AppRoutes.customRecipesScreen);
+    });
   }
 
   void navigateToAddRecipes() {

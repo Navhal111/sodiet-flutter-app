@@ -73,6 +73,9 @@ class RecipeController extends GetxController implements GetxService {
   RxString selectedSortBy = 'Name (A-Z)'.obs;
   RxList<Recipe> filteredRecipeList = <Recipe>[].obs;
 
+  // Custom recipes flag
+  RxBool isCustomRecipesMode = false.obs;
+
   // Recipe submission related variables
   RxBool isSubmittingRecipe = false.obs;
 
@@ -112,7 +115,7 @@ class RecipeController extends GetxController implements GetxService {
     addedIngredients.clear();
   }
 
-  getRecipes({bool loadMore = false}) async {
+  getRecipes({bool loadMore = false, bool isCustom = false}) async {
     if (loadMore) {
       if (isLoadingMore.value || !hasMoreData.value) return;
       isLoadingMore.value = true;
@@ -122,9 +125,12 @@ class RecipeController extends GetxController implements GetxService {
       currentPage = 1;
       hasMoreData.value = true;
       recipeList.clear(); // Clear list on fresh load
+      // Store the custom mode for future operations
+      isCustomRecipesMode.value = isCustom;
     }
 
-    print("Starting to fetch recipes... Page: $currentPage");
+    print(
+        "Starting to fetch recipes... Page: $currentPage, isCustom: $isCustom");
 
     try {
       String apiUrl = AppConstants.GET_RECIPES;
@@ -132,6 +138,16 @@ class RecipeController extends GetxController implements GetxService {
         apiUrl += '?page=$currentPage&page_size=$pageSize';
       } else {
         apiUrl += '?page_size=$pageSize';
+      }
+
+      // Add custom parameter if needed
+      if (isCustom) {
+        if (apiUrl.contains('?')) {
+          apiUrl += '&custom=true';
+        } else {
+          apiUrl += '?custom=true';
+        }
+        print("Adding custom=true parameter to recipes API");
       }
 
       // Add category filter if selected
@@ -205,16 +221,17 @@ class RecipeController extends GetxController implements GetxService {
 
   // Method to load more data when scrolling
   void loadMoreRecipes() {
-    getRecipes(loadMore: true);
+    getRecipes(loadMore: true, isCustom: isCustomRecipesMode.value);
   }
 
   // Method to refresh recipes
   void refreshRecipes() {
-    getRecipes();
+    getRecipes(isCustom: isCustomRecipesMode.value);
   }
 
   // Method to search recipes via API
-  searchRecipesAPI(String searchTerm, {bool loadMore = false}) async {
+  searchRecipesAPI(String searchTerm,
+      {bool loadMore = false, bool isCustom = false}) async {
     // Allow empty search term for filtering only
     // if (searchTerm.isEmpty) {
     //   clearSearchResults();
@@ -234,7 +251,7 @@ class RecipeController extends GetxController implements GetxService {
     }
 
     print(
-        "Starting to search recipes... Search term: '$searchTerm', Page: $searchCurrentPage");
+        "Starting to search recipes... Search term: '$searchTerm', Page: $searchCurrentPage, isCustom: $isCustom");
 
     try {
       String apiUrl = AppConstants.GET_RECIPES_SEARCH;
@@ -247,6 +264,12 @@ class RecipeController extends GetxController implements GetxService {
       // Add search term only if it's not empty
       if (searchTerm.isNotEmpty) {
         queryParams.add('search_term=$searchTerm');
+      }
+
+      // Add custom parameter if needed
+      if (isCustom) {
+        queryParams.add('custom=true');
+        print("Adding custom=true parameter to search API");
       }
 
       apiUrl += '?' + queryParams.join('&');
@@ -312,7 +335,8 @@ class RecipeController extends GetxController implements GetxService {
   // Method to load more search results
   void loadMoreSearchResults() {
     if (currentSearchTerm.value.isNotEmpty) {
-      searchRecipesAPI(currentSearchTerm.value, loadMore: true);
+      searchRecipesAPI(currentSearchTerm.value,
+          loadMore: true, isCustom: isCustomRecipesMode.value);
     }
   }
 
@@ -862,19 +886,20 @@ class RecipeController extends GetxController implements GetxService {
             currentSearchTerm.value.isNotEmpty ? currentSearchTerm.value : "";
         print(
             "🔍 Using searchRecipesAPI with filters. Search term: '$searchTerm'");
-        searchRecipesAPI(searchTerm);
+        searchRecipesAPI(searchTerm, isCustom: isCustomRecipesMode.value);
       } else {
         // No filters active, use getRecipes for normal browsing
         if (currentSearchTerm.value.isNotEmpty) {
           // User was searching but removed filters, continue with search
           print(
               "🔍 Using searchRecipesAPI for search without filters: ${currentSearchTerm.value}");
-          searchRecipesAPI(currentSearchTerm.value);
+          searchRecipesAPI(currentSearchTerm.value,
+              isCustom: isCustomRecipesMode.value);
         } else {
           // No search, no filters - use normal list
           print(
               "📋 Using getRecipes for normal browsing (no filters, no search)");
-          getRecipes();
+          getRecipes(isCustom: isCustomRecipesMode.value);
         }
       }
     } else {
@@ -905,7 +930,7 @@ class RecipeController extends GetxController implements GetxService {
           currentSearchTerm.value.isNotEmpty ? currentSearchTerm.value : "";
       print(
           "🔍 Using searchRecipesAPI after clearing filters. Search term: '$searchTerm'");
-      searchRecipesAPI(searchTerm);
+      searchRecipesAPI(searchTerm, isCustom: isCustomRecipesMode.value);
     } else {
       // No filters were active, just update filtered list for sorting changes
       if (currentSearchTerm.value.isNotEmpty) {

@@ -55,6 +55,12 @@ class AppPages {
       page: () => const RecipesScreen(),
     ),
     GetPage(
+      name: AppRoutes.customRecipesScreen,
+      page: () => const RecipesScreen(
+        isCustom: true,
+      ),
+    ),
+    GetPage(
       name: AppRoutes.recipeDetailScreen,
       page: () => RecipeDetailScreen(
         recipe: Get.arguments as Map<String, dynamic>,

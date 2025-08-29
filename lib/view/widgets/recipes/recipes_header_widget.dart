@@ -3,10 +3,12 @@ import 'package:sodiet/view/widgets/app_text.dart';
 
 class RecipesHeaderWidget extends StatelessWidget {
   final VoidCallback onAddRecipeTap;
+  final bool isCustom;
 
   const RecipesHeaderWidget({
     Key? key,
     required this.onAddRecipeTap,
+    this.isCustom = false,
   }) : super(key: key);
 
   @override
@@ -45,13 +47,15 @@ class RecipesHeaderWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SemiBoldText(
-                  'Recipes',
+                  isCustom ? 'Custom Recipes' : 'Recipes',
                   fontSize: 20,
                   textColor: const Color(0xFF091242),
                 ),
                 const SizedBox(height: 4),
                 RegularText(
-                  'All your recipes will be shown here, you can view or manage your recipes here.',
+                  isCustom
+                      ? 'Your custom recipes will be shown here, you can view or manage your custom recipes here.'
+                      : 'All your recipes will be shown here, you can view or manage your recipes here.',
                   fontSize: 12,
                   textColor: Colors.grey.shade600,
                   maxLines: 2,

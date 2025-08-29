@@ -19,14 +19,15 @@ class WeightLogManagerScreen extends StatefulWidget {
 
 class _WeightLogManagerScreenState extends State<WeightLogManagerScreen> {
   late WeightLogController controller;
-
   late ScrollController _scrollController;
+  late FocusNode _weightFocusNode;
 
   @override
   void initState() {
     super.initState();
     controller = Get.find<WeightLogController>();
     _scrollController = ScrollController();
+    _weightFocusNode = FocusNode();
     _scrollController.addListener(_onScroll);
   }
 
@@ -34,6 +35,7 @@ class _WeightLogManagerScreenState extends State<WeightLogManagerScreen> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _weightFocusNode.dispose();
     super.dispose();
   }
 
@@ -182,6 +184,7 @@ class _WeightLogManagerScreenState extends State<WeightLogManagerScreen> {
                             onPressed: controller.isSubmitting.value
                                 ? null
                                 : () async {
+                                    _weightFocusNode.unfocus();
                                     await controller.submitWeightLog();
                                     // Check if edit was successful and close dialog
                                     if (!controller.isEditing.value &&
@@ -297,10 +300,20 @@ class _WeightLogManagerScreenState extends State<WeightLogManagerScreen> {
                             // Weight Field
                             CustomTextField(
                               controller: controller.weightController,
+                              focusNode: _weightFocusNode,
                               hintText: 'Enter weight in kg',
                               labelText: 'Weight',
                               textInputType: TextInputType.numberWithOptions(
                                   decimal: true),
+                              textInputAction: TextInputAction.done,
+                              onSubmitted: (value) async {
+                                if (!controller.isSubmitting.value) {
+                                  await controller.submitWeightLog();
+
+                                  // Close keyboard after submission
+                                  FocusScope.of(context).unfocus();
+                                }
+                              },
                             ),
 
                             const SizedBox(height: 10),
@@ -315,7 +328,12 @@ class _WeightLogManagerScreenState extends State<WeightLogManagerScreen> {
                                     : 'Add Weight Log',
                                 onPressed: controller.isSubmitting.value
                                     ? null
-                                    : controller.submitWeightLog,
+                                    : () async {
+                                        await controller.submitWeightLog();
+
+                                        // Close keyboard after submission
+                                        FocusScope.of(context).unfocus();
+                                      },
                                 backgroundColor: const Color(0xFFFF9800),
                                 textColor: Colors.white,
                               ),

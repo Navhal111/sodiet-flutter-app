@@ -7,6 +7,7 @@ class AppRoutes {
   static const String planScreen = '/plan_screen';
   static const String generatePlanScreen = '/generate_plan_screen';
   static const String recipesScreen = '/recipes_screen';
+  static const String customRecipesScreen = '/custom_recipes_screen';
   static const String addRecipeScreen = '/add_recipe_screen';
   static const String recipeDetailScreen = '/recipe_detail_screen';
   static const String optimizationScreen = '/optimization_screen';

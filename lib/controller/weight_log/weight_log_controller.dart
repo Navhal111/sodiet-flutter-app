@@ -135,9 +135,15 @@ class WeightLogController extends GetxController implements GetxService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         CustomToast.showSuccess('Weight log added successfully');
+
+        // Clear weight field but keep the date for easy re-entry
         weightController.clear();
+
         // Refresh the list
         await getWeightLogs(isRefresh: true);
+
+        // Return true to indicate successful submission
+        return;
       } else {
         CustomToast.showError('Failed to add weight log');
       }

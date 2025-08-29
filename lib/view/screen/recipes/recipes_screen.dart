@@ -10,13 +10,14 @@ import 'package:sodiet/view/screen/recipes/add_recipe_screen.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/common/custom_toast.dart';
 import 'package:sodiet/view/widgets/layouts/base_screen_layout.dart';
-import 'package:sodiet/view/widgets/recipes/recipe_header_section_widget.dart';
 import 'package:sodiet/view/widgets/recipes/recipes_header_widget.dart';
 import 'package:sodiet/view/widgets/recipes/recipes_search_widget.dart';
 import 'package:sodiet/view/widgets/recipes/filter_popup_widget.dart';
 
 class RecipesScreen extends StatefulWidget {
-  const RecipesScreen({Key? key}) : super(key: key);
+  final bool isCustom;
+
+  const RecipesScreen({Key? key, this.isCustom = false}) : super(key: key);
 
   @override
   State<RecipesScreen> createState() => _RecipesScreenState();
@@ -29,18 +30,39 @@ class _RecipesScreenState extends State<RecipesScreen> {
   final FocusNode _searchFocusNode = FocusNode();
   late RecipeController recipeController;
   Timer? _debounceTimer;
+  late bool isCustomRecipes;
 
   String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
+
+    isCustomRecipes = widget.isCustom;
+    print("🚀 RecipesScreen initState - isCustom: $isCustomRecipes");
+
     recipeController = Get.find<RecipeController>();
-    recipeController.getRecipes();
-    // Load food categories for filtering
-    recipeController.getFoodCategories();
-    // Load food subcategories for filtering
-    recipeController.getFoodSubcategories();
+
+    // Defer observable updates to avoid build conflicts
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Clear existing data and reset for fresh load
+      recipeController.recipeList.clear();
+      recipeController.searchResultsList.clear();
+      recipeController.currentSearchTerm.value = '';
+      recipeController.currentPage = 1;
+      recipeController.searchCurrentPage = 1;
+      recipeController.hasMoreData.value = true;
+      recipeController.hasMoreSearchData.value = true;
+
+      // Set the custom mode and load fresh data
+      recipeController.isCustomRecipesMode.value = isCustomRecipes;
+      recipeController.getRecipes(isCustom: isCustomRecipes);
+
+      // Load food categories for filtering
+      recipeController.getFoodCategories();
+      // Load food subcategories for filtering
+      recipeController.getFoodSubcategories();
+    });
 
     // Add scroll listener for pagination
     _scrollController.addListener(_onScroll);
@@ -116,7 +138,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
         recipeController.clearSearchResults();
       } else {
         // Call search API with the query
-        recipeController.searchRecipesAPI(_searchQuery.trim());
+        recipeController.searchRecipesAPI(_searchQuery.trim(),
+            isCustom: isCustomRecipes);
       }
     });
   }
@@ -129,7 +152,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
       recipeController.clearSearchResults();
     } else {
       // Call search API immediately
-      recipeController.searchRecipesAPI(_searchQuery.trim());
+      recipeController.searchRecipesAPI(_searchQuery.trim(),
+          isCustom: isCustomRecipes);
     }
 
     // Dismiss keyboard
@@ -180,6 +204,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                 // Recipes Header Widget
                 RecipesHeaderWidget(
                   onAddRecipeTap: _handleAddRecipe,
+                  isCustom: isCustomRecipes,
                 ),
 
                 const SizedBox(height: 4),
