@@ -110,15 +110,17 @@ class AuthController extends GetxController implements GetxService {
   }
 
   // Send Password Reset Email
-  Future<void> resetPassword(String email, BuildContext context) async {
+  Future<bool> resetPassword(String email, BuildContext context) async {
     try {
       isLoading.value = true;
 
       await SupabaseAuthService.resetPassword(email: email);
       showCustomSnackBar("Password reset link sent to your email!", context,
           isError: false);
+      return true;
     } catch (e) {
       showCustomSnackBar(SupabaseAuthService.getAuthErrorMessage(e), context);
+      return false;
     } finally {
       isLoading.value = false;
     }

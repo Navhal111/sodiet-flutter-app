@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class RecipesSearchWidget extends StatefulWidget {
   final TextEditingController? controller;
+  final FocusNode? focusNode;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onFilterTap;
   final VoidCallback? onSubmitted;
@@ -10,6 +11,7 @@ class RecipesSearchWidget extends StatefulWidget {
   const RecipesSearchWidget({
     Key? key,
     this.controller,
+    this.focusNode,
     this.onChanged,
     this.onFilterTap,
     this.onSubmitted,
@@ -22,6 +24,7 @@ class RecipesSearchWidget extends StatefulWidget {
 
 class _RecipesSearchWidgetState extends State<RecipesSearchWidget> {
   bool _hasText = false;
+
   @override
   void initState() {
     super.initState();
@@ -64,6 +67,7 @@ class _RecipesSearchWidgetState extends State<RecipesSearchWidget> {
           Expanded(
             child: TextField(
               controller: widget.controller,
+              focusNode: widget.focusNode,
               onChanged: widget.onChanged,
               onSubmitted: (_) => widget.onSubmitted?.call(),
               textInputAction: TextInputAction.search,

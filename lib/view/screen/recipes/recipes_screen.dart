@@ -25,6 +25,8 @@ class RecipesScreen extends StatefulWidget {
 class _RecipesScreenState extends State<RecipesScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final GlobalKey _searchKey = GlobalKey();
+  final FocusNode _searchFocusNode = FocusNode();
   late RecipeController recipeController;
   Timer? _debounceTimer;
 
@@ -47,12 +49,25 @@ class _RecipesScreenState extends State<RecipesScreen> {
     _searchController.addListener(() {
       _searchQuery = _searchController.text;
     });
+
+    // Add focus listener to handle rebuilds
+    _searchFocusNode.addListener(_onFocusChanged);
+  }
+
+  void _onFocusChanged() {
+    // This helps maintain focus state during rebuilds
+    if (_searchFocusNode.hasFocus) {
+      print("🎯 Search field gained focus");
+    } else {
+      print("❌ Search field lost focus");
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
+    _searchFocusNode.dispose();
     _debounceTimer?.cancel();
     super.dispose();
   }
@@ -91,6 +106,12 @@ class _RecipesScreenState extends State<RecipesScreen> {
 
     // Set up new timer for debounced search
     _debounceTimer = Timer(const Duration(milliseconds: 800), () {
+      // Check if the search field still has focus before proceeding
+      if (!_searchFocusNode.hasFocus) {
+        print("⚠️ Search field lost focus, skipping search");
+        return;
+      }
+
       if (_searchQuery.trim().isEmpty) {
         recipeController.clearSearchResults();
       } else {
@@ -162,13 +183,17 @@ class _RecipesScreenState extends State<RecipesScreen> {
                 ),
 
                 const SizedBox(height: 4),
-                // Search Widget
-                RecipesSearchWidget(
-                  controller: _searchController,
-                  onChanged: _handleSearch,
-                  onSubmitted: _handleSearchSubmit,
-                  onClear: _clearSearch,
-                  onFilterTap: _handleFilter,
+                // Search Widget - wrapped in its own RepaintBoundary to isolate rebuilds
+                RepaintBoundary(
+                  child: RecipesSearchWidget(
+                    key: _searchKey,
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    onChanged: _handleSearch,
+                    onSubmitted: _handleSearchSubmit,
+                    onClear: _clearSearch,
+                    onFilterTap: _handleFilter,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 // Filter indicator chip

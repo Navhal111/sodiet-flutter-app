@@ -24,7 +24,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  void _sendResetLink() {
+  void _sendResetLink() async {
     // Implement Supabase password reset functionality
     String email = _emailController.text.trim();
 
@@ -35,7 +35,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     // Use AuthController to send password reset
     final authController = Get.find<AuthController>();
-    authController.resetPassword(email, context);
+    bool success = await authController.resetPassword(email, context);
+
+    // Navigate back to login screen after successful reset
+    if (success) {
+      Get.back(); // Navigate back to login screen
+    }
   }
 
   @override
@@ -74,15 +79,57 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   textInputType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 30),
-                Center(
-                  child: CustomButton(
-                    width: Get.width - 80,
-                    text: 'Get Link',
-                    onPressed: _sendResetLink,
-                    height: 44,
-                    showShadow: true,
-                  ),
-                ),
+                Obx(() {
+                  final authController = Get.find<AuthController>();
+                  return Center(
+                    child: Container(
+                      width: Get.width - 80,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.3),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: Offset(0, 3),
+                          )
+                        ],
+                      ),
+                      child: TextButton(
+                        onPressed: authController.isLoading.value
+                            ? null
+                            : _sendResetLink,
+                        style: TextButton.styleFrom(
+                          backgroundColor: authController.isLoading.value
+                              ? Colors.grey.shade400
+                              : Theme.of(context).primaryColor,
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                        ),
+                        child: authController.isLoading.value
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                'Get Link',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                      ),
+                    ),
+                  );
+                }),
                 const SizedBox(height: 20),
                 Center(
                   child: CustomButton(
