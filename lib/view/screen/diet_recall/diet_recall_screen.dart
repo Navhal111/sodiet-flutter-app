@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sodiet/constant/appConstant.dart';
 import 'package:sodiet/model/diet_recall_model.dart';
 import 'package:sodiet/model/recipe_model.dart';
 import 'package:sodiet/route/app_routes.dart';
-import 'package:sodiet/utils/images.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/common/custom_toast.dart';
 import 'package:sodiet/view/widgets/common/searchable_recipe_bottom_sheet.dart';
@@ -1519,15 +1519,20 @@ class _DietRecallScreenState extends State<DietRecallScreen>
     final quantity = entry.foodQty;
     final unit = entry.unit;
     final recallId = entry.recallId;
+    final recipeCode = entry.foodName; // This is the actual recipe code
 
     // Cache recipe lookup to avoid repeated searches
     final displayName = _getCachedRecipeName(foodName, recipes);
+
+    // Create image URL based on recipe code, similar to recipes screen
+    final imageUrl = '${AppConstants.BASE_URL_IMAGE}${recipeCode}.jpg';
 
     return Container(
       key: ValueKey('diet_entry_$index'), // Stable key for better performance
       child: DietEntryCardWidget(
         title: displayName,
-        imagePath: MyImages.food1,
+        recipeCode: recipeCode,
+        imagePath: imageUrl,
         onTap: () {
           // Handle card tap
           CustomToast.showInfo('You tapped on $displayName');

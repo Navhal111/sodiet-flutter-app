@@ -811,7 +811,6 @@ class _AddIngredientScreenState extends State<AddIngredientScreen>
         // Clear form on success
         _clearForm();
         // Navigate back
-        Navigator.of(context).pop();
       } else {
         CustomToast.showError(result['message'] ?? 'Failed to add ingredient');
       }

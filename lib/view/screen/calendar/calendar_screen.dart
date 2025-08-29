@@ -298,6 +298,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
       );
     }
 
+    // Ensure we have complete weeks (add empty cells to make last row have 7 days)
+    while (calendarDays.length % 7 != 0) {
+      calendarDays.add(const SizedBox());
+    }
+
     // Create rows of 7 days each
     List<Widget> rows = [];
     for (int i = 0; i < calendarDays.length; i += 7) {
@@ -306,8 +311,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           margin: const EdgeInsets.only(bottom: 8),
           child: Row(
             children: calendarDays
-                .sublist(i,
-                    i + 7 > calendarDays.length ? calendarDays.length : i + 7)
+                .sublist(i, i + 7)
                 .map((day) => Expanded(child: day))
                 .toList(),
           ),

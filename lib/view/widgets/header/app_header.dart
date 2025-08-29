@@ -92,22 +92,22 @@ class AppHeader extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   // Profile Icon
-                  GestureDetector(
-                    onTap: onProfileTap as void Function()?,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      child: Icon(
-                        Icons.person,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
-                  ),
+                  // GestureDetector(
+                  //   onTap: onProfileTap as void Function()?,
+                  //   child: Container(
+                  //     width: 40,
+                  //     height: 40,
+                  //     decoration: BoxDecoration(
+                  //       shape: BoxShape.circle,
+                  //       color: Theme.of(context).primaryColor,
+                  //     ),
+                  //     child: Icon(
+                  //       Icons.person,
+                  //       color: Colors.white,
+                  //       size: 24,
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
             ],

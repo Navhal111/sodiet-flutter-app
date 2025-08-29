@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:sodiet/utils/images.dart';
 
 import '../app_text.dart';
 
 class DietEntryCardWidget extends StatelessWidget {
   final String title;
+  final String? recipeCode;
   final String? subtitle;
   final String? imagePath;
   final VoidCallback onTap;
@@ -22,6 +22,7 @@ class DietEntryCardWidget extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.imagePath,
+    this.recipeCode,
     required this.onTap,
     this.onEdit,
     this.onDelete,
@@ -58,27 +59,7 @@ class DietEntryCardWidget extends StatelessWidget {
                   borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(12),
                       bottomLeft: Radius.circular(12)),
-                  child: Image.asset(
-                    imagePath ?? MyImages.food1,
-                    width: imageSize,
-                    height: imageSize,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: imageSize,
-                        height: imageSize,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.restaurant_menu,
-                          color: Colors.grey.shade400,
-                          size: imageSize! * 0.6,
-                        ),
-                      );
-                    },
-                  ),
+                  child: _buildImage(),
                 ),
 
                 const SizedBox(width: 12),
@@ -157,6 +138,65 @@ class DietEntryCardWidget extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildImage() {
+    // Check if imagePath is a network URL (starts with http)
+    if (imagePath != null && imagePath!.startsWith('http')) {
+      return Image.network(
+        imagePath!,
+        width: imageSize,
+        height: imageSize,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildErrorImage();
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: imageSize,
+            height: imageSize,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                bottomLeft: Radius.circular(12),
+              ),
+            ),
+            child: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Colors.grey.shade400,
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      // Fallback to asset image or default error image
+      return _buildErrorImage();
+    }
+  }
+
+  Widget _buildErrorImage() {
+    return Container(
+      width: imageSize,
+      height: imageSize,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(12),
+          bottomLeft: Radius.circular(12),
+        ),
+      ),
+      child: Icon(
+        Icons.restaurant_menu,
+        color: Colors.grey.shade400,
+        size: imageSize! * 0.4,
       ),
     );
   }

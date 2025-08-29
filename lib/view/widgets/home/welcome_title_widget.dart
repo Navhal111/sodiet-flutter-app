@@ -32,7 +32,7 @@ class WelcomeTitleWidget extends StatelessWidget {
                   const SizedBox(height: 4),
                   SemiBoldText(
                     '$userName!',
-                    fontSize: 24,
+                    fontSize: 18,
                     textColor: const Color(0xFF091242), // Dark blue
                   ),
                 ],
