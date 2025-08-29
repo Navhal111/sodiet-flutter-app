@@ -626,6 +626,22 @@ class _DietRecallScreenState extends State<DietRecallScreen>
                         selectedRecipeKey != null &&
                         selectedRecipeValue != null &&
                         _quantityController.text.isNotEmpty) {
+                      // Validate quantity is a positive number
+                      final quantityText = _quantityController.text.trim();
+                      final quantity = double.tryParse(quantityText);
+
+                      if (quantity == null) {
+                        CustomToast.showWarning(
+                            'Please enter a valid number for quantity');
+                        return;
+                      }
+
+                      if (quantity <= 0) {
+                        CustomToast.showWarning(
+                            'Quantity must be greater than 0');
+                        return;
+                      }
+
                       // Show loading toast
                       CustomToast.showLoading('Adding diet entry...');
 
@@ -1448,6 +1464,20 @@ class _DietRecallScreenState extends State<DietRecallScreen>
         _editRecipeKeyNotifier.value != null &&
         _editRecipeValueNotifier.value != null &&
         _editQuantityController.text.isNotEmpty) {
+      // Validate quantity is a positive number
+      final quantityText = _editQuantityController.text.trim();
+      final quantity = double.tryParse(quantityText);
+
+      if (quantity == null) {
+        CustomToast.showWarning('Please enter a valid number for quantity');
+        return;
+      }
+
+      if (quantity <= 0) {
+        CustomToast.showWarning('Quantity must be greater than 0');
+        return;
+      }
+
       Get.back(); // Close dialog first
       CustomToast.showLoading('Updating diet entry...');
 

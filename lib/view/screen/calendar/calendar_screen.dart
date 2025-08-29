@@ -57,7 +57,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
         if (controller.isLoading.value) {
           return const Center(
             child: CircularProgressIndicator(),
-            
           );
         }
 
@@ -448,7 +447,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
     String imagePath = '${AppConstants.BASE_URL_IMAGE}$recipeCode.jpg';
     String quantity = '$portion $description';
-    String weightText = '${weight}gms';
+
+    // Convert weight to integer to remove decimal places
+    double weightDouble = double.tryParse(weight) ?? 0.0;
+    int weightInt = weightDouble.round();
+    String weightText = '${weightInt}gms';
 
     return Container(
       padding: const EdgeInsets.all(0),

@@ -182,13 +182,14 @@ class _HomeDrawerState extends State<HomeDrawer> {
                       onTap: () =>
                           navigationController.navigateToIntegrations()),
                   // _buildDrawerItem(context, Icons.help_outline, 'Help Desk'),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
                   _buildDrawerItem(
                     context,
                     Icons.logout_outlined,
                     'Logout',
                     onTap: () => _showLogoutConfirmation(context),
                   ),
+                  const SizedBox(height: 50),
                 ],
               ),
             ),

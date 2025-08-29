@@ -133,19 +133,95 @@ class ActivityOverviewChart extends StatelessWidget {
     }
   }
 
-  // Centralized activity color mapping for consistency
-  static const Map<String, Color> activityColors = {
-    'dancing': Color(0xFFE57373), // Red
-    'walking around/ strolling': Color(0xFF4FC3F7), // Light Blue
-    'walking/strolling': Color(0xFF4FC3F7), // Light Blue
-    'walking quickly': Color(0xFF2196F3), // Blue
-    'walking slowly': Color(0xFF9C27B0), // Purple
-  };
+  // Predefined color palette for dynamic assignment
+  static const List<Color> _colorPalette = [
+    Color(0xFFE57373), // Red
+    Color(0xFF4FC3F7), // Light Blue
+    Color(0xFF2196F3), // Blue
+    Color(0xFF9C27B0), // Purple
+    Color(0xFF66BB6A), // Green
+    Color(0xFFFFB74D), // Orange
+    Color(0xFFA1887F), // Brown
+    Color(0xFF26A69A), // Teal
+    Color(0xFFEF5350), // Deep Red
+    Color(0xFF42A5F5), // Deep Blue
+    Color(0xFF7E57C2), // Deep Purple
+    Color(0xFF26C6DA), // Cyan
+    Color(0xFF29B6F6), // Light Blue
+    Color(0xFF9CCC65), // Light Green
+    Color(0xFFFFCA28), // Amber
+    Color(0xFFFF7043), // Deep Orange
+    Color(0xFF8D6E63), // Light Brown
+    Color(0xFF78909C), // Blue Grey
+    Color(0xFFFFA726), // Orange
+    Color(0xFF5C6BC0), // Indigo
+    Color(0xFFEC407A), // Pink
+    Color(0xFF26A69A), // Teal
+    Color(0xFFD4E157), // Lime
+    Color(0xFFFFEE58), // Yellow
+    Color(0xFFFF8A65), // Deep Orange
+    Color(0xFF90A4AE), // Blue Grey
+    Color(0xFFF06292), // Pink
+    Color(0xFF4DD0E1), // Cyan
+    Color(0xFF81C784), // Light Green
+    Color(0xFFFFAB91), // Deep Orange
+  ];
+
+  // Cache for assigned colors to maintain consistency
+  static final Map<String, Color> _assignedColors = {};
+
+  // Method to clear color cache if needed (call when activity data changes significantly)
+  static void clearColorCache() {
+    _assignedColors.clear();
+  }
 
   Color _getActivityColor(String activityName) {
-    // Use centralized color mapping
     final normalizedName = activityName.toLowerCase();
-    return activityColors[normalizedName] ?? Colors.grey.shade400;
+
+    // Return already assigned color if exists
+    if (_assignedColors.containsKey(normalizedName)) {
+      return _assignedColors[normalizedName]!;
+    }
+
+    // Get all unique activity names from current data
+    List<String> allActivities = [];
+    if (activityData != null) {
+      allActivities =
+          activityData!.series.map((s) => s.name.toLowerCase()).toList();
+      allActivities.sort(); // Sort for consistent assignment
+    }
+
+    // Find index of current activity in sorted list
+    int activityIndex = allActivities.indexOf(normalizedName);
+    if (activityIndex == -1) {
+      // Fallback: use hash-based color selection
+      activityIndex = normalizedName.hashCode.abs();
+    }
+
+    // Assign color from palette using modulo to cycle through colors
+    Color assignedColor = _colorPalette[activityIndex % _colorPalette.length];
+
+    // If we have more activities than colors, create variations
+    if (activityIndex >= _colorPalette.length) {
+      // Create color variations by adjusting opacity and brightness
+      int variation = (activityIndex / _colorPalette.length).floor();
+      double opacity =
+          1.0 - (variation * 0.15).clamp(0.0, 0.4); // Max 40% transparency
+      assignedColor = assignedColor.withOpacity(opacity);
+
+      // For even more variations, slightly adjust hue
+      if (variation > 2) {
+        HSLColor hsl = HSLColor.fromColor(assignedColor);
+        double hueShift =
+            (variation * 30.0) % 360.0; // Shift hue by 30 degrees per variation
+        assignedColor = hsl.withHue((hsl.hue + hueShift) % 360.0).toColor();
+      }
+    }
+
+    // Cache the assigned color
+    _assignedColors[normalizedName] = assignedColor;
+
+    return assignedColor;
   }
 
   Widget _buildLegendItem(String label, Color color) {

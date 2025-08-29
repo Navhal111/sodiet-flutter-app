@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:sodiet/controller/auth/authController.dart';
 import 'package:sodiet/controller/home/homeController.dart';
 import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
@@ -24,6 +25,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final HomeController homeController = Get.find<HomeController>();
+  final AuthController authController = Get.find<AuthController>();
 
   @override
   void initState() {
@@ -408,7 +410,7 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               WelcomeTitleWidget(
-                  userName: 'Testlight User',
+                  userName: authController.userDisplayName,
                   onLogWeightTap: _showAddWeightLogDialog),
               const SizedBox(height: 14),
               SizedBox(
