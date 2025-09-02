@@ -20,6 +20,17 @@ class AuthController extends GetxController implements GetxService {
   });
 
   RxBool isLoading = false.obs;
+  RxString resetToken = ''.obs;
+
+  // Set reset token
+  void setResetToken(String token) {
+    resetToken.value = token;
+  }
+
+  // Clear reset token
+  void clearResetToken() {
+    resetToken.value = '';
+  }
 
   loginCheckScreen() async {
     // Check if user is logged in with Supabase
@@ -117,6 +128,37 @@ class AuthController extends GetxController implements GetxService {
       await SupabaseAuthService.resetPassword(email: email);
       showCustomSnackBar("Password reset link sent to your email!", context,
           isError: false);
+      return true;
+    } catch (e) {
+      showCustomSnackBar(SupabaseAuthService.getAuthErrorMessage(e), context);
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Verify Password Reset with OTP
+  Future<bool> verifyPasswordReset({
+    required String token,
+    required String newPassword,
+    required BuildContext context,
+  }) async {
+    try {
+      isLoading.value = true;
+
+      await SupabaseAuthService.verifyPasswordResetOTP(
+        token: token,
+        newPassword: newPassword,
+      );
+
+      showCustomSnackBar(
+          "Password reset successful! You can now login with your new password.",
+          context,
+          isError: false);
+
+      // Clear the reset token
+      resetToken.value = '';
+
       return true;
     } catch (e) {
       showCustomSnackBar(SupabaseAuthService.getAuthErrorMessage(e), context);

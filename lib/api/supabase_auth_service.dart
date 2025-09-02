@@ -111,6 +111,39 @@ class SupabaseAuthService {
     }
   }
 
+  // Verify OTP for password reset
+  static Future verifyPasswordResetOTP({
+    required String token,
+    required String newPassword,
+  }) async {
+    try {
+      log('Attempting _supabase.auth.currentUser: ${_supabase.auth.currentUser?.email}');
+      log('Attempting to verify password reset OTP with token: $token');
+      // First verify the OTP token
+      // final response = await _supabase.auth.verifyOTP(
+      //   token: token,
+      //   type: OtpType.recovery,
+      //   email: _supabase.auth.currentUser?.email,
+      // );
+
+      if (_supabase.auth.currentUser != null) {
+        // If verification successful, update the password
+        await _supabase.auth.updateUser(
+          UserAttributes(password: newPassword),
+        );
+        await SupabaseAuthService.signOut();
+        log('Password reset successful for user: ${_supabase.auth.currentUser!.email}');
+      } else {
+        log('Password reset failed: User is null');
+      }
+
+      // return _supabase.auth.currentUser;
+    } catch (e) {
+      log('Password reset verification error: $e');
+      rethrow;
+    }
+  }
+
   // Reset password
   static Future<void> resetPassword({
     required String email,

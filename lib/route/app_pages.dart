@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:sodiet/view/screen/auth/forgot_password/forgot_password_screen.dart';
+import 'package:sodiet/view/screen/auth/reset_password/reset_password_screen.dart';
 import 'package:sodiet/view/screen/auth/login_screen.dart';
 import 'package:sodiet/view/screen/auth/signup_screen.dart';
 import 'package:sodiet/view/screen/course_correction/course_correction_screen.dart';
@@ -41,6 +42,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.forgotPasswordScreen,
       page: () => const ForgotPasswordScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.resetPasswordScreen,
+      page: () => const ResetPasswordScreen(),
     ),
     GetPage(
       name: AppRoutes.homeScreen,
