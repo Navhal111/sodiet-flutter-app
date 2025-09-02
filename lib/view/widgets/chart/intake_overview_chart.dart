@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:sodiet/model/plan_model.dart' as models;
+import 'package:sodiet/view/widgets/app_text.dart';
 
 class IntakeOverviewChart extends StatelessWidget {
   final models.IntakeOverviewChart? intakeData;
@@ -43,17 +44,17 @@ class IntakeOverviewChart extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTitleWithIcon(),
+          _buildTitleWithIcon(context),
           const SizedBox(height: 20),
           _buildLegend(),
           const SizedBox(height: 20),
           SizedBox(
             height: 300,
             child: intakeData == null || intakeData!.dates.isEmpty
-                ? const Center(
-                    child: Text(
+                ? Center(
+                    child: RegularText(
                       'No intake data available',
-                      style: TextStyle(color: Colors.grey),
+                      textColor: Colors.grey,
                     ),
                   )
                 : _buildScrollableChart(),
@@ -63,32 +64,135 @@ class IntakeOverviewChart extends StatelessWidget {
     );
   }
 
-  Widget _buildTitleWithIcon() {
+  Widget _buildTitleWithIcon(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
+        SemiBoldText(
           title,
-          style: TextStyle(
-            fontSize: titleFontSize,
-            fontWeight: FontWeight.w600,
-            color: titleColor,
-          ),
+          fontSize: titleFontSize,
+          textColor: titleColor,
         ),
-        Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade200,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.info_outline,
-            size: 16,
-            color: Colors.grey,
+        GestureDetector(
+          onTap: () => _showInfoPopup(context),
+          child: Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.info_outline,
+              size: 16,
+              color: Colors.grey,
+            ),
           ),
         ),
       ],
+    );
+  }
+
+  void _showInfoPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.info_outline, color: titleColor),
+              const SizedBox(width: 8),
+              SemiBoldText(
+                'Intake Overview Details',
+                fontSize: 16,
+                textColor: titleColor,
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RegularText(
+                  'This chart shows your daily calorie intake breakdown by meal type over time.',
+                  fontSize: 14,
+                  textColor: Colors.black87,
+                ),
+                const SizedBox(height: 12),
+                SemiBoldText(
+                  'Meal Categories:',
+                  fontSize: 14,
+                  textColor: titleColor,
+                ),
+                const SizedBox(height: 8),
+                _buildInfoLegendItem('Breakfast', mealColors['Breakfast']!,
+                    'Morning meal intake'),
+                _buildInfoLegendItem(
+                    'Lunch', mealColors['Lunch']!, 'Afternoon meal intake'),
+                _buildInfoLegendItem(
+                    'Dinner', mealColors['Dinner']!, 'Evening meal intake'),
+                _buildInfoLegendItem(
+                    'Snacks', mealColors['Snacks']!, 'Between-meal snacks'),
+                const SizedBox(height: 12),
+                RegularText(
+                  'Tip: Swipe horizontally on the chart to view more data points.',
+                  fontSize: 12,
+                  textColor: Colors.grey.shade600,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: MediumText(
+                'Got it',
+                fontSize: 14,
+                textColor: titleColor,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoLegendItem(String label, Color color, String description) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            margin: const EdgeInsets.only(top: 2),
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                MediumText(
+                  label,
+                  fontSize: 13,
+                  textColor: Colors.black87,
+                ),
+                RegularText(
+                  description,
+                  fontSize: 12,
+                  textColor: Colors.grey.shade600,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -120,13 +224,10 @@ class IntakeOverviewChart extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        Text(
+        SemiBoldText(
           label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF091242),
-          ),
+          fontSize: 14,
+          textColor: const Color(0xFF091242),
         ),
       ],
     );
@@ -172,13 +273,10 @@ class IntakeOverviewChart extends StatelessWidget {
                   color: Colors.grey.shade400,
                 ),
                 const SizedBox(width: 4),
-                Text(
+                RegularText(
                   'Swipe to see more data',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey.shade500,
-                    fontStyle: FontStyle.italic,
-                  ),
+                  fontSize: 10,
+                  textColor: Colors.grey.shade500,
                 ),
                 const SizedBox(width: 4),
                 Icon(
@@ -287,13 +385,10 @@ class IntakeOverviewChart extends StatelessWidget {
                     axisSide: meta.axisSide,
                     child: Padding(
                       padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
+                      child: RegularText(
                         '${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFF37474F),
-                          fontWeight: FontWeight.w400,
-                        ),
+                        fontSize: 10,
+                        textColor: const Color(0xFF37474F),
                       ),
                     ),
                   );
@@ -302,48 +397,34 @@ class IntakeOverviewChart extends StatelessWidget {
                     axisSide: meta.axisSide,
                     child: Padding(
                       padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
+                      child: RegularText(
                         dateStr.length > 5
                             ? dateStr.substring(dateStr.length - 5)
                             : dateStr,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFF37474F),
-                          fontWeight: FontWeight.w400,
-                        ),
+                        fontSize: 10,
+                        textColor: const Color(0xFF37474F),
                       ),
                     ),
                   );
                 }
               }
-              return const Text('');
+              return RegularText('');
             },
           ),
         ),
         leftTitles: AxisTitles(
-          axisNameWidget: const Text(
-            'Energy in Kcal',
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFF37474F),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
           sideTitles: SideTitles(
             showTitles: true,
             interval: maxValue / 5,
-            reservedSize: 60,
+            reservedSize: 40, // Reduced reserved space since no axis label
             getTitlesWidget: (value, meta) {
               return SideTitleWidget(
                 axisSide: meta.axisSide,
                 space: 8,
-                child: Text(
+                child: RegularText(
                   value.toInt().toString(),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF37474F),
-                    fontWeight: FontWeight.w400,
-                  ),
+                  fontSize: 11,
+                  textColor: const Color(0xFF37474F),
                 ),
               );
             },

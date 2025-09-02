@@ -73,7 +73,7 @@ class HomeController extends GetxController implements GetxService {
         authController.logoutUser();
       } else {
         print('Error loading dashboard summary: ${response.statusCode}');
-        Get.offNamed(AppRoutes.generatePlanScreen);
+        // Get.offNamed(AppRoutes.generatePlanScreen);
         dashboardSummaryResponse.value = null;
         return {
           'success': false,

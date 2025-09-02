@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sodiet/controller/auth/authController.dart';
 import 'package:sodiet/controller/home/homeController.dart';
+import 'package:sodiet/controller/plan/planController.dart';
 import 'package:sodiet/route/app_routes.dart';
 import 'package:sodiet/view/widgets/app_text.dart';
 import 'package:sodiet/view/widgets/chart/activity_overview_chart.dart';
@@ -26,11 +27,33 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final HomeController homeController = Get.find<HomeController>();
   final AuthController authController = Get.find<AuthController>();
+  final PlanController planController = Get.find<PlanController>();
+
+  // Variable to track selected week
+  RxInt selectedWeek = 1.obs;
 
   @override
   void initState() {
     super.initState();
     _loadDashboardData();
+    _loadPlandataData();
+
+    // Listen to nutrient weekly summary changes to auto-select first week
+    ever(homeController.isLoadingNutrientWeeklySummary, (isLoading) {
+      if (!isLoading && homeController.hasNutrientWeeklySummary) {
+        _selectFirstAvailableWeek();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // Clean up any listeners if needed
+    super.dispose();
+  }
+
+  _loadPlandataData() async {
+    await planController.getActivePlanDetails();
   }
 
   _loadDashboardData() async {
@@ -39,6 +62,22 @@ class _HomeScreenState extends State<HomeScreen> {
     await homeController.getIntakeOverview();
     await homeController.getActivityOverview();
     await homeController.getNutrientTimeSeries();
+  }
+
+  // Method to select the first available week
+  void _selectFirstAvailableWeek() {
+    if (homeController.hasNutrientWeeklySummary &&
+        homeController.availableWeeks.isNotEmpty) {
+      // Get available weeks and filter out 999 (Average)
+      final availableWeeks =
+          homeController.availableWeeks.where((week) => week != 999).toList();
+      if (availableWeeks.isNotEmpty) {
+        selectedWeek.value = availableWeeks.first;
+      } else if (homeController.availableWeeks.contains(999)) {
+        // If only Average is available, select it
+        selectedWeek.value = 999;
+      }
+    }
   }
 
   // Method to build KPI widgets from dashboard summary data
@@ -131,9 +170,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     ];
   }
-
-  // Variable to track selected week
-  RxInt selectedWeek = 1.obs;
 
   // Method to build week tabs
   Widget _buildWeekTabs() {
@@ -493,7 +529,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     SemiBoldText(
                       'Nutrient Analysis',
-                      fontSize: 16,
+                      fontSize: 22,
                       textColor: const Color(0xFF091242), // Dark blue
                     ),
                     const SizedBox(height: 16),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:sodiet/constant/appConstant.dart';
+import 'package:sodiet/helper/deep_link_handler.dart';
 import 'package:sodiet/route/app_pages.dart';
 import 'package:sodiet/theme/dark.dart';
 import 'package:sodiet/theme/light.dart';
@@ -40,6 +41,7 @@ class _MyAppState extends State<MyApp> {
     // TODO: implement initState
     initializeDefaultFromAndroidResource();
     super.initState();
+    DeepLinkHandler.initialize();
   }
 
   Future<void> initializeDefaultFromAndroidResource() async {

@@ -175,6 +175,7 @@ class DietController extends GetxController implements GetxService {
       if (response.statusCode == 200 || response.statusCode == 204) {
         // Refresh the diet recall list after successful deletion
         await getDietRecallList();
+        getIntakeOverview();
         isLoading.value = false;
         return {'success': true, 'message': 'Diet entry deleted successfully!'};
       } else {

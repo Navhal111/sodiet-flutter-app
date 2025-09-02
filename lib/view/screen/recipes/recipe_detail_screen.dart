@@ -299,7 +299,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                         child: Center(
                                           child: SemiBoldText(
                                             'Nutrients information',
-                                            fontSize: 14,
+                                            fontSize: 10,
                                             textColor: _isNutrientsSelected
                                                 ? Theme.of(context)
                                                     .primaryColorDark
@@ -352,7 +352,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                         child: Center(
                                           child: SemiBoldText(
                                             'Ingredients',
-                                            fontSize: 14,
+                                            fontSize: 12,
                                             textColor: !_isNutrientsSelected
                                                 ? Theme.of(context)
                                                     .primaryColorDark

@@ -36,7 +36,8 @@ class WeightProgressChart extends StatelessWidget {
         (weightDataList.length * 25.0).clamp(300.0, double.infinity);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding:
+          const EdgeInsets.all(20), // Increased padding to prevent cropping
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -52,25 +53,24 @@ class WeightProgressChart extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SemiBoldText(
-            title,
-            fontSize: titleFontSize,
-            textColor: titleColor,
-          ),
+          _buildTitleWithIcon(context),
           const SizedBox(height: 24),
           SizedBox(
             height: 450, // Increased from 300 to 400 for better readability
             child: weightDataList.isEmpty
-                ? const Center(
-                    child: Text(
+                ? Center(
+                    child: RegularText(
                       'No chart data available',
-                      style: TextStyle(color: Colors.grey),
+                      textColor: Colors.grey,
                     ),
                   )
                 : SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    child: SizedBox(
+                    child: Container(
                       width: chartWidth,
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 8), // Added margin to prevent cropping
                       child: LineChart(
                         _createChartData(context),
                       ),
@@ -127,12 +127,149 @@ class WeightProgressChart extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
+          MediumText(
             label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: color.computeLuminance() > 0.5 ? Colors.black87 : color,
+            fontSize: 11,
+            textColor: color.computeLuminance() > 0.5 ? Colors.black87 : color,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTitleWithIcon(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        SemiBoldText(
+          title,
+          fontSize: titleFontSize,
+          textColor: titleColor,
+        ),
+        GestureDetector(
+          onTap: () => _showInfoPopup(context),
+          child: Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.info_outline,
+              size: 16,
+              color: Colors.grey,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showInfoPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.info_outline, color: titleColor),
+              const SizedBox(width: 8),
+              SemiBoldText(
+                'Plan Progress Details',
+                fontSize: 16,
+                textColor: titleColor,
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RegularText(
+                  'This comprehensive chart tracks your weight loss/gain progress alongside intake and expenditure data.',
+                  fontSize: 14,
+                  textColor: Colors.black87,
+                ),
+                const SizedBox(height: 12),
+                SemiBoldText(
+                  'Chart Legend:',
+                  fontSize: 14,
+                  textColor: titleColor,
+                ),
+                const SizedBox(height: 8),
+                _buildPopupLegendItem('Weight', const Color(0xFFFF6B9D),
+                    'Projected weight progression'),
+                _buildPopupLegendItem('Logged Weight', const Color(0xFF1E3A8A),
+                    'Actual recorded weight'),
+                _buildPopupLegendItem('Target Intake', const Color(0xFF06B6D4),
+                    'Recommended daily calories'),
+                _buildPopupLegendItem('Target Expenditure',
+                    const Color(0xFF10B981), 'Recommended calories burned'),
+                _buildPopupLegendItem('Actual Intake', const Color(0xFF8B5CF6),
+                    'Actual calories consumed'),
+                _buildPopupLegendItem('Actual Expenditure',
+                    const Color(0xFFF97316), 'Actual calories burned'),
+                _buildPopupLegendItem('CC Intake', const Color(0xFF1E40AF),
+                    'Calorie cycling intake'),
+                _buildPopupLegendItem('CC Expenditure', const Color(0xFF059669),
+                    'Calorie cycling expenditure'),
+                const SizedBox(height: 12),
+                RegularText(
+                  'Tip: Swipe horizontally to view your complete progress timeline.',
+                  fontSize: 12,
+                  textColor: Colors.grey.shade600,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: MediumText(
+                'Got it',
+                fontSize: 14,
+                textColor: titleColor,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPopupLegendItem(String label, Color color, String description) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            margin: const EdgeInsets.only(top: 2),
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                MediumText(
+                  label,
+                  fontSize: 13,
+                  textColor: Colors.black87,
+                ),
+                RegularText(
+                  description,
+                  fontSize: 12,
+                  textColor: Colors.grey.shade600,
+                ),
+              ],
             ),
           ),
         ],
@@ -176,7 +313,7 @@ class WeightProgressChart extends StatelessWidget {
         rightTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: showRightAxisLabels,
-            reservedSize: 60,
+            reservedSize: 60, // Increased reserved space to prevent cropping
             interval: (maxIntake - minIntake) / 5, // Use intake intervals
             getTitlesWidget: (value, meta) {
               // Map intake position to weight position
@@ -186,83 +323,51 @@ class WeightProgressChart extends StatelessWidget {
 
               return SideTitleWidget(
                 axisSide: meta.axisSide,
-                space: 4,
-                child: Text(
-                  '${weightValue.toStringAsFixed(0)}kg', // Whole numbers for cleaner look
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w500,
-                  ),
+                space: 8, // Increased space from axis line
+                child: MediumText(
+                  '${weightValue.toStringAsFixed(0)}kg',
+                  fontSize: 10,
+                  textColor: Colors.black87,
                 ),
               );
             },
-          ),
-          axisNameWidget: const Text(
-            'Weight (kg)',
-            style: TextStyle(
-              color: Colors.black87,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
           ),
         ),
         topTitles: const AxisTitles(
           sideTitles: SideTitles(showTitles: false),
         ),
         bottomTitles: AxisTitles(
-          axisNameWidget: const Text(
-            'Day',
-            style: TextStyle(
-              color: Colors.black87, // Changed from grey to black87
-              fontSize: 11,
-              fontWeight: FontWeight.w600, // Added for consistency
-            ),
-          ),
           sideTitles: SideTitles(
             showTitles: true,
-            reservedSize: 30,
+            reservedSize: 30, // Slightly increased reserved space
             interval: maxDay > 15 ? 5 : 2,
             getTitlesWidget: (value, meta) {
               return SideTitleWidget(
                 axisSide: meta.axisSide,
-                child: Text(
+                space: 6, // Increased space from axis line
+                child: MediumText(
                   '${value.toInt()}',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.black87, // Changed from grey to black87
-                    fontWeight: FontWeight.w500, // Changed from w400 to w500
-                  ),
+                  fontSize: 10,
+                  textColor: Colors.black87,
                 ),
               );
             },
           ),
         ),
         leftTitles: AxisTitles(
-          axisNameWidget: const Text(
-            'Intake (kcal)',
-            style: TextStyle(
-              color: Colors.black87, // Changed from grey to black87
-              fontSize: 11,
-              fontWeight: FontWeight.w600, // Changed from w500 to w600
-            ),
-          ),
           sideTitles: SideTitles(
             showTitles: true,
-            reservedSize: 60,
+            reservedSize: 35, // Increased reserved space to prevent cropping
             interval: (maxIntake - minIntake) /
                 5, // Show exactly 5 intervals = 6 labels
             getTitlesWidget: (value, meta) {
               return SideTitleWidget(
                 axisSide: meta.axisSide,
-                space: 4,
-                child: Text(
-                  '${(value / 1000).toStringAsFixed(1)}k', // Show as 1.5k format
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.black87, // Changed from grey to black87
-                    fontWeight: FontWeight.w500, // Changed from w400 to w500
-                  ),
+                space: 8, // Increased space from axis line
+                child: MediumText(
+                  '${(value / 1000).toStringAsFixed(1)}k',
+                  fontSize: 10,
+                  textColor: Colors.black87,
                 ),
               );
             },

@@ -110,12 +110,14 @@ class FatLogController extends GetxController implements GetxService {
   Future<void> addFatLog() async {
     if (dateController.text.trim().isEmpty ||
         fatController.text.trim().isEmpty) {
+      FocusManager.instance.primaryFocus?.unfocus();
       CustomToast.showError('Please fill in all fields');
       return;
     }
 
     final fat = double.tryParse(fatController.text.trim());
     if (fat == null || fat < 0) {
+      FocusManager.instance.primaryFocus?.unfocus();
       CustomToast.showError('Please enter a valid body fat percentage');
       return;
     }
@@ -135,6 +137,8 @@ class FatLogController extends GetxController implements GetxService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         CustomToast.showSuccess('Fat log added successfully');
+        // Close keyboard before clearing and navigating
+        FocusManager.instance.primaryFocus?.unfocus();
         fatController.clear();
         Get.back();
         // Refresh the list
@@ -152,12 +156,14 @@ class FatLogController extends GetxController implements GetxService {
   Future<void> updateFatLog() async {
     if (dateController.text.trim().isEmpty ||
         fatController.text.trim().isEmpty) {
+      FocusManager.instance.primaryFocus?.unfocus();
       CustomToast.showError('Please fill in all fields');
       return;
     }
 
     final fat = double.tryParse(fatController.text.trim());
     if (fat == null || fat < 0) {
+      FocusManager.instance.primaryFocus?.unfocus();
       CustomToast.showError('Please enter a valid body fat percentage');
       return;
     }
@@ -178,6 +184,8 @@ class FatLogController extends GetxController implements GetxService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         CustomToast.showSuccess('Fat log updated successfully');
+        // Close keyboard before clearing and updating
+        FocusManager.instance.primaryFocus?.unfocus();
         cancelEdit();
         // Refresh the list
         await getFatLogs(isRefresh: true);

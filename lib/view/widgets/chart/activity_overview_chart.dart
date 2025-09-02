@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:sodiet/model/plan_model.dart' as models;
+import 'package:sodiet/view/widgets/app_text.dart';
 
 class ActivityOverviewChart extends StatelessWidget {
   final models.ActivityOverviewChart? activityData;
@@ -35,17 +36,17 @@ class ActivityOverviewChart extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTitleWithIcon(),
+          _buildTitleWithIcon(context),
           const SizedBox(height: 20),
           _buildLegend(),
           const SizedBox(height: 20),
           SizedBox(
             height: 300,
             child: activityData == null || activityData!.dates.isEmpty
-                ? const Center(
-                    child: Text(
+                ? Center(
+                    child: RegularText(
                       'No activity data available',
-                      style: TextStyle(color: Colors.grey),
+                      textColor: Colors.grey,
                     ),
                   )
                 : _buildScrollableChart(),
@@ -55,32 +56,114 @@ class ActivityOverviewChart extends StatelessWidget {
     );
   }
 
-  Widget _buildTitleWithIcon() {
+  Widget _buildTitleWithIcon(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
+        SemiBoldText(
           title,
-          style: TextStyle(
-            fontSize: titleFontSize,
-            fontWeight: FontWeight.w600,
-            color: titleColor,
-          ),
+          fontSize: titleFontSize,
+          textColor: titleColor,
         ),
-        Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade200,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.info_outline,
-            size: 16,
-            color: Colors.grey,
+        GestureDetector(
+          onTap: () => _showInfoPopup(context),
+          child: Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.info_outline,
+              size: 16,
+              color: Colors.grey,
+            ),
           ),
         ),
       ],
+    );
+  }
+
+  void _showInfoPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.info_outline, color: titleColor),
+              const SizedBox(width: 8),
+              SemiBoldText(
+                'Activity Overview Details',
+                fontSize: 16,
+                textColor: titleColor,
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RegularText(
+                  'This chart tracks your daily energy expenditure from different physical activities.',
+                  fontSize: 14,
+                  textColor: Colors.black87,
+                ),
+                const SizedBox(height: 12),
+                SemiBoldText(
+                  'Features:',
+                  fontSize: 14,
+                  textColor: titleColor,
+                ),
+                const SizedBox(height: 8),
+                _buildInfoItem('🏃‍♀️', 'Track various physical activities'),
+                _buildInfoItem('⚡', 'Monitor energy expenditure over time'),
+                _buildInfoItem('🎯', 'Each activity has its own colored line'),
+                _buildInfoItem('📊', 'View individual activity trends'),
+                _buildInfoItem('👆', 'Swipe horizontally for more data'),
+                const SizedBox(height: 12),
+                RegularText(
+                  'Note: Only activities with recorded data are displayed in the chart.',
+                  fontSize: 12,
+                  textColor: Colors.grey.shade600,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: MediumText(
+                'Got it',
+                fontSize: 14,
+                textColor: titleColor,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoItem(String emoji, String description) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RegularText(emoji, fontSize: 14),
+          const SizedBox(width: 8),
+          Expanded(
+            child: RegularText(
+              description,
+              fontSize: 12,
+              textColor: Colors.grey.shade700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -133,38 +216,38 @@ class ActivityOverviewChart extends StatelessWidget {
     }
   }
 
-  // Predefined color palette for dynamic assignment
+  // Predefined color palette for dynamic assignment with distinct, darker colors
   static const List<Color> _colorPalette = [
-    Color(0xFFE57373), // Red
-    Color(0xFF4FC3F7), // Light Blue
-    Color(0xFF2196F3), // Blue
-    Color(0xFF9C27B0), // Purple
-    Color(0xFF66BB6A), // Green
-    Color(0xFFFFB74D), // Orange
-    Color(0xFFA1887F), // Brown
-    Color(0xFF26A69A), // Teal
-    Color(0xFFEF5350), // Deep Red
-    Color(0xFF42A5F5), // Deep Blue
-    Color(0xFF7E57C2), // Deep Purple
-    Color(0xFF26C6DA), // Cyan
-    Color(0xFF29B6F6), // Light Blue
-    Color(0xFF9CCC65), // Light Green
-    Color(0xFFFFCA28), // Amber
-    Color(0xFFFF7043), // Deep Orange
-    Color(0xFF8D6E63), // Light Brown
-    Color(0xFF78909C), // Blue Grey
-    Color(0xFFFFA726), // Orange
-    Color(0xFF5C6BC0), // Indigo
-    Color(0xFFEC407A), // Pink
-    Color(0xFF26A69A), // Teal
-    Color(0xFFD4E157), // Lime
-    Color(0xFFFFEE58), // Yellow
-    Color(0xFFFF8A65), // Deep Orange
-    Color(0xFF90A4AE), // Blue Grey
-    Color(0xFFF06292), // Pink
-    Color(0xFF4DD0E1), // Cyan
-    Color(0xFF81C784), // Light Green
-    Color(0xFFFFAB91), // Deep Orange
+    Color(0xFFD32F2F), // Dark Red
+    Color(0xFF1976D2), // Dark Blue
+    Color(0xFF388E3C), // Dark Green
+    Color(0xFF7B1FA2), // Dark Purple
+    Color(0xFFE65100), // Dark Orange
+    Color(0xFF5D4037), // Dark Brown
+    Color(0xFF0097A7), // Dark Cyan
+    Color(0xFFAF52DE), // Medium Purple
+    Color(0xFF558B2F), // Olive Green
+    Color(0xFF8E24AA), // Medium Purple
+    Color(0xFF00695C), // Dark Teal
+    Color(0xFF6A1B9A), // Deep Purple
+    Color(0xFF4527A0), // Deep Purple Blue
+    Color(0xFF283593), // Indigo
+    Color(0xFF1565C0), // Blue
+    Color(0xFF0277BD), // Light Blue
+    Color(0xFF00838F), // Cyan
+    Color(0xFF00695C), // Teal
+    Color(0xFF2E7D32), // Green
+    Color(0xFF689F38), // Light Green
+    Color(0xFF9E9D24), // Lime
+    Color(0xFFF57F17), // Yellow
+    Color(0xFFFF8F00), // Amber
+    Color(0xFFEF6C00), // Orange
+    Color(0xFFD84315), // Deep Orange
+    Color(0xFFBF360C), // Red Orange
+    Color(0xFF3E2723), // Brown
+    Color(0xFF424242), // Grey
+    Color(0xFF37474F), // Blue Grey
+    Color(0xFF263238), // Dark Blue Grey
   ];
 
   // Cache for assigned colors to maintain consistency
@@ -237,13 +320,10 @@ class ActivityOverviewChart extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        Text(
+        MediumText(
           label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF37474F),
-          ),
+          fontSize: 12,
+          textColor: const Color(0xFF37474F),
         ),
       ],
     );
@@ -289,13 +369,10 @@ class ActivityOverviewChart extends StatelessWidget {
                   color: Colors.grey.shade400,
                 ),
                 const SizedBox(width: 4),
-                Text(
+                RegularText(
                   'Swipe to see more data',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey.shade500,
-                    fontStyle: FontStyle.italic,
-                  ),
+                  fontSize: 10,
+                  textColor: Colors.grey.shade500,
                 ),
                 const SizedBox(width: 4),
                 Icon(
@@ -381,13 +458,10 @@ class ActivityOverviewChart extends StatelessWidget {
                     axisSide: meta.axisSide,
                     child: Padding(
                       padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
+                      child: RegularText(
                         '${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFF37474F),
-                          fontWeight: FontWeight.w400,
-                        ),
+                        fontSize: 10,
+                        textColor: const Color(0xFF37474F),
                       ),
                     ),
                   );
@@ -396,48 +470,34 @@ class ActivityOverviewChart extends StatelessWidget {
                     axisSide: meta.axisSide,
                     child: Padding(
                       padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
+                      child: RegularText(
                         dateStr.length > 5
                             ? dateStr.substring(dateStr.length - 5)
                             : dateStr,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFF37474F),
-                          fontWeight: FontWeight.w400,
-                        ),
+                        fontSize: 10,
+                        textColor: const Color(0xFF37474F),
                       ),
                     ),
                   );
                 }
               }
-              return const Text('');
+              return RegularText('');
             },
           ),
         ),
         leftTitles: AxisTitles(
-          axisNameWidget: const Text(
-            'Energy in Kcal',
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFF37474F),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
           sideTitles: SideTitles(
             showTitles: true,
             interval: maxValue / 5,
-            reservedSize: 60,
+            reservedSize: 40, // Reduced reserved space since no axis label
             getTitlesWidget: (value, meta) {
               return SideTitleWidget(
                 axisSide: meta.axisSide,
                 space: 8,
-                child: Text(
+                child: RegularText(
                   value.toInt().toString(),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF37474F),
-                    fontWeight: FontWeight.w400,
-                  ),
+                  fontSize: 11,
+                  textColor: const Color(0xFF37474F),
                 ),
               );
             },

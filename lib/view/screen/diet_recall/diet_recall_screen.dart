@@ -719,6 +719,200 @@ class _DietRecallScreenState extends State<DietRecallScreen>
     );
   }
 
+  // Helper method to get timing color
+  Color _getTimingColor(String timing) {
+    switch (timing.toLowerCase()) {
+      case 'breakfast':
+        return const Color(0xFFFF9800); // Orange
+      case 'lunch':
+        return const Color(0xFF4CAF50); // Green
+      case 'dinner':
+        return const Color(0xFF2196F3); // Blue
+      case 'snacks':
+        return const Color(0xFF9C27B0); // Purple
+      default:
+        return const Color(0xFF8D4E2A); // Brown
+    }
+  }
+
+  // Helper method to get timing icon
+  String _getTimingIcon(String timing) {
+    switch (timing.toLowerCase()) {
+      case 'breakfast':
+        return 'assets/icons/breakfast.png';
+      case 'lunch':
+        return 'assets/icons/lunch.png';
+      case 'dinner':
+        return 'assets/icons/dinner.png';
+      case 'snacks':
+        return 'assets/icons/snaks.png';
+      default:
+        return 'assets/icons/breakfast.png';
+    }
+  }
+
+  Widget _buildTimingSection(
+      String timing, List<DietRecall> entries, List<Recipe> recipes) {
+    final timingIcon = _getTimingIcon(timing);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Timing header
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+            child: Row(
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  child: Image.asset(
+                    timingIcon,
+                    width: 24,
+                    height: 24,
+                    color: Theme.of(context).primaryColorDark,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        Icons.restaurant,
+                        color: Theme.of(context).primaryColorDark,
+                        size: 20,
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SemiBoldText(
+                  '$timing (${entries.length})',
+                  fontSize: 16,
+                ),
+              ],
+            ),
+          ),
+
+          // Entries for this timing
+          ...entries.asMap().entries.map((mapEntry) {
+            final index = mapEntry.key;
+            final entry = mapEntry.value;
+            return _buildDietEntryItem(entry, recipes, index);
+          }).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateSection(
+      String date,
+      Map<String, List<DietRecall>> entriesForDate,
+      List<String> timingOrder,
+      List<Recipe> recipes) {
+    // Format date for display
+    String displayDate = _formatDateForDisplay(date);
+
+    // Count total entries for this date
+    int totalEntriesForDate = 0;
+    entriesForDate.values.forEach((entries) {
+      totalEntriesForDate += entries.length;
+    });
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Date header
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  color: Colors.blue.shade600,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                SemiBoldText(
+                  displayDate,
+                  fontSize: 16,
+                  textColor: Colors.blue.shade700,
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: RegularText(
+                    '$totalEntriesForDate entries',
+                    fontSize: 12,
+                    textColor: Colors.blue.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Timing sections for this date
+          ...timingOrder
+              .where((timing) => entriesForDate.containsKey(timing))
+              .map((timing) {
+            final entriesForTiming = entriesForDate[timing]!;
+            return _buildTimingSection(timing, entriesForTiming, recipes);
+          }).toList(),
+        ],
+      ),
+    );
+  }
+
+  String _formatDateForDisplay(String date) {
+    try {
+      DateTime dateTime = DateTime.parse(date);
+      DateTime now = DateTime.now();
+      DateTime today = DateTime(now.year, now.month, now.day);
+      DateTime yesterday = today.subtract(const Duration(days: 1));
+      DateTime dateOnly = DateTime(dateTime.year, dateTime.month, dateTime.day);
+
+      if (dateOnly == today) {
+        return 'Today - ${_formatDate(dateTime)}';
+      } else if (dateOnly == yesterday) {
+        return 'Yesterday - ${_formatDate(dateTime)}';
+      } else {
+        return _formatDate(dateTime);
+      }
+    } catch (e) {
+      // If parsing fails, return the original date
+      return date;
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
   // Custom delete confirmation dialog
   void _showDeleteConfirmation(String recallId, String recipeName) {
     Get.dialog(
@@ -867,6 +1061,52 @@ class _DietRecallScreenState extends State<DietRecallScreen>
     final dietRecalls = dietController.dietRecallList;
     final recipes = dietController.recipeList;
 
+    // Group diet entries by date first (using created_at), then by timing
+    Map<String, Map<String, List<DietRecall>>> groupedEntriesByDate = {};
+
+    for (var entry in dietRecalls) {
+      // Use entry_date field for date grouping
+      String entryDate = entry.entryDate;
+
+      String timing = entry.timeOfDay.toLowerCase();
+      // Normalize timing values
+      switch (timing) {
+        case 'breakfast':
+          timing = 'Breakfast';
+          break;
+        case 'lunch':
+          timing = 'Lunch';
+          break;
+        case 'dinner':
+          timing = 'Dinner';
+          break;
+        case 'snacks':
+        case 'snack':
+          timing = 'Snacks';
+          break;
+        default:
+          timing = entry.timeOfDay.capitalize ?? 'Other';
+      }
+
+      // Group by date first
+      if (!groupedEntriesByDate.containsKey(entryDate)) {
+        groupedEntriesByDate[entryDate] = {};
+      }
+
+      // Then group by timing within the date
+      if (!groupedEntriesByDate[entryDate]!.containsKey(timing)) {
+        groupedEntriesByDate[entryDate]![timing] = [];
+      }
+      groupedEntriesByDate[entryDate]![timing]!.add(entry);
+    }
+
+    // Sort dates in descending order (latest first)
+    final sortedDates = groupedEntriesByDate.keys.toList()
+      ..sort((a, b) => b.compareTo(a));
+
+    // Define timing order for consistent display
+    final timingOrder = ['Breakfast', 'Lunch', 'Dinner', 'Snacks', 'Other'];
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(0),
@@ -898,19 +1138,19 @@ class _DietRecallScreenState extends State<DietRecallScreen>
               ),
             ),
 
-          // Non-scrollable ListView that expands to fit content
+          // Display grouped entries by date, then by timing
           dietRecalls.isNotEmpty
-              ? ListView.builder(
-                  shrinkWrap: true, // Let ListView fit its content
-                  physics:
-                      const NeverScrollableScrollPhysics(), // Disable ListView scrolling
-                  padding: const EdgeInsets.only(bottom: 16),
-                  itemCount: dietRecalls.length +
-                      (dietController.hasMoreData.value ? 1 : 0),
-                  itemBuilder: (context, index) {
+              ? Column(
+                  children: [
+                    ...sortedDates.map((date) {
+                      final entriesForDate = groupedEntriesByDate[date]!;
+                      return _buildDateSection(
+                          date, entriesForDate, timingOrder, recipes);
+                    }).toList(),
+
                     // Show loading indicator at the bottom when loading more
-                    if (index == dietRecalls.length) {
-                      return Container(
+                    if (dietController.hasMoreData.value)
+                      Container(
                         padding: const EdgeInsets.all(16),
                         child: Center(
                           child: dietController.isLoadingMore.value
@@ -931,12 +1171,8 @@ class _DietRecallScreenState extends State<DietRecallScreen>
                                 )
                               : const SizedBox.shrink(),
                         ),
-                      );
-                    }
-
-                    final entry = dietRecalls[index];
-                    return _buildDietEntryItem(entry, recipes, index);
-                  },
+                      ),
+                  ],
                 )
               : _buildEmptyState(),
         ],

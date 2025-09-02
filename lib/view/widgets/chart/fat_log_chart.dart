@@ -95,9 +95,9 @@ class FatLogChart extends StatelessWidget {
                 fontSize: titleFontSize,
                 textColor: titleColor,
               ),
-              // Legend
               Row(
                 children: [
+                  // Legend
                   Container(
                     width: 12,
                     height: 3,
@@ -111,6 +111,24 @@ class FatLogChart extends StatelessWidget {
                     'Body Fat %',
                     fontSize: 12,
                     textColor: Colors.grey.shade600,
+                  ),
+                  const SizedBox(width: 12),
+                  // Info Icon
+                  GestureDetector(
+                    onTap: () => _showInfoPopup(context),
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -210,16 +228,14 @@ class FatLogChart extends StatelessWidget {
                 final date = DateTime.parse(sortedLogs[index].logDate);
                 return Padding(
                   padding: const EdgeInsets.only(top: 8),
-                  child: Text(
+                  child: RegularText(
                     '${date.month}/${date.day}',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 10,
-                    ),
+                    fontSize: 10,
+                    textColor: Colors.grey.shade600,
                   ),
                 );
               }
-              return const Text('');
+              return RegularText('');
             },
           ),
         ),
@@ -229,12 +245,10 @@ class FatLogChart extends StatelessWidget {
             reservedSize: 40,
             interval: horizontalInterval,
             getTitlesWidget: (value, meta) {
-              return Text(
+              return RegularText(
                 '${value.toStringAsFixed(1)}%',
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontSize: 10,
-                ),
+                fontSize: 10,
+                textColor: Colors.grey.shade600,
               );
             },
           ),
@@ -312,5 +326,87 @@ class FatLogChart extends StatelessWidget {
     if (dataLength <= 10) return 2;
     if (dataLength <= 20) return 4;
     return (dataLength / 5).ceil().toDouble();
+  }
+
+  void _showInfoPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.info_outline, color: titleColor),
+              const SizedBox(width: 8),
+              SemiBoldText(
+                'Body Fat Trend Details',
+                fontSize: 16,
+                textColor: titleColor,
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RegularText(
+                  'This chart tracks your body fat percentage changes over time to help monitor your fitness progress.',
+                  fontSize: 14,
+                  textColor: Colors.black87,
+                ),
+                const SizedBox(height: 12),
+                SemiBoldText(
+                  'Features:',
+                  fontSize: 14,
+                  textColor: titleColor,
+                ),
+                const SizedBox(height: 8),
+                _buildInfoItem(
+                    '📊', 'Visual trend line showing body fat changes'),
+                _buildInfoItem('📅', 'Date-based tracking with hover tooltips'),
+                _buildInfoItem('🎯', 'Precise percentage measurements'),
+                _buildInfoItem('📈', 'Easy-to-read progress visualization'),
+                const SizedBox(height: 12),
+                RegularText(
+                  'Tip: Hover over data points to see specific dates and measurements.',
+                  fontSize: 12,
+                  textColor: Colors.grey.shade600,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: MediumText(
+                'Got it',
+                fontSize: 14,
+                textColor: titleColor,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoItem(String emoji, String description) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RegularText(emoji, fontSize: 14),
+          const SizedBox(width: 8),
+          Expanded(
+            child: RegularText(
+              description,
+              fontSize: 12,
+              textColor: Colors.grey.shade700,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

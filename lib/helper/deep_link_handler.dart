@@ -58,34 +58,34 @@ class DeepLinkHandler {
     log('Custom scheme path: $path');
     log('Query parameters: $queryParams');
 
-    switch (path) {
-      case '/home':
-      case '/dashboard':
-        Get.offAllNamed(AppRoutes.homeScreen);
-        break;
-      case '/profile':
-        Get.toNamed(AppRoutes.homeScreen);
-        // Navigate to profile tab if you have tabs
-        break;
-      case '/plan':
-        Get.toNamed(AppRoutes.planScreen);
-        break;
-      case '/recipes':
-        Get.toNamed(AppRoutes.recipesScreen);
-        break;
-      case '/calendar':
-        Get.toNamed(AppRoutes.calendarScreen);
-        break;
-      case '/optimization':
-        Get.toNamed(AppRoutes.optimizationScreen);
-        break;
-      case '/onboarding':
-        Get.offAllNamed(AppRoutes.splashScreen);
-        break;
-      default:
-        // Default to home screen if path is not recognized
-        Get.offAllNamed(AppRoutes.homeScreen);
-    }
+    // switch (path) {
+    //   case '/home':
+    //   case '/dashboard':
+    //     Get.offAllNamed(AppRoutes.homeScreen);
+    //     break;
+    //   case '/profile':
+    //     Get.toNamed(AppRoutes.homeScreen);
+    //     // Navigate to profile tab if you have tabs
+    //     break;
+    //   case '/plan':
+    //     Get.toNamed(AppRoutes.planScreen);
+    //     break;
+    //   case '/recipes':
+    //     Get.toNamed(AppRoutes.recipesScreen);
+    //     break;
+    //   case '/calendar':
+    //     Get.toNamed(AppRoutes.calendarScreen);
+    //     break;
+    //   case '/optimization':
+    //     Get.toNamed(AppRoutes.optimizationScreen);
+    //     break;
+    //   case '/onboarding':
+    //     Get.offAllNamed(AppRoutes.splashScreen);
+    //     break;
+    //   default:
+    //     // Default to home screen if path is not recognized
+    //     Get.offAllNamed(AppRoutes.homeScreen);
+    // }
   }
 
   /// Handle HTTPS deep links (https://sodiet.app/...)

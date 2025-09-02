@@ -87,35 +87,7 @@ class WeightLogChart extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Title and Legend
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              SemiBoldText(
-                title,
-                fontSize: titleFontSize,
-                textColor: titleColor,
-              ),
-              // Legend
-              Row(
-                children: [
-                  Container(
-                    width: 12,
-                    height: 3,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF00BCD4),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  RegularText(
-                    'Weight',
-                    fontSize: 12,
-                    textColor: Colors.grey.shade600,
-                  ),
-                ],
-              ),
-            ],
-          ),
+          _buildTitleWithIcon(context),
           const SizedBox(height: 20),
           // Chart
           Expanded(
@@ -312,5 +284,137 @@ class WeightLogChart extends StatelessWidget {
     if (dataLength <= 10) return 2;
     if (dataLength <= 20) return 4;
     return (dataLength / 5).ceil().toDouble();
+  }
+
+  Widget _buildTitleWithIcon(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        SemiBoldText(
+          title,
+          fontSize: titleFontSize,
+          textColor: titleColor,
+        ),
+        Row(
+          children: [
+            // Legend
+            Container(
+              width: 12,
+              height: 3,
+              decoration: BoxDecoration(
+                color: const Color(0xFF00BCD4),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 6),
+            RegularText(
+              'Weight',
+              fontSize: 12,
+              textColor: Colors.grey.shade600,
+            ),
+            const SizedBox(width: 16),
+            // Info icon
+            GestureDetector(
+              onTap: () => _showInfoPopup(context),
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _showInfoPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.info_outline, color: titleColor),
+              const SizedBox(width: 8),
+              SemiBoldText(
+                'Weight Trend Details',
+                fontSize: 16,
+                textColor: titleColor,
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RegularText(
+                  'This chart tracks your weight changes over time, helping you monitor your weight management progress.',
+                  fontSize: 14,
+                  textColor: Colors.black87,
+                ),
+                const SizedBox(height: 12),
+                SemiBoldText(
+                  'Features:',
+                  fontSize: 14,
+                  textColor: titleColor,
+                ),
+                const SizedBox(height: 8),
+                _buildInfoItem('⚖️', 'Track weight changes over time'),
+                _buildInfoItem('📈', 'Visualize weight trends and patterns'),
+                _buildInfoItem('📊', 'Interactive chart with data points'),
+                _buildInfoItem('📅', 'Date-based weight logging'),
+                _buildInfoItem('👆', 'Touch data points for detailed info'),
+                const SizedBox(height: 12),
+                RegularText(
+                  'Tip: Log your weight regularly at the same time of day for the most accurate tracking.',
+                  fontSize: 12,
+                  textColor: Colors.grey.shade600,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: MediumText(
+                'Got it',
+                fontSize: 14,
+                textColor: titleColor,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoItem(String emoji, String description) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RegularText(emoji, fontSize: 14),
+          const SizedBox(width: 8),
+          Expanded(
+            child: RegularText(
+              description,
+              fontSize: 12,
+              textColor: Colors.grey.shade700,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

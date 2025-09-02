@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:get/get.dart';
 import 'package:sodiet/model/plan_model.dart' as models;
+import 'package:sodiet/view/widgets/app_text.dart';
 
 class NutrientTimeSeriesChart extends StatefulWidget {
   final models.NutrientTimeSeriesResponse? nutrientTimeSeriesData;
@@ -64,7 +65,7 @@ class _NutrientTimeSeriesChartState extends State<NutrientTimeSeriesChart> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTitleWithIcon(),
+          _buildTitleWithIcon(context),
           const SizedBox(height: 16), // Reduced spacing
           _buildNutrientDropdown(),
           const SizedBox(height: 12), // Reduced spacing
@@ -74,10 +75,10 @@ class _NutrientTimeSeriesChartState extends State<NutrientTimeSeriesChart> {
             height: 380, // Increased height for better label spacing
             child: widget.nutrientTimeSeriesData == null ||
                     widget.nutrientTimeSeriesData!.nutrientTimeSeries.isEmpty
-                ? const Center(
-                    child: Text(
+                ? Center(
+                    child: RegularText(
                       'No nutrient time series data available',
-                      style: TextStyle(color: Colors.grey),
+                      textColor: Colors.grey,
                     ),
                   )
                 : Obx(() => _buildScrollableChart()),
@@ -87,32 +88,146 @@ class _NutrientTimeSeriesChartState extends State<NutrientTimeSeriesChart> {
     );
   }
 
-  Widget _buildTitleWithIcon() {
+  Widget _buildTitleWithIcon(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
+        SemiBoldText(
           widget.title,
-          style: TextStyle(
-            fontSize: widget.titleFontSize,
-            fontWeight: FontWeight.w600,
-            color: widget.titleColor,
-          ),
+          fontSize: widget.titleFontSize,
+          textColor: widget.titleColor,
         ),
-        Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade200,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.info_outline,
-            size: 16,
-            color: Colors.grey,
+        GestureDetector(
+          onTap: () => _showInfoPopup(context),
+          child: Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.info_outline,
+              size: 16,
+              color: Colors.grey,
+            ),
           ),
         ),
       ],
+    );
+  }
+
+  void _showInfoPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.info_outline, color: widget.titleColor),
+              const SizedBox(width: 8),
+              SemiBoldText(
+                'Nutrient Time Series Details',
+                fontSize: 16,
+                textColor: widget.titleColor,
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RegularText(
+                  'This chart shows the nutrient intake over time for different meal categories.',
+                  fontSize: 14,
+                  textColor: Colors.black87,
+                ),
+                const SizedBox(height: 12),
+                SemiBoldText(
+                  'Features:',
+                  fontSize: 14,
+                  textColor: widget.titleColor,
+                ),
+                const SizedBox(height: 8),
+                _buildInfoItem(
+                    '📊', 'Select different nutrients from the dropdown'),
+                _buildInfoItem('🍽️',
+                    'View breakdown by meal type (Breakfast, Lunch, Dinner, Snacks)'),
+                _buildInfoItem('📈', 'Track total nutrient intake progression'),
+                _buildInfoItem(
+                    '👆', 'Swipe horizontally to see more data points'),
+                const SizedBox(height: 12),
+                SemiBoldText(
+                  'Meal Legend:',
+                  fontSize: 14,
+                  textColor: widget.titleColor,
+                ),
+                const SizedBox(height: 8),
+                _buildInfoLegendItem('Breakfast', mealColors['Breakfast']!),
+                _buildInfoLegendItem('Lunch', mealColors['Lunch']!),
+                _buildInfoLegendItem('Dinner', mealColors['Dinner']!),
+                _buildInfoLegendItem('Snacks', mealColors['Snacks']!),
+                _buildInfoLegendItem('Total', mealColors['Total']!),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: MediumText(
+                'Got it',
+                fontSize: 14,
+                textColor: widget.titleColor,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoItem(String emoji, String description) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RegularText(emoji, fontSize: 14),
+          const SizedBox(width: 8),
+          Expanded(
+            child: RegularText(
+              description,
+              fontSize: 12,
+              textColor: Colors.grey.shade700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoLegendItem(String label, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          MediumText(
+            label,
+            fontSize: 12,
+            textColor: Colors.black87,
+          ),
+        ],
+      ),
     );
   }
 
@@ -153,13 +268,10 @@ class _NutrientTimeSeriesChartState extends State<NutrientTimeSeriesChart> {
               items: nutrients.map((String nutrient) {
                 return DropdownMenuItem<String>(
                   value: nutrient,
-                  child: Text(
+                  child: MediumText(
                     nutrient,
-                    style: const TextStyle(
-                      fontSize: 14, // Reduced font size
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF2C3E50),
-                    ),
+                    fontSize: 14,
+                    textColor: const Color(0xFF2C3E50),
                   ),
                 );
               }).toList(),
@@ -209,13 +321,10 @@ class _NutrientTimeSeriesChartState extends State<NutrientTimeSeriesChart> {
           ),
         ),
         const SizedBox(width: 6),
-        Text(
+        MediumText(
           label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF2C3E50),
-          ),
+          fontSize: 12,
+          textColor: const Color(0xFF2C3E50),
         ),
       ],
     );
@@ -227,10 +336,10 @@ class _NutrientTimeSeriesChartState extends State<NutrientTimeSeriesChart> {
     final nutrientData = widget
         .nutrientTimeSeriesData!.nutrientTimeSeries[selectedNutrient.value];
     if (nutrientData == null || nutrientData.dates.isEmpty) {
-      return const Center(
-        child: Text(
+      return Center(
+        child: RegularText(
           'No data available for selected nutrient',
-          style: TextStyle(color: Colors.grey),
+          textColor: Colors.grey,
         ),
       );
     }
@@ -258,7 +367,7 @@ class _NutrientTimeSeriesChartState extends State<NutrientTimeSeriesChart> {
                     right: 30.0,
                     top: 10.0,
                     bottom: 20.0,
-                    left: 20.0), // Increased left padding for rotated label
+                    left: 0.0), // Increased left padding for rotated label
                 child: LineChart(
                   _buildLineChartData(nutrientData),
                 ),
@@ -278,13 +387,10 @@ class _NutrientTimeSeriesChartState extends State<NutrientTimeSeriesChart> {
                   color: Colors.grey.shade400,
                 ),
                 const SizedBox(width: 4),
-                Text(
+                RegularText(
                   'Swipe to see more data',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey.shade500,
-                    fontStyle: FontStyle.italic,
-                  ),
+                  fontSize: 10,
+                  textColor: Colors.grey.shade500,
                 ),
                 const SizedBox(width: 4),
                 Icon(
@@ -363,20 +469,9 @@ class _NutrientTimeSeriesChartState extends State<NutrientTimeSeriesChart> {
             const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         bottomTitles: AxisTitles(
-          axisNameWidget: Padding(
-            padding: const EdgeInsets.only(top: 15.0),
-            child: Text(
-              'Date',
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF7F8C8D),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
           sideTitles: SideTitles(
             showTitles: true,
-            reservedSize: 40, // Increased reserved space for bottom labels
+            reservedSize: 25, // Reduced reserved space since no axis label
             interval: _getOptimalInterval(nutrientData.dates.length),
             getTitlesWidget: (value, meta) {
               if (value.toInt() >= 0 &&
@@ -388,13 +483,10 @@ class _NutrientTimeSeriesChartState extends State<NutrientTimeSeriesChart> {
                     axisSide: meta.axisSide,
                     child: Padding(
                       padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
+                      child: RegularText(
                         '${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFF7F8C8D),
-                          fontWeight: FontWeight.w400,
-                        ),
+                        fontSize: 10,
+                        textColor: const Color(0xFF7F8C8D),
                       ),
                     ),
                   );
@@ -403,55 +495,34 @@ class _NutrientTimeSeriesChartState extends State<NutrientTimeSeriesChart> {
                     axisSide: meta.axisSide,
                     child: Padding(
                       padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
+                      child: RegularText(
                         dateStr.length > 5
                             ? dateStr.substring(dateStr.length - 5)
                             : dateStr,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFF7F8C8D),
-                          fontWeight: FontWeight.w400,
-                        ),
+                        fontSize: 10,
+                        textColor: const Color(0xFF7F8C8D),
                       ),
                     ),
                   );
                 }
               }
-              return const Text('');
+              return RegularText('');
             },
           ),
         ),
         leftTitles: AxisTitles(
-          axisNameWidget: Padding(
-            padding: const EdgeInsets.only(right: 15.0, bottom: 10.0),
-            child: RotatedBox(
-              quarterTurns:
-                  1, // Changed from 3 to 1 for proper vertical orientation
-              child: Text(
-                'Nutrient Value',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF7F8C8D),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ),
           sideTitles: SideTitles(
             showTitles: true,
             interval: maxValue / 5,
-            reservedSize: 65, // Increased reserved space for rotated label
+            reservedSize: 45, // Reduced reserved space since no axis label
             getTitlesWidget: (value, meta) {
               return SideTitleWidget(
                 axisSide: meta.axisSide,
                 space: 12, // Increased space
-                child: Text(
+                child: RegularText(
                   value.toInt().toString(),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF7F8C8D),
-                    fontWeight: FontWeight.w400,
-                  ),
+                  fontSize: 11,
+                  textColor: const Color(0xFF7F8C8D),
                 ),
               );
             },

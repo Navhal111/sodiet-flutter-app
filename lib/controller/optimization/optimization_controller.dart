@@ -201,8 +201,14 @@ class OptimizationController extends GetxController implements GetxService {
         final taskProgressData = TaskProgress.fromJson(response.body);
         taskProgress[weekNo] = taskProgressData;
 
+        print('Task status for week $weekNo: ${taskProgressData.status}');
+        print('Task is failed: ${taskProgressData.isFailed}');
+        print('Task is completed: ${taskProgressData.isCompleted}');
+
         // Stop polling if task is completed or failed
         if (taskProgressData.isCompleted || taskProgressData.isFailed) {
+          print(
+              'Stopping task monitoring for week $weekNo. Status: ${taskProgressData.status}');
           _progressTimer?.cancel();
           activeTaskWeek.value = 0;
 
@@ -211,7 +217,10 @@ class OptimizationController extends GetxController implements GetxService {
             // Refresh the week plan data to get updated status
             await refreshData();
           } else if (taskProgressData.isFailed) {
-            CustomToast.showError('Optimization failed for Week $weekNo');
+            CustomToast.showError(
+                'Optimization failed for Week $weekNo: ${taskProgressData.message}');
+            // Also refresh data to update the status
+            await refreshData();
           }
         }
       } else {
@@ -239,6 +248,11 @@ class OptimizationController extends GetxController implements GetxService {
   // Check if a week has active task
   bool isWeekTaskActive(int weekNo) {
     return activeTaskWeek.value == weekNo;
+  }
+
+  // Clear task progress for a specific week (useful for retry)
+  void clearTaskProgressForWeek(int weekNo) {
+    taskProgress.remove(weekNo);
   }
 
   @override
@@ -716,6 +730,7 @@ class OptimizationController extends GetxController implements GetxService {
         ];
       case 'error':
       case 'failed':
+      case 'failure':
         return [
           const Color(0xFFFFEBEE), // Background color
           const Color(0xFFE53935), // Text color
@@ -730,13 +745,13 @@ class OptimizationController extends GetxController implements GetxService {
       case '':
       default:
         return [
-          const Color(0xFFF5F5F5), // Default background
-          const Color(0xFF4C4C4C), // Default text color
+          const Color(0xFFFFEBEE), // Background color
+          const Color(0xFFE53935), // Text color
           [
-            const Color(0xFFBDBDBD),
-            const Color(0xFF9E9E9E),
-            const Color(0xFF757575),
-          ], // Default action colors
+            const Color(0xFFE57373),
+            const Color(0xFFEF5350),
+            const Color(0xFFE53935),
+          ], // Action colors
         ];
     }
   }
@@ -887,5 +902,8 @@ class TaskProgress {
       status.toLowerCase() == 'completed' || status.toLowerCase() == 'success';
   bool get isRunning => status.toLowerCase() == 'running';
   bool get isFailed =>
-      status.toLowerCase() == 'failed' || status.toLowerCase() == 'error';
+      status.toLowerCase() == 'failed' ||
+      status.toLowerCase() == 'failure' ||
+      status.toLowerCase() == 'error' ||
+      status.toLowerCase() == 'optimal';
 }

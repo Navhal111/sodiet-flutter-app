@@ -133,11 +133,11 @@ class RecipeController extends GetxController implements GetxService {
         "Starting to fetch recipes... Page: $currentPage, isCustom: $isCustom");
 
     try {
-      String apiUrl = AppConstants.GET_RECIPES;
+      String apiUrl = AppConstants.GET_RECIPES_SEARCH;
       if (loadMore || currentPage > 1) {
         apiUrl += '?page=$currentPage&page_size=$pageSize';
       } else {
-        apiUrl += '?page_size=$pageSize';
+        apiUrl += '?page=$currentPage&page_size=$pageSize';
       }
 
       // Add custom parameter if needed

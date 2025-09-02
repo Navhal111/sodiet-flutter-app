@@ -659,8 +659,10 @@ class _GeneratePlanScreenState extends State<GeneratePlanScreen>
     );
 
     if (picked != null) {
-      _startDateController.text =
-          '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+      setState(() {
+        _startDateController.text =
+            '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+      });
     }
   }
 

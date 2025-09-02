@@ -23,6 +23,8 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
   void initState() {
     super.initState();
     controller = Get.find<OptimizationController>();
+    controller.getWeekPlanMaster();
+    controller.getRecipes(); // Load recipes on initialization
   }
 
   @override
@@ -240,6 +242,12 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
       return;
     }
 
+    // Clear any previous failed task progress for this week to allow retry
+    final existingProgress = controller.getTaskProgressForWeek(weekNumber);
+    if (existingProgress != null && existingProgress.isFailed) {
+      controller.clearTaskProgressForWeek(weekNumber);
+    }
+
     // Show loading dialog
     showDialog(
       context: context,
@@ -392,11 +400,18 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
           // Green with higher opacity for running
           cardBackgroundColor = Colors.green.withOpacity(0.3);
         } else if (taskProgress.isFailed) {
-          // Red with higher opacity for error
+          // Red with higher opacity for error/failure
           cardBackgroundColor = Colors.red.withOpacity(0.3);
         } else if (taskProgress.isCompleted) {
           // Light green for success/completed status
           cardBackgroundColor = Colors.green.withOpacity(0.3);
+        }
+      } else {
+        // Use original status colors if no task progress
+        if (status.toLowerCase() == 'failed' ||
+            status.toLowerCase() == 'failure' ||
+            status.toLowerCase() == 'error') {
+          cardBackgroundColor = Colors.red.withOpacity(0.3);
         }
       }
 
@@ -436,13 +451,79 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
             // Status - Show task status if available, otherwise show original status
             Builder(
               builder: (context) {
-                final displayStatus = taskProgress?.status ?? status;
+                String displayStatus;
+                Color displayStatusColor = statusColor;
+
+                if (taskProgress != null) {
+                  // Use task progress status and determine color
+                  displayStatus = taskProgress.status;
+                  if (taskProgress.isFailed) {
+                    displayStatusColor = Colors.red.shade700;
+                  } else if (taskProgress.isRunning) {
+                    displayStatusColor = Colors.green.shade700;
+                  } else if (taskProgress.isCompleted) {
+                    displayStatusColor = Colors.green.shade700;
+                  }
+                } else {
+                  // Use original status
+                  displayStatus = status;
+                  // Update color for failure status in original data too
+                  if (status.toLowerCase() == 'failed' ||
+                      status.toLowerCase() == 'failure' ||
+                      status.toLowerCase() == 'error') {
+                    displayStatusColor = Colors.red.shade700;
+                  }
+                }
 
                 return SemiBoldText(
                   displayStatus,
                   fontSize: 24,
-                  textColor: statusColor,
+                  textColor: displayStatusColor,
                 );
+              },
+            ),
+
+            // Error message for failed tasks
+            Builder(
+              builder: (context) {
+                if (taskProgress != null &&
+                    taskProgress.isFailed &&
+                    taskProgress.message.isNotEmpty) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                          border:
+                              Border.all(color: Colors.red.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red.shade600,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: RegularText(
+                                taskProgress.message,
+                                fontSize: 12,
+                                textColor: Colors.red.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return const SizedBox.shrink();
               },
             ),
 
@@ -458,10 +539,14 @@ class _OptimizationScreenState extends State<OptimizationScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          RegularText(
-                            taskProgress.message,
-                            fontSize: 12,
-                            textColor: Colors.grey.shade600,
+                          SizedBox(
+                            width: Get.width - 120,
+                            child: RegularText(
+                              taskProgress.message,
+                              fontSize: 12,
+                              textColor: Colors.grey.shade600,
+                              maxLines: 2,
+                            ),
                           ),
                           RegularText(
                             '${taskProgress.current}/${taskProgress.total}',

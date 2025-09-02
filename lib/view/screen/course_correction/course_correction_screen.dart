@@ -22,6 +22,7 @@ class _CourseCorrectionScreenState extends State<CourseCorrectionScreen> {
   void initState() {
     super.initState();
     controller = Get.find<CourseCorrectionController>();
+    controller.getCorrectionPendingData();
   }
 
   @override

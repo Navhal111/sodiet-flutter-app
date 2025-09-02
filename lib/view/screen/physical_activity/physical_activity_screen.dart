@@ -22,12 +22,14 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _durationController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _durationFocusNode = FocusNode();
   final PhysicalActivityController controller =
       Get.find<PhysicalActivityController>();
   final PlanController planController = Get.find<PlanController>();
 
   String selectedActivity = StaticData.PHYSICAL_ACTIVITIES.keys.first;
   String selectedTime = 'Morning';
+  bool _isAddingActivity = false; // Local loading state
 
   // Use activities from StaticData
   List<String> get activities => StaticData.PHYSICAL_ACTIVITIES.keys.toList();
@@ -68,6 +70,7 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
     _dateController.dispose();
     _durationController.dispose();
     _scrollController.dispose();
+    _durationFocusNode.dispose();
     super.dispose();
   }
 
@@ -109,9 +112,31 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
   }
 
   void _addActivity() async {
+    print("DEBUG: _addActivity called, _isAddingActivity: $_isAddingActivity");
+    if (_isAddingActivity) return; // Prevent multiple simultaneous calls
+
     if (_dateController.text.isNotEmpty &&
         _durationController.text.isNotEmpty &&
         selectedActivity.isNotEmpty) {
+      print("DEBUG: Form validation passed");
+      // Validate duration
+      final duration = int.tryParse(_durationController.text.trim());
+      if (duration == null) {
+        CustomToast.showError('Please enter a valid duration number');
+        return;
+      }
+
+      if (duration <= 0) {
+        CustomToast.showError('Duration must be greater than 0 minutes');
+        return;
+      }
+
+      print("DEBUG: Setting loading state to true");
+      // Set local loading state
+      setState(() {
+        _isAddingActivity = true;
+      });
+
       // Show loading toast
       CustomToast.showLoading('Adding physical activity...');
 
@@ -119,27 +144,47 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
       Map<String, dynamic> activityData = {
         "entry_date": _formatDateForAPI(_dateController.text),
         "activity_name": selectedActivity,
-        "duration_minutes": int.tryParse(_durationController.text) ?? 0,
+        "duration_minutes": duration,
         "time_of_day": selectedTime.toLowerCase()
       };
 
-      // Call API to add activity
-      final result = await controller.addPaRecall(activityData);
+      try {
+        print("DEBUG: Calling API...");
+        // Call API to add activity
+        final result = await controller.addPaRecall(activityData);
 
-      // Show result toast
-      if (result['success']) {
-        CustomToast.showSuccess(result['message']);
-        planController.getActivityOverview();
-        // Clear form on success
-        _durationController.clear();
-        // Keep date and reset to defaults
-        selectedActivity = StaticData.PHYSICAL_ACTIVITIES.keys.first;
-        selectedTime = 'Morning';
-        setState(() {}); // Refresh UI
-      } else {
-        CustomToast.showError(result['message']);
+        print("DEBUG: API response: $result");
+        // Show result toast and reset form
+        if (result['success']) {
+          CustomToast.showSuccess(result['message']);
+
+          // Refresh activity overview
+          planController.getActivityOverview();
+
+          print("DEBUG: Clearing form and resetting state");
+          // Clear and reset form
+          _durationController.clear();
+          setState(() {
+            selectedActivity = StaticData.PHYSICAL_ACTIVITIES.keys.first;
+            selectedTime = 'Morning';
+          });
+        } else {
+          CustomToast.showError(result['message']);
+        }
+      } catch (e) {
+        print("DEBUG: Exception: $e");
+        CustomToast.showError('An error occurred. Please try again.');
+      } finally {
+        print("DEBUG: Setting loading state to false");
+        // Always reset loading state
+        if (mounted) {
+          setState(() {
+            _isAddingActivity = false;
+          });
+        }
       }
     } else {
+      print("DEBUG: Form validation failed");
       CustomToast.showWarning('Please fill in all fields');
     }
   }
@@ -267,7 +312,7 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
                         // Call delete API
                         final result =
                             await controller.deletePaRecall(recallId);
-
+                        planController.getActivityOverview();
                         // Show result toast
                         if (result['success']) {
                           CustomToast.showSuccess(result['message']);
@@ -404,6 +449,7 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: DropdownButtonFormField<String>(
+                        key: const ValueKey('activity_dropdown'),
                         value: selectedActivity,
                         style:
                             const TextStyle(fontSize: 14, color: Colors.black),
@@ -454,7 +500,9 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             child: TextFormField(
+                              key: const ValueKey('duration_field'),
                               controller: _durationController,
+                              focusNode: _durationFocusNode,
                               keyboardType: TextInputType.number,
                               style: const TextStyle(fontSize: 14),
                               decoration: InputDecoration(
@@ -490,6 +538,7 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             child: DropdownButtonFormField<String>(
+                              key: const ValueKey('time_dropdown'),
                               value: selectedTime,
                               style: const TextStyle(
                                   fontSize: 14, color: Colors.black),
@@ -537,57 +586,54 @@ class _PhysicalActivityScreenState extends State<PhysicalActivityScreen> {
                       ],
                     ),
 
-                    // Add Button - Updated to use Obx pattern like DietRecallScreen
+                    // Add Button - Using local loading state
                     Container(
                       width: double.infinity,
                       height: 40,
-                      child: Obx(() => ElevatedButton(
-                            onPressed: controller.isLoading.value
-                                ? null
-                                : _addActivity,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: controller.isLoading.value
-                                  ? Colors.grey
-                                  : const Color(0xFFFF9800),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: controller.isLoading.value
-                                ? Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                  Colors.white),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      const Text(
-                                        'Adding...',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                : const Text(
-                                    'Add',
+                      child: ElevatedButton(
+                        onPressed: _isAddingActivity ? null : _addActivity,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _isAddingActivity
+                              ? Colors.grey
+                              : const Color(0xFFFF9800),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: _isAddingActivity
+                            ? Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.white),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'Adding...',
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                          )),
+                                ],
+                              )
+                            : const Text(
+                                'Add',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
                     ),
                   ],
                 ),

@@ -120,7 +120,7 @@ class SupabaseAuthService {
 
       await _supabase.auth.resetPasswordForEmail(
         email,
-        redirectTo: null,
+        redirectTo: "sodiet://reset-password",
       );
 
       log('Password reset email sent to: $email');

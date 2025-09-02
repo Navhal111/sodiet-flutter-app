@@ -354,7 +354,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       ),
       // Show submit button only when there are menu interactions in draft
       bottomNavigationBar: Obx(
-        () => controller.menuInteractionsList.isNotEmpty
+        () => (controller.menuInteractionsList.isNotEmpty && mode == 'edit')
             ? Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -460,6 +460,30 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       return recipeName.contains(searchQuery);
     }).toList();
 
+    // Group menu items by timing
+    final Map<String, List<Map<String, dynamic>>> groupedByTiming = {};
+    for (var menuItem in filteredMenuItems) {
+      final rawTiming = menuItem['Timings']?.toString() ?? 'Other';
+      // Normalize timing to match our expected format
+      final timing = _normalizeTimingName(rawTiming);
+      if (!groupedByTiming.containsKey(timing)) {
+        groupedByTiming[timing] = [];
+      }
+      groupedByTiming[timing]!.add(menuItem);
+    }
+
+    // Define timing order for consistent display
+    final timingOrder = ['Breakfast', 'Lunch', 'Snacks', 'Dinner', 'Other'];
+    final sortedTimings = groupedByTiming.keys.toList();
+    sortedTimings.sort((a, b) {
+      final indexA = timingOrder.indexOf(a);
+      final indexB = timingOrder.indexOf(b);
+      if (indexA == -1 && indexB == -1) return a.compareTo(b);
+      if (indexA == -1) return 1;
+      if (indexB == -1) return -1;
+      return indexA.compareTo(indexB);
+    });
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -471,7 +495,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         ),
         const SizedBox(height: 12),
 
-        // Dynamic meal items for the day
+        // Dynamic meal items grouped by timing
         if (filteredMenuItems.isEmpty)
           Container(
             padding: const EdgeInsets.all(16),
@@ -506,19 +530,144 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             ),
           )
         else
-          ...filteredMenuItems
-              .map((menuItem) => _buildMealItem(
-                    '${AppConstants.BASE_URL_IMAGE}${menuItem['Recipe_Code']}.jpg', // image path - we'll use default
-                    menuItem['Recipe_Name']?.toString() ?? 'Unknown Recipe',
-                    '${menuItem['Portion']?.toString() ?? '0'} ${menuItem['Description']?.toString() ?? ''}',
-                    '${menuItem['Recipe_Weight']?.toString() ?? '0'}gms',
-                    mode, // Pass the mode to determine if close icon should be shown
-                    menuItem, // Pass the full menu item for remove functionality
-                    day, // Pass the day for remove functionality
-                  ))
-              .toList(),
+          ...sortedTimings.map((timing) {
+            final timingMeals = groupedByTiming[timing]!;
+            return _buildTimingSection(timing, timingMeals, day);
+          }).toList(),
       ],
     );
+  }
+
+  Widget _buildTimingSection(
+      String timing, List<Map<String, dynamic>> timingMeals, String day) {
+    // Get timing-specific colors and icons
+    Color timingColor = _getTimingColor(timing);
+    IconData timingIcon = _getTimingIcon(timing);
+
+    // Capitalize the timing properly
+    String displayTiming = _capitalizeFirst(timing);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Timing header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: timingColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: timingColor.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  timingIcon,
+                  color: timingColor,
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                SemiBoldText(
+                  displayTiming,
+                  fontSize: 14,
+                  textColor: timingColor,
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: timingColor.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '${timingMeals.length}',
+                    style: TextStyle(
+                      color: timingColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Meals for this timing
+          ...timingMeals
+              .map((menuItem) => _buildMealItem(
+                    '${AppConstants.BASE_URL_IMAGE}${menuItem['Recipe_Code']}.jpg',
+                    menuItem['Recipe_Name']?.toString() ?? 'Unknown Recipe',
+                    '${menuItem['Portion']?.toString() ?? '0'} ${menuItem['Description']?.toString() ?? ''}',
+                    '${(menuItem['Recipe_Weight']?.toDouble() ?? 0.0).toInt()}gms',
+                    mode,
+                    menuItem,
+                    day,
+                  ))
+              .toList(),
+        ],
+      ),
+    );
+  }
+
+  String _capitalizeFirst(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1).toLowerCase();
+  }
+
+  String _normalizeTimingName(String rawTiming) {
+    // Convert to lowercase for comparison and then to proper case
+    final normalized = rawTiming.toLowerCase().trim();
+
+    switch (normalized) {
+      case 'breakfast':
+        return 'Breakfast';
+      case 'lunch':
+        return 'Lunch';
+      case 'snacks':
+      case 'snack':
+        return 'Snacks';
+      case 'dinner':
+        return 'Dinner';
+      default:
+        return 'Other';
+    }
+  }
+
+  Color _getTimingColor(String timing) {
+    switch (timing.toLowerCase()) {
+      case 'breakfast':
+        return const Color(0xFFFF9800); // Orange
+      case 'lunch':
+        return const Color(0xFF4CAF50); // Green
+      case 'dinner':
+        return const Color(0xFF2196F3); // Blue
+      case 'snacks':
+        return const Color(0xFF9C27B0); // Purple
+      default:
+        return const Color(0xFF607D8B); // Blue Grey
+    }
+  }
+
+  IconData _getTimingIcon(String timing) {
+    switch (timing.toLowerCase()) {
+      case 'breakfast':
+        return Icons.wb_sunny;
+      case 'lunch':
+        return Icons.wb_sunny_outlined;
+      case 'dinner':
+        return Icons.nightlight;
+      case 'snacks':
+        return Icons.cookie;
+      default:
+        return Icons.restaurant;
+    }
   }
 
   Widget _buildMealItem(String imagePath, String foodName, String quantity,

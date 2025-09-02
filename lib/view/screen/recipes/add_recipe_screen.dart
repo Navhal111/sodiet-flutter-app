@@ -327,7 +327,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           ),
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 10),
 
         // Additional Details Section
         Container(
@@ -440,7 +440,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           ),
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 10),
 
         // Recipe Attributes Section
         _buildRecipeAttributesSection(),
@@ -816,6 +816,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
   Widget _buildRecipeAttributesSection() {
     return Container(
+      width: Get.width - 15,
       key: const ValueKey('recipe_attributes_section'),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
