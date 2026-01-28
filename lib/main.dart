@@ -18,6 +18,8 @@ void main() async {
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  // checkes code my side
+
   @override
   State<MyApp> createState() => _MyAppState();
 }
@@ -45,12 +47,16 @@ class _MyAppState extends State<MyApp> {
       SystemUiMode.manual,
       overlays: [SystemUiOverlay.top],
     );
+    // checkes code my side
     return GetBuilder<ThemeController>(builder: (themeController) {
       return GetMaterialApp(
+        // checkes code my side
         title: AppConstants.APP_NAME,
         debugShowCheckedModeBanner: false,
+        // checkes code my side
         theme: themeController.darkTheme ? dark : light,
         getPages: AppPages.pages,
+        // checkes code my side
         defaultTransition: Transition.rightToLeft,
         initialRoute: AppRoutes.splashScreen,
         // initialRoute: AppRoutes.dashboard,
