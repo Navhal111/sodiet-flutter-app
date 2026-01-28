@@ -30,23 +30,10 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
   //nitesh mine
+  //ritesh mine
   //nitesh mine
   //nitesh mine
   //nitesh mine
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   //nitesh mine
 
@@ -65,6 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    //ritesh mine
     // TODO: Implement login functionality with API
     print('Login with: $email, $password, Remember: $_rememberMe');
 
@@ -89,6 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: 80,
                   height: 80,
                 ),
+                //ritesh mine
                 const SizedBox(height: 15),
                 MediumText(
                   'Login',
