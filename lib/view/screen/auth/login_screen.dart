@@ -17,7 +17,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final FocusNode _emailFocusNode = FocusNode();
+  final TextEditingController _passwordControllermainsd =
+      TextEditingController();
+  final FocusNode _emailFocusNode = FocusNode(descendantsAreFocusable: true);
   final FocusNode _passwordFocusNode = FocusNode();
   bool _rememberMe = false;
 
@@ -104,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onSubmitted: (_) => _login(),
                 ),
                 const SizedBox(height: 4),
-                //hii mera name is nihtesh 
+                //hii mera name is nihtesh
 
 //nitesh mine
                 Row(
@@ -150,6 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
+
                 ///sdsds
                 const SizedBox(height: 30),
                 Center(
